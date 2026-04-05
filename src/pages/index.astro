@@ -22,7 +22,7 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft))
       />
       <div>
         <h1 class="text-3xl sm:text-4xl font-bold tracking-tight">
-          Hey, I'm Roger 👋
+          Hey, I'm <a href={SOCIAL.twitter} target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] transition-colors">@roger_creator</a> 👋
         </h1>
         <p class="mt-4 text-lg text-[var(--color-text-secondary)] leading-relaxed">
           Technical founder based in Australia. I build AI-powered products at{" "}

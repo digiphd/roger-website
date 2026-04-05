@@ -1,0 +1,37 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { SOCIAL } from "../consts";
+---
+
+<BaseLayout title="About" description="About Roger Chappel — builder, engineer, founder.">
+  <section class="py-8">
+    <h1 class="text-3xl font-bold mb-8">About</h1>
+    <div class="prose prose-lg max-w-none">
+      <p>
+        I'm Roger Chappel — a builder, engineer, and founder based in Australia.
+      </p>
+      <p>
+        I'm the founder of <a href={SOCIAL.axislabs} target="_blank" rel="noopener noreferrer">Axislabs.dev</a>,
+        a portfolio of AI-powered SaaS products. I'm also CTO &amp; co-founder of
+        <strong>Thoroughbreds.ai</strong>, where we're using AI to transform the
+        thoroughbred racing industry.
+      </p>
+      <p>
+        I've spent my career building software products — from early-stage startups
+        to scaling systems that serve thousands of users. These days, I'm focused on
+        the intersection of AI and product development: building tools that are
+        genuinely useful, shipping fast, and learning in public.
+      </p>
+      <p>
+        I write here about what I'm building, the engineering decisions behind it,
+        and lessons from the founder journey. If you're building with AI or thinking
+        about starting something, I hope you find it useful.
+      </p>
+      <h2>Get in touch</h2>
+      <p>
+        You can find me on <a href={SOCIAL.twitter} target="_blank" rel="noopener noreferrer">X / Twitter</a> or
+        check out my work on <a href={SOCIAL.github} target="_blank" rel="noopener noreferrer">GitHub</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

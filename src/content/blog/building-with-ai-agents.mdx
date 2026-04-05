@@ -1,0 +1,83 @@
+---
+title: "Building with AI Agents: What I've Learned So Far"
+description: "Practical lessons from building AI agent-powered products at Axislabs — what works, what doesn't, and where this is all heading."
+pubDate: 2026-04-01
+---
+
+We're in the early innings of AI agents actually being useful. Not the demo-ware "watch me book a flight" kind — I mean agents that do real work, reliably, in production.
+
+At [Axislabs](https://axislabs.dev), I've been building products that lean heavily on AI agents. Here's what I've learned.
+
+## Start with the loop, not the model
+
+The most common mistake I see is people starting with "let's use GPT-4" or "let's use Claude" and then figuring out the product. That's backwards.
+
+Start with the workflow loop:
+
+1. What input does the agent receive?
+2. What decisions does it need to make?
+3. What actions does it take?
+4. How do you verify the output?
+
+The model is a component. The loop is the product.
+
+## Agents need guardrails, not freedom
+
+The fantasy of a fully autonomous agent that "figures it out" is appealing but wrong for production. Every successful agent system I've built has tight guardrails:
+
+- **Structured outputs** — force the model to return JSON that matches your schema
+- **Validation at every step** — check the agent's work before executing actions
+- **Human-in-the-loop escape hatches** — when confidence is low, ask a human
+- **Cost controls** — set token budgets and circuit breakers
+
+The goal isn't to limit the AI. It's to make it predictable enough to trust.
+
+## Tool use is where the magic happens
+
+The real power of agents isn't in generating text — it's in using tools. A well-designed tool interface lets an agent:
+
+```typescript
+const tools = [
+  {
+    name: "search_database",
+    description: "Search the product database by query",
+    parameters: {
+      query: { type: "string" },
+      limit: { type: "number", default: 10 },
+    },
+  },
+  {
+    name: "send_notification",
+    description: "Send a notification to a user",
+    parameters: {
+      userId: { type: "string" },
+      message: { type: "string" },
+    },
+  },
+];
+```
+
+Keep tools simple, well-documented, and composable. The agent will figure out how to chain them together.
+
+## Evals are your test suite
+
+You wouldn't ship code without tests. Don't ship agents without evals.
+
+I run evaluation suites that test:
+
+- **Accuracy** — does the agent produce the right output for known inputs?
+- **Robustness** — does it handle edge cases and malformed input gracefully?
+- **Cost** — how many tokens does it use on average?
+- **Latency** — is it fast enough for the user experience?
+
+Evals aren't a one-time thing. As your prompts and tools evolve, your evals need to evolve too.
+
+## Where this is heading
+
+We're about 18 months away from agents being a boring, standard part of every SaaS product. The companies building that muscle memory now — learning how to design agent loops, write good evals, and ship reliably — will have a massive advantage.
+
+The best time to start building with agents was six months ago. The second best time is now.
+
+---
+
+*If you're building with AI agents and want to compare notes, find me on [X](https://x.com/roger_creator).*

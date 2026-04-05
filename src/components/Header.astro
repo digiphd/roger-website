@@ -11,12 +11,12 @@ const currentPath = Astro.url.pathname;
 ---
 
 <header
-  class="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-lg"
+  class="sticky top-0 z-50 border-b border-[var(--color-border)] bg-white/80 backdrop-blur-lg"
 >
   <nav class="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
     <a
       href="/"
-      class="text-lg font-semibold text-[var(--color-text-primary)] hover:text-[var(--color-accent-light)] transition-colors"
+      class="text-lg font-semibold text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
     >
       {SITE_TITLE}
     </a>
@@ -29,7 +29,7 @@ const currentPath = Astro.url.pathname;
               class:list={[
                 "text-sm font-medium transition-colors",
                 currentPath === href || (href !== "/" && currentPath.startsWith(href))
-                  ? "text-[var(--color-accent-light)]"
+                  ? "text-[var(--color-accent)]"
                   : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
               ]}
             >

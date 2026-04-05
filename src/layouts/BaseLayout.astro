@@ -9,16 +9,18 @@ interface Props {
   description?: string;
   ogImage?: string;
   article?: boolean;
+  pubDate?: Date;
 }
 
 const {
   title,
   description = SITE_DESCRIPTION,
-  ogImage = "/og-default.png",
+  ogImage = "/roger.jpg",
   article = false,
+  pubDate,
 } = Astro.props;
 
-const pageTitle = title ? `${title} — ${SITE_TITLE}` : SITE_TITLE;
+const pageTitle = title ? `${title} — ${SITE_TITLE}` : `${SITE_TITLE} — Builder, Engineer, Founder`;
 const canonicalUrl = new URL(Astro.url.pathname, SITE_URL);
 ---
 
@@ -44,6 +46,7 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL);
 
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    <meta name="author" content="Roger Chappel" />
     <link rel="canonical" href={canonicalUrl} />
 
     <!-- Open Graph -->
@@ -52,16 +55,53 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL);
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={new URL(ogImage, SITE_URL)} />
+    <meta property="og:site_name" content={SITE_TITLE} />
+    <meta property="og:locale" content="en_AU" />
+    {pubDate && <meta property="article:published_time" content={pubDate.toISOString()} />}
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@roger_creator" />
+    <meta name="twitter:creator" content="@roger_creator" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={new URL(ogImage, SITE_URL)} />
+
+    <!-- JSON-LD structured data -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": article ? "BlogPosting" : "WebSite",
+      "name": pageTitle,
+      "description": description,
+      "url": canonicalUrl.toString(),
+      ...(article ? {
+        "author": {
+          "@type": "Person",
+          "name": "Roger Chappel",
+          "url": SITE_URL,
+        },
+        ...(pubDate ? { "datePublished": pubDate.toISOString() } : {}),
+      } : {
+        "author": {
+          "@type": "Person",
+          "name": "Roger Chappel",
+          "url": SITE_URL,
+          "jobTitle": "Founder",
+          "worksFor": {
+            "@type": "Organization",
+            "name": "Axislabs",
+            "url": "https://axislabs.dev",
+          },
+          "sameAs": [
+            "https://x.com/roger_creator",
+            "https://github.com/digiphd",
+          ],
+        },
+      }),
+    })} />
   </head>
   <body
-    class="min-h-screen flex flex-col bg-[var(--color-surface)] text-[var(--color-text-primary)]"
+    class="min-h-screen flex flex-col bg-white text-[var(--color-text-primary)]"
   >
     <Header />
     <main class="flex-1 w-full max-w-3xl mx-auto px-6 py-12">

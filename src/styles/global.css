@@ -3,16 +3,16 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --color-accent: #06b6d4;
-  --color-accent-light: #22d3ee;
-  --color-accent-dark: #0891b2;
-  --color-surface: #0f172a;
-  --color-surface-raised: #1e293b;
-  --color-surface-overlay: #334155;
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  --color-border: #1e293b;
+  --color-accent: #0d9488;
+  --color-accent-light: #14b8a6;
+  --color-accent-dark: #0f766e;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f8fafc;
+  --color-surface-overlay: #f1f5f9;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-border: #e2e8f0;
 }
 
 html {
@@ -28,22 +28,22 @@ body {
 }
 
 ::selection {
-  background-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  background-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
 }
 
 /* Prose overrides for blog posts */
 .prose {
   --tw-prose-body: var(--color-text-secondary);
   --tw-prose-headings: var(--color-text-primary);
-  --tw-prose-links: var(--color-accent-light);
+  --tw-prose-links: var(--color-accent-dark);
   --tw-prose-bold: var(--color-text-primary);
-  --tw-prose-code: var(--color-accent-light);
-  --tw-prose-pre-bg: var(--color-surface-raised);
-  --tw-prose-pre-code: var(--color-text-secondary);
+  --tw-prose-code: var(--color-accent-dark);
+  --tw-prose-pre-bg: #1e293b;
+  --tw-prose-pre-code: #e2e8f0;
   --tw-prose-quotes: var(--color-text-secondary);
   --tw-prose-quote-borders: var(--color-accent);
   --tw-prose-hr: var(--color-border);
-  --tw-prose-th-borders: var(--color-surface-overlay);
+  --tw-prose-th-borders: var(--color-border);
   --tw-prose-td-borders: var(--color-border);
 }
 
@@ -60,8 +60,9 @@ body {
 .prose code:not(pre code) {
   padding: 0.15em 0.35em;
   border-radius: 0.25rem;
-  background-color: var(--color-surface-raised);
+  background-color: var(--color-surface-overlay);
   font-size: 0.875em;
+  color: var(--color-text-primary);
 }
 
 .prose code:not(pre code)::before,

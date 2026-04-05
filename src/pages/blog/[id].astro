@@ -22,7 +22,7 @@ const formattedDate = post.data.pubDate.toLocaleDateString("en-AU", {
 });
 ---
 
-<BaseLayout title={post.data.title} description={post.data.description} article>
+<BaseLayout title={post.data.title} description={post.data.description} article pubDate={post.data.pubDate}>
   <article class="py-8">
     <header class="mb-10">
       <div class="flex items-center gap-3 text-sm text-[var(--color-text-muted)] mb-4">

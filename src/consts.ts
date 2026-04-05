@@ -1,10 +1,10 @@
 export const SITE_TITLE = "Roger Chappel";
 export const SITE_DESCRIPTION =
-  "Builder, engineer, founder. Building the future with AI.";
+  "Technical founder building AI-powered products. Founder of Axislabs.dev. Writing about building, shipping, and the AI founder journey.";
 export const SITE_URL = "https://rogerchappel.com";
 
 export const SOCIAL = {
   twitter: "https://x.com/roger_creator",
-  github: "https://github.com/axislabs-dev",
+  github: "https://github.com/digiphd",
   axislabs: "https://axislabs.dev",
 } as const;

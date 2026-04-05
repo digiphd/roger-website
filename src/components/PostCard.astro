@@ -10,26 +10,28 @@ interface Props {
 const { title, description, pubDate, slug, readingTime } = Astro.props;
 
 const formattedDate = pubDate.toLocaleDateString("en-AU", {
-  year: "numeric",
-  month: "short",
   day: "numeric",
+  month: "short",
+  year: "numeric",
 });
 ---
 
-<a href={`/blog/${slug}`} class="group block">
-  <article
-    class="p-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-surface-overlay)] hover:bg-[var(--color-surface-raised)] transition-all duration-200"
-  >
-    <div class="flex items-center gap-3 text-sm text-[var(--color-text-muted)] mb-3">
-      <time datetime={pubDate.toISOString()}>{formattedDate}</time>
-      <span class="text-[var(--color-surface-overlay)]">&middot;</span>
-      <span>{readingTime}</span>
-    </div>
-    <h3
-      class="text-xl font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-light)] transition-colors mb-2"
-    >
+<a
+  href={`/blog/${slug}`}
+  class="group block rounded-lg px-4 py-4 -mx-4 hover:bg-[var(--color-surface-raised)] transition-colors"
+>
+  <div class="flex items-baseline justify-between gap-4">
+    <h3 class="text-base font-medium text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors">
       {title}
     </h3>
-    <p class="text-[var(--color-text-secondary)] leading-relaxed">{description}</p>
-  </article>
+    <span class="text-xs text-[var(--color-text-muted)] whitespace-nowrap shrink-0">
+      {formattedDate}
+    </span>
+  </div>
+  <p class="mt-1 text-sm text-[var(--color-text-secondary)] line-clamp-2">
+    {description}
+  </p>
+  <span class="mt-1.5 inline-block text-xs text-[var(--color-text-muted)]">
+    {readingTime}
+  </span>
 </a>

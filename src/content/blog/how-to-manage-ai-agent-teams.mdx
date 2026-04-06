@@ -1,0 +1,323 @@
+---
+title: "How to Manage a Team of AI Agents"
+description: "A practical guide to AI agent orchestration: org charts, task boards, dispatch patterns, and lessons from running 10+ agents daily."
+pubDate: 2026-04-08
+tags: ["ai", "engineering", "agents"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+I manage a team of 10 AI agents. They have names, roles, a task board, and an org chart. One of them reviews the others' code. One only does video rendering. There's a dispatch table that decides who gets what work.
+
+This is my actual workflow. Not a thought experiment. Not a demo. I'll walk you through exactly how it works, what breaks, and what I'd do differently.
+
+## Why you need an org chart for AI agents
+
+"Just use ChatGPT" is the AI equivalent of "just hire a generalist." It works until it doesn't.
+
+I started with one agent doing everything: code, reviews, research, deployments. The problems were immediate. Context from a marketing task bled into a code review. Security concerns got the same weight as formatting preferences. The agent was okay at everything and great at nothing.
+
+<CompareTable
+  left={{ title: "One generalist agent", items: ["Context bleed between domains", "No depth in any area", "Can't review its own work", "Prompt engineering is a mess", "One failure mode kills everything"] }}
+  right={{ title: "Specialized agent team", items: ["Clean context per task domain", "Deep expertise per role", "Cross-agent code review", "Targeted, testable prompts", "Failures are isolated and recoverable"] }}
+/>
+
+The fix was specialization. A code review agent shouldn't be writing features. A prompt tuned for security review catches things a general agent misses every time.
+
+<Highlight emoji="🔑">
+Specialization beats generalization for AI agents the same way it does for humans. You wouldn't ask your security auditor to design your landing page.
+</Highlight>
+
+This mirrors what [GitHub found in their 2022 study](https://github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness/): developers using Copilot completed tasks 55% faster. But that's one agent, one task type. Multiply that specialization across an entire workflow and the gains compound.
+
+## The practical setup: agent roles and specializations
+
+Here's what my agent team actually looks like:
+
+| Agent | Role | Default Domain | Fallback |
+|-------|------|---------------|----------|
+| **Neo** | CEO / Coordinator | Strategy, dispatch | Portfolio oversight |
+| **Forge** | Full-stack dev (methodical) | PostDropr, SilentAgents | General backend |
+| **Blitz** | Full-stack dev (fast) | RSCreative, EverContent | Webpipe, rapid prototypes |
+| **Cipher** | Architect | ClutchCut, complex systems | System design reviews |
+| **Sentinel** | Code reviewer | Security, quality gates | Dependency audits |
+| **Maverick** | Quant analyst | Trading algorithms | Data analysis |
+| **Razor** | Video rendering | ClutchCut pipeline | Media processing |
+| **Havoc** | Infra / DevOps | Deployments, CI/CD | Monitoring |
+
+<StatBlock stats={[
+  { label: "Specialized agents", value: "10+" },
+  { label: "Products managed", value: "8" },
+  { label: "Humans on the team", value: "1" },
+]} />
+
+This isn't roleplay. Each agent has different system prompts, different tool access, and in some cases different models. Sentinel runs on a model optimized for code analysis. Blitz uses a fast model because speed matters more than deep reasoning for rapid prototyping. Cipher gets the most capable model available because architecture decisions are expensive to get wrong.
+
+Each agent has a dispatch priority. When multiple tasks are queued, the dispatch table decides: highest priority unassigned task in the agent's default domain first, then fallback domains, then idle.
+
+```yaml
+# Example agent config
+agent:
+  name: Forge
+  role: full-stack-developer
+  style: methodical
+  default_domain: [postdropr, silentagents]
+  fallback_domain: [general-backend]
+  model: claude-opus-4-6
+  tools: [file_read, file_write, terminal, browser, git]
+  constraints:
+    - no production deployments without human approval
+    - all PRs require Sentinel review
+    - max 1 task at a time
+```
+
+## Task management: humans and agents on the same board
+
+The biggest unlock wasn't the agents themselves. It was putting humans and agents on the same task board.
+
+I built [CrewCmd](https://crewcmd.dev) to solve this. It's a local-first task management system designed from the ground up for mixed human-agent teams. The thesis is simple: one board, one lifecycle, mixed workforce.
+
+Every task, whether it's assigned to me or to Forge, flows through the same lifecycle:
+
+<Step number={1} title="Inbox">
+New tasks land here. Could be from a customer bug report, a feature idea, or an agent flagging a dependency update.
+</Step>
+
+<Step number={2} title="Queued">
+Triaged and prioritized. The dispatch table checks this queue when an agent finishes its current work.
+</Step>
+
+<Step number={3} title="In Progress">
+Agent (or human) is actively working. Status updates flow back to the board.
+</Step>
+
+<Step number={4} title="Review">
+Work is done but not approved. Sentinel reviews agent code. I review anything that touches architecture or user-facing changes.
+</Step>
+
+<Step number={5} title="Done">
+Reviewed, approved, merged. Acceptance criteria met. Not "I wrote some code and it compiles" but actually verified.
+</Step>
+
+The key insight: agents pick up queued tasks automatically. I wake up, review overnight work, triage new items, and dispatch. The agents handle volume. I handle direction.
+
+<Callout type="info" title="Why not Linear or Jira?">
+I tried both. The problem is they're designed for humans who sometimes use AI, not for AI agents as primary workers. CrewCmd treats agents as first-class team members with their own assignment rules, status reporting, and capacity tracking.
+</Callout>
+
+```typescript
+// Example task schema
+interface AgentTask {
+  id: string;
+  title: string;
+  status: "inbox" | "queued" | "in_progress" | "review" | "done";
+  assignee: string | null;       // agent name or human
+  domain: string;                 // maps to agent dispatch
+  priority: "critical" | "high" | "medium" | "low";
+  acceptance_criteria: string[];  // explicit, testable conditions
+  context: string;                // scoped prompt for the agent
+  created_at: string;
+  updated_at: string;
+}
+```
+
+## Dispatch patterns that actually work
+
+After months of trial and error, these are the dispatch patterns that produce reliable output.
+
+### 1. Scope to ONE thing per dispatch
+
+This is the single most important rule. "Build the dashboard" is a terrible task. "Add the revenue chart to `src/components/Dashboard.tsx` using the data from the `/api/analytics` endpoint" is a good task.
+
+<CompareTable
+  left={{ title: "Bad dispatch", items: ["Build the user settings page", "Fix all the bugs in the auth flow", "Refactor the API layer", "Update the design system"] }}
+  right={{ title: "Good dispatch", items: ["Add email validation to SignupForm.tsx", "Fix the token refresh race condition in auth/refresh.ts", "Extract the retry logic in api/client.ts into a shared utility", "Add the new color tokens to tokens.css"] }}
+/>
+
+### 2. Include acceptance criteria in every prompt
+
+Agents need to know what "done" means. Not vaguely. Specifically.
+
+```markdown
+## Task: Add email validation to SignupForm
+
+### Context
+The signup form at `src/components/SignupForm.tsx` currently accepts
+any string as an email. We need client-side validation.
+
+### Acceptance Criteria
+- [ ] Email field shows error state for invalid emails
+- [ ] Validation runs on blur, not on every keystroke
+- [ ] Error message: "Please enter a valid email address"
+- [ ] Valid emails: standard format, allows + aliases
+- [ ] All existing tests pass
+- [ ] New test covers the validation logic
+```
+
+### 3. The "Plan then Build" pattern
+
+For anything beyond a trivial change, have the agent plan first. Review the plan. Then let it build.
+
+<Step number={1} title="Agent plans">
+"Here's how I'd implement this: I'll modify these 3 files, add this component, update this test. Here's my approach to the tricky part."
+</Step>
+
+<Step number={2} title="Human reviews plan">
+You catch the architectural mistake before it's 500 lines of wrong code. Cheap to fix at this stage.
+</Step>
+
+<Step number={3} title="Agent builds">
+With an approved plan, the agent produces dramatically better output. It has a roadmap instead of guessing.
+</Step>
+
+<Callout type="tip" title="This saves more money than you think">
+A bad plan caught early costs you one agent call. A bad plan caught after implementation costs you the full build plus the rework. At scale, plan-first dispatch cuts token costs by 30-40%.
+</Callout>
+
+### 4. Always verify before marking complete
+
+Agents will tell you they're done when they're not. "PR created" doesn't mean the PR passes CI. "Tests pass" doesn't mean the tests actually test anything useful. Build verification into the dispatch:
+
+```markdown
+### Verification Steps
+- [ ] Run the test suite and confirm all tests pass
+- [ ] Verify the component renders correctly in the browser
+- [ ] Confirm no TypeScript errors
+- [ ] Check that the PR diff only contains changes related to this task
+```
+
+## What goes wrong (the honest section)
+
+I'd be lying if I said this was smooth. Here's what actually breaks.
+
+### Agents lie about completing tasks
+
+Not maliciously. But an agent will report "Task complete, all tests pass" when in reality it wrote a test that asserts `true === true`. Or it'll say "PR created" when the PR has merge conflicts. Trust but verify. Always.
+
+<Callout type="warning" title="The confidence problem">
+Agents are confident by default. They don't say "I'm not sure this works." They say "Done." Build verification into your workflow, not as an optional step, but as a required gate.
+</Callout>
+
+### Context windows are a real constraint
+
+An agent working on a complex feature will forget what it did at the start of the session. For large tasks, this means the end of the output contradicts the beginning. The fix: smaller tasks, more frequent checkpoints, and explicit context passing between steps.
+
+The [Stack Overflow 2025 Developer Survey](https://survey.stackoverflow.co/2025/) found that context limitations were the #1 frustration developers reported with AI coding tools. It's not a "skill issue." It's an architectural constraint.
+
+### Multi-file changes are the hardest
+
+Single-shot commands for multi-file work produce half-baked output almost every time. The agent changes one file perfectly and breaks three others. Interactive sessions, where the agent can explore the codebase, understand imports, and iterate, produce dramatically better results.
+
+<Highlight emoji="⚡">
+Never use single-shot mode for multi-file work. Interactive sessions with exploration time are slower but produce code that actually works.
+</Highlight>
+
+### Security is not optional
+
+Agents with write access to production systems are a real risk. The [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/) should be required reading. Prompt injection is the #1 threat, and when your agent has access to your deployment pipeline, it's not theoretical.
+
+My rules:
+- No agent gets production write access without human-in-the-loop approval
+- Sentinel reviews every agent PR before merge
+- Agent credentials are scoped to the minimum required permissions
+- All agent actions are logged and auditable
+
+### Token costs scale fast
+
+Running 10 agents daily isn't cheap. A heavy day of agent work can cost $50-100 in API calls. That adds up. Track your costs per agent, per task type. Know which tasks are worth the tokens and which are better done manually.
+
+<StatBlock stats={[
+  { label: "Avg daily token cost", value: "$30-80" },
+  { label: "Cost per agent task", value: "$0.50-5" },
+  { label: "ROI break-even", value: "~2 hrs saved/day" },
+]} />
+
+## The organizational question: BYO agents vs company-provided
+
+This is the question every engineering org will face in the next 18 months.
+
+[Microsoft's 2024 Work Trend Index](https://www.microsoft.com/en-us/worklab/work-trend-index/) found that 78% of AI users were bringing their own tools to work. [Salesforce reported](https://www.salesforce.com/news/stories/ai-at-work-research/) over 55% of employees admitted to using unapproved AI tools. This is shadow IT all over again, with higher stakes because these tools process proprietary code.
+
+The questions no one has good answers for yet:
+
+- **Who pays for tokens?** Per-engineer allocations? Department pools? Usage-based with caps?
+- **Who controls agent access?** Can your agents read the production database? Should they?
+- **What's the governance model?** [Deloitte found](https://www.deloitte.com/us/en/insights/topics/digital-transformation/generative-ai-in-the-enterprise.html) only 22% of enterprise leaders had AI governance frameworks. That number needs to be higher.
+- **Is the CAO a real role?** Someone needs to own agent strategy: governance, safety, orchestration standards, vendor management. That's a full-time job, not a side project for the CTO.
+
+<Callout type="info" title="Deep dive: the organizational shift">
+I explore the broader implications of this in [The 100x Engineer Doesn't Write Code](/blog/the-100x-engineer), including what happens to engineering roles when agent orchestration becomes the primary skill.
+</Callout>
+
+[Gartner predicts](https://www.gartner.com/en/articles/intelligent-agent-in-ai) 33% of enterprise software will include agentic AI by 2028. [McKinsey's data](https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai) shows 72% of organizations have adopted AI in at least one function, but only 25-30% are capturing significant value. The gap between adoption and value capture is an orchestration problem, not a technology problem.
+
+The parallel to DevOps is striking. In 2010, most companies had dev teams and ops teams that barely talked to each other. The companies that figured out DevOps, that merged the workflows, built the tooling, and changed the org structure, won. The same thing is happening with human-agent workflows right now.
+
+## What the hybrid workflow actually looks like
+
+Here's my actual day:
+
+**6:00 AM** — Review overnight agent work. Blitz shipped two components while I slept. Forge has a PR ready for review. Sentinel flagged a dependency with a known CVE.
+
+**6:30 AM** — Triage. Three new items in the inbox. One is critical (customer-reported bug), two are feature work. I assign the bug to Forge with a scoped prompt and acceptance criteria. Feature work gets queued for later.
+
+**7:00 AM** — Strategic work. This is the human-only part. Product direction, customer conversations, architecture decisions that require judgment the agents don't have. I might write code here if it's the kind of work where my context matters more than agent speed.
+
+**8:00 AM** — Review and dispatch. Check Forge's bug fix, approve Sentinel's security recommendations, dispatch the next round of work. Blitz picks up the queued feature tasks.
+
+**Throughout the day** — Agents handle volume. I handle direction. When something needs creative judgment or domain expertise the agents lack, I step in. When something needs to be done reliably and repeatedly, an agent does it.
+
+<Highlight emoji="🎯">
+Agents handle volume. Humans handle direction. Not a replacement for judgment, a multiplier for capacity.
+</Highlight>
+
+The ratio shifts depending on the day. Some days I'm 80% reviewing agent work and 20% doing my own. Some days I'm deep in code because the problem requires my full context. The point is having the flexibility to choose.
+
+## Getting started
+
+You don't need 10 agents and a custom task management system to start. Here's the progression I'd recommend:
+
+<Step number={1} title="Start with two agents: a builder and a reviewer">
+One agent writes code. Another reviews it. This single pattern catches more bugs than you'd expect and teaches you how to write good dispatch prompts.
+</Step>
+
+<Step number={2} title="Add a task board">
+Even a simple one. Track what's assigned, what's in progress, what needs review. This forces you to think about task scoping and acceptance criteria.
+</Step>
+
+<Step number={3} title="Specialize gradually">
+As you notice patterns (this type of task always needs more context, that type of task is always fast), split your agents along those lines. Add specializations based on real workflow data, not theory.
+</Step>
+
+<Step number={4} title="Build the dispatch layer">
+Automate the assignment logic. When agent A finishes, it pulls the next task from its domain queue. This is where tools like [CrewCmd](https://crewcmd.dev) come in, but you can start with a script.
+</Step>
+
+<Step number={5} title="Instrument everything">
+Track cost per task, success rate per agent, time to completion. You can't optimize what you don't measure. This data tells you which agents need better prompts and which task types aren't worth automating.
+</Step>
+
+<Callout type="tip" title="Start small, scale with data">
+I didn't build this system in a week. It evolved over months of daily use. Start with one agent doing one thing well, then grow from there. Every layer I added was in response to a real problem, not a theoretical one.
+</Callout>
+
+## The bottom line
+
+Managing AI agents is a new skill. It's closer to managing a team of junior developers than it is to prompt engineering. You need clear task definitions, review processes, escalation paths, and accountability.
+
+The engineers who learn this skill now will have a massive advantage. Not because AI replaces engineering judgment, but because it multiplies engineering capacity for those who know how to orchestrate it.
+
+I wrote about the broader implications of this shift in [The 100x Engineer Doesn't Write Code](/blog/the-100x-engineer), and about my early experiments in [I Gave My AI Agent Team an Org Chart](/blog/i-gave-my-ai-agent-team-an-org-chart). The practical foundation for all of it is in [Building with AI Agents](/blog/building-with-ai-agents).
+
+Give your agents a job title, a task board, and clear acceptance criteria. Verify their work. Iterate on your dispatch patterns. The technology is good enough. The bottleneck is the management layer.
+
+Build that layer.
+
+---
+
+*If you're running your own agent team and want to compare notes, find me on [X](https://x.com/roger_creator).*

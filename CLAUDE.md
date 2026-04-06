@@ -197,14 +197,22 @@ scripts/              # Build scripts (OG generator)
 public/og/            # Generated OG images (committed to repo)
 ```
 
-## Forking This Repo
+## Personalizing This Site
 
-If you're cloning this for your own site:
+All personal information is centralized in **`src/consts.ts`**. This is the single source of truth. Every component (author bio, footer, meta tags, JSON-LD schema, newsletter forms, about page, homepage) pulls from this one file.
 
-1. Update `src/consts.ts` with your name, social links, and site URL
-2. Replace `public/roger.jpg` with your photo
-3. Edit `remotion/compositions/OGImage.tsx` to match your brand colors
-4. Update the Buttondown form action in `src/pages/index.astro` and `src/components/BlogPostFooter.astro`
-5. Delete existing posts in `src/content/blog/` and write your own
-6. Run `pnpm og` to generate fresh OG images
-7. Deploy to Vercel (or any static host)
+### To make this your own:
+
+1. **Edit `src/consts.ts`** — update all fields:
+   - `SITE_TITLE`, `SITE_DESCRIPTION`, `SITE_URL`
+   - `AUTHOR` object: name, handle, photo path, job title, bio, about page description, intro paragraphs, topics
+   - `SOCIAL` links: Twitter/X, GitHub, LinkedIn, TikTok, email
+   - `GITHUB_USERNAME` for the contribution chart and API stats
+   - `NEWSLETTER_ID` for Buttondown (or swap the form action for your provider)
+2. **Replace `public/roger.jpg`** with your own photo (keep the same filename or update `AUTHOR.photo`)
+3. **Edit `remotion/compositions/OGImage.tsx`** to match your brand colors
+4. **Delete existing posts** in `src/content/blog/` and write your own
+5. Run `pnpm og` to generate fresh OG images
+6. Deploy to Vercel (or any static host)
+
+**You should NOT need to edit any component files to personalize the site.** If you find hardcoded personal info outside `src/consts.ts`, that's a bug.

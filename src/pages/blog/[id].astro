@@ -4,7 +4,7 @@ import AuthorBio from "../../components/AuthorBio.astro";
 import BlogPostFooter from "../../components/BlogPostFooter.astro";
 import { getCollection, render } from "astro:content";
 import { getReadingTime } from "../../utils/readingTime";
-import { SITE_URL, SOCIAL } from "../../consts";
+import { SITE_URL, AUTHOR, SOCIAL_PROFILES } from "../../consts";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog", ({ data }) => !data.draft);
@@ -47,28 +47,22 @@ const articleSchema = {
   "keywords": post.data.tags?.join(", "),
   "author": {
     "@type": "Person",
-    "name": "Roger Chappel",
+    "name": AUTHOR.name,
     "url": `${SITE_URL}/about`,
-    "jobTitle": "CTO & Founder",
-    "description": "Technical founder building AI-native SaaS at Axislabs.dev",
-    "image": `${SITE_URL}/roger.jpg`,
+    "jobTitle": AUTHOR.jobTitle,
+    "description": AUTHOR.bio,
+    "image": `${SITE_URL}${AUTHOR.photo}`,
     "worksFor": {
       "@type": "Organization",
-      "name": "Axislabs",
-      "url": "https://axislabs.dev",
+      ...AUTHOR.organization,
     },
-    "sameAs": [
-      SOCIAL.twitter,
-      SOCIAL.github,
-      SOCIAL.linkedin,
-      SOCIAL.tiktok,
-    ],
+    "sameAs": [...SOCIAL_PROFILES],
   },
   "publisher": {
     "@type": "Person",
-    "name": "Roger Chappel",
+    "name": AUTHOR.name,
     "url": SITE_URL,
-    "image": `${SITE_URL}/roger.jpg`,
+    "image": `${SITE_URL}${AUTHOR.photo}`,
   },
   "mainEntityOfPage": {
     "@type": "WebPage",

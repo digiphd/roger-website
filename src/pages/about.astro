@@ -1,15 +1,15 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { SOCIAL } from "../consts";
+import { AUTHOR, SOCIAL, GITHUB_USERNAME, NEWSLETTER_ID } from "../consts";
 ---
 
-<BaseLayout title="About" description="Roger Chappel — technical founder, full-stack engineer, and AI product builder based in Australia.">
+<BaseLayout title="About" description={`${AUTHOR.name} — ${AUTHOR.aboutDescription}`}>
   <section class="py-8">
     <!-- Hero photo placeholder — Roger will provide -->
     <div class="relative w-full h-48 sm:h-64 rounded-xl overflow-hidden mb-8 bg-[var(--color-surface-raised)] border border-[var(--color-border)]">
       <img
-        src="/roger.jpg"
-        alt="Roger Chappel"
+        src={AUTHOR.photo}
+        alt={AUTHOR.name}
         class="w-full h-full object-cover"
       />
       <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-surface)] via-transparent to-transparent"></div>
@@ -19,28 +19,14 @@ import { SOCIAL } from "../consts";
     <p class="text-lg text-[var(--color-text-secondary)] mt-2">Builder. Engineer. Founder.</p>
 
     <div class="prose prose-lg max-w-none mt-8">
-      <p>
-        I'm Roger. I build things with code, ship them fast, and write about what I learn along the way.
-      </p>
-      <p>
-        I run <a href={SOCIAL.axislabs} target="_blank" rel="noopener noreferrer">Axislabs</a>,
-        a portfolio of AI-powered SaaS products. I'm also CTO & co-founder of
-        <strong>Thoroughbreds.ai</strong>, where we're bringing AI to the thoroughbred racing industry.
-      </p>
-      <p>
-        My background is full-stack engineering: Next.js, TypeScript, Python, and whatever else gets the job done.
-        These days I spend most of my time at the intersection of AI and product development. I'm interested in
-        what happens when you treat AI agents as first-class team members, not just tools.
-      </p>
-      <p>
-        I'm based in Australia. When I'm not coding, I'm probably thinking about coding. Working on it.
-      </p>
+      {AUTHOR.aboutIntro.map((paragraph) => (
+        <p set:html={paragraph} />
+      ))}
       <h2>What I write about</h2>
       <ul>
-        <li>Building AI-powered products (the real stuff, not the hype)</li>
-        <li>Shipping SaaS as a solo/small-team founder</li>
-        <li>Engineering decisions and trade-offs</li>
-        <li>The founder journey, unfiltered</li>
+        {AUTHOR.writesAbout.map((topic) => (
+          <li>{topic}</li>
+        ))}
       </ul>
     </div>
 
@@ -49,8 +35,8 @@ import { SOCIAL } from "../consts";
       <h2 class="text-2xl font-semibold text-[var(--color-accent)] mb-4">GitHub Activity</h2>
       <div class="rounded-xl bg-[var(--color-surface-raised)] border border-[var(--color-border)] p-6 overflow-x-auto">
         <img
-          src="https://ghchart.rshah.org/3b82f6/digiphd"
-          alt="Roger's GitHub contribution chart"
+          src={`https://ghchart.rshah.org/3b82f6/${GITHUB_USERNAME}`}
+          alt={`${AUTHOR.name}'s GitHub contribution chart`}
           class="w-full dark:invert-0"
           loading="lazy"
         />
@@ -88,7 +74,7 @@ import { SOCIAL } from "../consts";
         I write about building AI products, shipping SaaS, and the founder journey. No spam, unsubscribe anytime.
       </p>
       <form
-        action="https://buttondown.com/api/emails/embed-subscribe/roger_creator"
+        action={`https://buttondown.com/api/emails/embed-subscribe/${NEWSLETTER_ID}`}
         method="post"
         target="popupwindow"
         class="mt-4 flex flex-col sm:flex-row gap-3"
@@ -121,10 +107,10 @@ import { SOCIAL } from "../consts";
     </div>
   </section>
 
-  <script>
+  <script define:vars={{ GITHUB_USERNAME }}>
     async function loadGitHubStats() {
       try {
-        const res = await fetch('https://api.github.com/users/digiphd');
+        const res = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}`);
         if (!res.ok) return;
         const data = await res.json();
         const container = document.getElementById('gh-stats');

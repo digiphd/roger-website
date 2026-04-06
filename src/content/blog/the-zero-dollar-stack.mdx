@@ -3,10 +3,20 @@ title: "The $0 Stack: Shipping SaaS on Free Tiers"
 description: "The exact tools I use to build and ship multiple SaaS products without spending a cent on infrastructure. Neon, Vercel, Cloudflare, and more."
 pubDate: 2026-04-05
 tags: ["saas", "devtools", "building"]
-draft: false
 ---
 
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
 I have 8 SaaS products in various stages of development. My monthly infrastructure bill is $0.
+
+<StatBlock stats={[
+  { label: "Products", value: "8" },
+  { label: "Monthly cost", value: "$0" },
+  { label: "Paying customers", value: "TBD" },
+]} />
 
 That's not a flex. It's a strategy. When you're bootstrapping multiple products, every dollar spent on infrastructure before you have revenue is a dollar that makes you feel pressure to rush, cut corners, or worse, quit.
 
@@ -32,7 +42,9 @@ No AWS. No Docker in production. No Kubernetes. No $50/month database you forget
 
 Neon's killer feature for bootstrappers is autoscaling to zero. When nobody's using your product at 3am, you're not paying for a database sitting idle. When you get a traffic spike, it scales up.
 
-The catch: cold starts. Neon's free tier can take 1 to 3 seconds to wake up from a cold start. I fixed this with a simple `withRetry()` wrapper that handles the initial connection timeout gracefully. Users see a slightly slower first load, never an error.
+<Callout type="warning" title="Cold start gotcha">
+Neon's free tier can take 1 to 3 seconds to wake up from a cold start. Fix this with a `withRetry()` wrapper. Users see a slightly slower first load, never an error.
+</Callout>
 
 ```typescript
 async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
@@ -48,9 +60,18 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
 }
 ```
 
-One gotcha: if you're using Neon's connection pooler, remove `channel_binding=require` from your connection string. It causes silent auth failures that will waste your afternoon.
+<Callout type="tip" title="Connection pooler tip">
+If you're using Neon's connection pooler, remove `channel_binding=require` from your connection string. It causes silent auth failures that will waste your afternoon.
+</Callout>
 
 ## Why Better Auth over Clerk or Auth0
+
+<CompareTable
+  left={{ title: "Managed auth (Clerk, Auth0)", items: ["Fast to integrate", "Pricing surprise at scale", "Vendor lock-in", "External dependency"] }}
+  right={{ title: "Better Auth (self-hosted)", items: ["Slightly more setup", "Free forever", "No lock-in", "Runs in your app"] }}
+  leftColor="text-amber-400"
+  rightColor="text-emerald-400"
+/>
 
 Clerk is great but it's $25/month once you pass the free tier. Auth0 is enterprise pricing dressed in startup clothing.
 
@@ -66,7 +87,9 @@ Cloudflare Workers serve static assets from the edge, 100k requests per day free
 
 ## The pattern that makes it work
 
-The key isn't any individual tool. It's the pattern:
+<Highlight emoji="🔑">
+The key isn't any individual tool. It's the pattern: same stack everywhere, shared components, static where possible, pay per use not per month.
+</Highlight>
 
 1. **Same stack everywhere.** Next.js, React, Tailwind, Drizzle ORM, Neon. Every product uses the same foundation. Context switching costs drop to near zero.
 2. **Shared components.** Auth flows, billing integration, admin dashboards. Build once, copy across products.
@@ -75,9 +98,9 @@ The key isn't any individual tool. It's the pattern:
 
 ## When to upgrade
 
-Free tiers aren't forever. The goal isn't to stay free. It's to stay free until you have revenue.
-
-My rule: upgrade when a paying customer would notice the free tier limitation. Not before. Cold starts annoying? That's fine while you have 10 users. Cold starts annoying while you have 100 paying users? Time to upgrade Neon to the $19/month plan.
+<Callout type="info" title="The upgrade rule">
+Upgrade when a paying customer would notice the free tier limitation. Not before. Cold starts annoying while you have 10 users? That's fine. Cold starts annoying with 100 paying users? Time to upgrade.
+</Callout>
 
 Until then, $0.
 

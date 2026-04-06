@@ -3,8 +3,12 @@ title: "Why I'm Building a Portfolio of AI-Native SaaS Products"
 description: "The thesis behind Axislabs: multiple AI-native bets, one holding company, and why the timing matters more than people think."
 pubDate: 2026-04-03
 tags: ["saas", "ai", "startups"]
-draft: false
 ---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
 
 Most founders pick one idea and go all in. I'm doing the opposite.
 
@@ -16,7 +20,11 @@ Here's why.
 
 We're in a weird moment. AI capabilities are advancing faster than most teams can ship products around them. That means there's a gap between what's possible and what's available as a product. Every month that gap produces new opportunities.
 
-If you're a solo technical founder who can ship fast, you can claim territory that bigger companies won't touch for another 12 to 18 months. But you have to move now.
+<Highlight emoji="⏰">
+If you're a solo technical founder who can ship fast, you can claim territory that bigger companies won't touch for another 12 to 18 months.
+</Highlight>
+
+But you have to move now.
 
 ## Why multiple products, not one
 
@@ -26,18 +34,37 @@ That advice assumes you're building a traditional SaaS where the moat is in the 
 
 Building multiple products lets me:
 
-- **Test faster.** Some ideas validate in weeks, not months. Why commit to one before you know which has real pull?
-- **Share infrastructure.** Auth, billing, deployment pipelines, agent orchestration. Build once, use everywhere.
-- **Create a content-to-distribution pipeline.** One product creates content, another distributes it. They feed each other.
-- **Diversify risk.** If one product doesn't find market fit, the others keep moving.
+<Step number={1} title="Test faster">
+Some ideas validate in weeks, not months. Why commit to one before you know which has real pull?
+</Step>
+
+<Step number={2} title="Share infrastructure">
+Auth, billing, deployment pipelines, agent orchestration. Build once, use everywhere.
+</Step>
+
+<Step number={3} title="Create a content-to-distribution pipeline">
+One product creates content, another distributes it. They feed each other.
+</Step>
+
+<Step number={4} title="Diversify risk">
+If one product doesn't find market fit, the others keep moving.
+</Step>
 
 ## The portfolio today
+
+<StatBlock stats={[
+  { label: "Products", value: "8" },
+  { label: "Shared stack", value: "1" },
+  { label: "Infra cost", value: "$0" },
+]} />
 
 I'm building 8 products. That sounds insane, and maybe it is. But most share the same stack (Next.js, React, Tailwind, Neon, Stripe) and the same AI infrastructure.
 
 The two that ship first are [ClutchCut](https://clutchcut.ai) (AI video creation from existing media) and [PostDropr](https://postdropr.com) (dynamic landing pages for content drops). Together they form a content-to-distribution pipeline. ClutchCut makes the content. PostDropr distributes it. Then I use both to market everything else.
 
-That's the real play. Dogfooding at portfolio scale.
+<Callout type="tip" title="The real play">
+Dogfooding at portfolio scale. Every product markets every other product.
+</Callout>
 
 ## AI-native means AI-native
 
@@ -49,9 +76,11 @@ ClutchCut doesn't help you edit video. It watches your existing content, writes 
 
 ## The solo founder question
 
-"Can one person really build 8 products?"
+<Highlight emoji="🤖">
+"Can one person really build 8 products?" No. But one person with a team of AI agents can build a lot more than people expect.
+</Highlight>
 
-No. But one person with a team of AI agents can build a lot more than people expect. I have agents handling code reviews, shipping features, monitoring deployments, and managing their own task boards. That's not hypothetical. That's my Tuesday.
+I have agents handling code reviews, shipping features, monitoring deployments, and managing their own task boards. That's not hypothetical. That's my Tuesday.
 
 The real constraint isn't building. It's deciding what to build next and in what order. Strategy, not labour.
 

@@ -1,5 +1,5 @@
 ---
-import { SOCIAL } from "../consts";
+import { AUTHOR, SOCIAL } from "../consts";
 ---
 
 <footer class="border-t border-[var(--color-border)] py-8 mt-auto">
@@ -7,7 +7,7 @@ import { SOCIAL } from "../consts";
     class="max-w-3xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4"
   >
     <p class="text-sm text-[var(--color-text-muted)]">
-      &copy; {new Date().getFullYear()} Roger Chappel
+      &copy; {new Date().getFullYear()} {AUTHOR.name}
     </p>
     <div class="flex items-center gap-1">
       <!-- X / Twitter -->

@@ -70,6 +70,9 @@ This site is deployed on Vercel. Connect your GitHub repo and it will automatica
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This repository uses dual licensing:
 
-Blog post content is © Roger Chappel. Feel free to reference or link, but please don't republish posts in full without permission.
+- **Documentation & Blog Posts**: Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+- **Code & Code Snippets**: Licensed under the [MIT License](LICENSE)
+
+See the [LICENSE](LICENSE) file for full details.

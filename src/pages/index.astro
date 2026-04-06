@@ -3,7 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import PostCard from "../components/PostCard.astro";
 import { getCollection } from "astro:content";
 import { getReadingTime } from "../utils/readingTime";
-import { SOCIAL } from "../consts";
+import { AUTHOR, SOCIAL, NEWSLETTER_ID } from "../consts";
 
 const posts = (await getCollection("blog", ({ data }) => !data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
@@ -16,13 +16,13 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft))
     <div class="flex flex-col sm:flex-row items-start gap-8">
       <!-- Profile photo -->
       <img
-        src="/roger.jpg"
-        alt="Roger Chappel"
+        src={AUTHOR.photo}
+        alt={AUTHOR.name}
         class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover ring-2 ring-[var(--color-border)] shrink-0"
       />
       <div>
         <h1 class="text-3xl sm:text-4xl font-bold tracking-tight">
-          Hey, I'm <a href={SOCIAL.twitter} target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] transition-colors">@roger_creator</a> 👋
+          Hey, I'm <a href={SOCIAL.twitter} target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] transition-colors">{AUTHOR.handle}</a> 👋
         </h1>
         <p class="mt-4 text-xl text-[var(--color-text-secondary)] leading-relaxed">
           Technical founder based in Australia. I build AI-powered products at{" "}
@@ -81,7 +81,7 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft))
         I write about building AI products, shipping SaaS, and the founder journey. No spam, unsubscribe anytime.
       </p>
       <form
-        action="https://buttondown.com/api/emails/embed-subscribe/roger_creator"
+        action={`https://buttondown.com/api/emails/embed-subscribe/${NEWSLETTER_ID}`}
         method="post"
         target="popupwindow"
         class="mt-4 flex flex-col sm:flex-row gap-3"

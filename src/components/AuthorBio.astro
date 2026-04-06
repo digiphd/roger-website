@@ -1,20 +1,20 @@
 ---
-import { SOCIAL, SITE_URL } from "../consts";
+import { AUTHOR, SOCIAL } from "../consts";
 ---
 
 <div class="mt-12 flex items-start gap-4 p-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)]">
   <img
-    src="/roger.jpg"
-    alt="Roger Chappel"
+    src={AUTHOR.photo}
+    alt={AUTHOR.name}
     class="w-16 h-16 rounded-full object-cover flex-shrink-0"
     loading="lazy"
   />
   <div>
     <p class="font-semibold text-[var(--color-text-primary)]">
-      <a href="/about" class="hover:text-[var(--color-accent)] transition-colors">Roger Chappel</a>
+      <a href="/about" class="hover:text-[var(--color-accent)] transition-colors">{AUTHOR.name}</a>
     </p>
     <p class="text-sm text-[var(--color-text-secondary)] mt-1">
-      CTO and founder building AI-native SaaS at <a href="https://axislabs.dev" class="text-[var(--color-accent)] hover:text-[var(--color-accent-light)] transition-colors">Axislabs.dev</a>. Writing about shipping products, working with AI agents, and the solo founder grind.
+      {AUTHOR.bio}
     </p>
     <div class="flex items-center gap-3 mt-3">
       <a href={SOCIAL.twitter} target="_blank" rel="noopener noreferrer" class="text-[var(--color-text-muted)] hover:text-[var(--color-accent)] transition-colors" aria-label="X/Twitter">

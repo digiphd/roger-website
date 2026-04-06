@@ -2,7 +2,7 @@
 import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
-import { SITE_TITLE, SITE_DESCRIPTION, SITE_URL } from "../consts";
+import { SITE_TITLE, SITE_DESCRIPTION, SITE_URL, AUTHOR, SOCIAL_PROFILES } from "../consts";
 
 interface Props {
   title?: string;
@@ -16,7 +16,7 @@ interface Props {
 const {
   title,
   description = SITE_DESCRIPTION,
-  ogImage = "/roger.jpg",
+  ogImage = AUTHOR.photo,
   article = false,
   pubDate,
   jsonLd,
@@ -48,7 +48,7 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL);
 
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
-    <meta name="author" content="Roger Chappel" />
+    <meta name="author" content={AUTHOR.name} />
     <link rel="canonical" href={canonicalUrl} />
 
     <!-- Open Graph -->
@@ -63,8 +63,8 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL);
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@roger_creator" />
-    <meta name="twitter:creator" content="@roger_creator" />
+    <meta name="twitter:site" content={AUTHOR.handle} />
+    <meta name="twitter:creator" content={AUTHOR.handle} />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={new URL(ogImage, SITE_URL)} />
@@ -79,40 +79,28 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL);
       ...(article ? {
         "author": {
           "@type": "Person",
-          "name": "Roger Chappel",
+          "name": AUTHOR.name,
           "url": SITE_URL,
-          "jobTitle": "CTO & Founder",
-          "image": new URL("/roger.jpg", SITE_URL).toString(),
+          "jobTitle": AUTHOR.jobTitle,
+          "image": new URL(AUTHOR.photo, SITE_URL).toString(),
           "worksFor": {
             "@type": "Organization",
-            "name": "Axislabs",
-            "url": "https://axislabs.dev",
+            ...AUTHOR.organization,
           },
-          "sameAs": [
-            "https://x.com/roger_creator",
-            "https://github.com/digiphd",
-            "https://www.linkedin.com/in/rogerchappel/",
-            "https://www.tiktok.com/@roger.chappel",
-          ],
+          "sameAs": [...SOCIAL_PROFILES],
         },
         ...(pubDate ? { "datePublished": pubDate.toISOString() } : {}),
       } : {
         "author": {
           "@type": "Person",
-          "name": "Roger Chappel",
+          "name": AUTHOR.name,
           "url": SITE_URL,
-          "jobTitle": "CTO & Founder",
+          "jobTitle": AUTHOR.jobTitle,
           "worksFor": {
             "@type": "Organization",
-            "name": "Axislabs",
-            "url": "https://axislabs.dev",
+            ...AUTHOR.organization,
           },
-          "sameAs": [
-            "https://x.com/roger_creator",
-            "https://github.com/digiphd",
-            "https://www.linkedin.com/in/rogerchappel/",
-            "https://www.tiktok.com/@roger.chappel",
-          ],
+          "sameAs": [...SOCIAL_PROFILES],
         },
       }),
     })} />

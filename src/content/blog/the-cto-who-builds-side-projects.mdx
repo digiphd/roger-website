@@ -1,0 +1,125 @@
+---
+title: "The CTO Who Builds Side Projects at 6AM"
+description: "Why I keep my day job as CTO while building a portfolio of AI products before sunrise. The case for hybrid entrepreneurship."
+pubDate: 2026-04-07
+tags: ["building", "startups", "personal"]
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+My alarm goes off at 5:45. By 6, I'm at my desk dispatching AI agents, reviewing pull requests from last night's runs, and making decisions about which product gets attention today. By 9, I switch context entirely and become a CTO at a startup. This has been my life for five years.
+
+I run [Axislabs.dev](https://axislabs.dev) on the side: a portfolio of AI-native SaaS products. Eight of them, in various stages from nearly launch-ready to barely past the idea phase. I have zero human employees for this work. My team is AI agents with names, specializations, and an org chart.
+
+This sounds like hustle culture. It's not. It's a very specific bet on a very specific way of building.
+
+<Highlight emoji="⏰">
+The best side projects don't need you to quit your job. They need you to be honest about what you can build in the margins.
+</Highlight>
+
+## You're in good company
+
+The mythology of startups says you need to go all-in. Burn the boats. Quit your job. Eat ramen.
+
+The data says something different.
+
+Gmail started as a side project by Paul Buchheit at Google. Slack began as an internal tool for a gaming company. Craigslist was Craig Newmark's side hobby while working at Charles Schwab. Twitter emerged from a hackday at a podcasting startup called Odeo.
+
+<StatBlock stats={[
+  { label: "Gmail", value: "Side project" },
+  { label: "Slack", value: "Internal tool" },
+  { label: "Craigslist", value: "Hobby project" },
+  { label: "Twitter", value: "Hackday idea" },
+]} />
+
+These aren't exceptions. Indie Hackers data consistently shows that a significant portion of successful indie products started while the founder had a full-time job. Buffer's early story is the same: Joel Gascoigne built and validated it nights and weekends while employed.
+
+A [University of Wisconsin study](https://pubsonline.informs.org/doi/10.1287/mnsc.2013.1882) found that founders who kept their day jobs were 33% less likely to fail than those who quit to go full-time. The researchers call this "hybrid entrepreneurship," and it turns out the safety net doesn't make you soft. It makes you smarter.
+
+## Why constraints make you faster
+
+When you have 2-3 hours a day, you can't afford to build the wrong thing. You can't gold-plate features nobody asked for. You can't spend a week on a landing page.
+
+<CompareTable
+  left={{ title: "Unlimited time", items: ["Build first, validate later", "Perfectionist rabbit holes", "Emotional attachment to code", "Burn rate pressure"] }}
+  right={{ title: "2 hours before work", items: ["Validate first, build only what's proven", "Ship the minimum that works", "Delete what doesn't perform", "Zero burn rate, zero panic"] }}
+/>
+
+Limited time is a forcing function. It makes you ruthless about prioritization. Every morning I ask the same question: what is the single highest-leverage thing I can do in the next two hours? Most days, the answer is unglamorous. Fix a bug. Write a landing page. Set up analytics. Send a cold email.
+
+<Callout type="tip" title="The two-hour test">
+If you can't make meaningful progress on your side project in a focused two-hour block, your project might be scoped too large, or you might be spending time on things that don't matter yet.
+</Callout>
+
+## What a morning actually looks like
+
+People ask me what my routine is. Here's the honest version:
+
+<Step number={1} title="Review overnight agent output">
+My AI agents run tasks overnight: drafting copy, writing tests, researching competitors, generating reports. First thing I do is review what they produced. About 60% is usable. The rest gets flagged for revision or scrapped.
+</Step>
+
+<Step number={2} title="Make one strategic decision">
+Which product gets my attention today? What's the next milestone? I pick one thing and commit to it. Context-switching across eight products is a guaranteed way to make zero progress on all of them.
+</Step>
+
+<Step number={3} title="Dispatch and build">
+I dispatch agents on the tasks I've decided on, then do the work that requires human judgment: talking to users, making product calls, writing the parts that need a real voice. The agents handle the volume. I handle the direction.
+</Step>
+
+<Step number={4} title="Ship or schedule">
+Before I close the laptop, something is either shipped or queued. A deploy, a scheduled post, a test suite running. No open loops.
+</Step>
+
+## The part nobody talks about
+
+Here's the thing I've been wrestling with: I've been building for five years with barely any sales. Eight products. Thousands of hours. And the honest truth is that I spent most of that time building, not selling.
+
+<Highlight emoji="🪞">
+Building is comfortable. Distribution is where the real work starts.
+</Highlight>
+
+I recently had a wake-up call. The products are good. The tech works. But good products don't sell themselves, and nobody owes you their attention just because you shipped something. I spent years perfecting code when I should have been perfecting my go-to-market.
+
+This is the trap that technical founders fall into constantly. We'd rather refactor a codebase than write a cold outreach email. We'd rather add a feature than run an ad experiment. Building feels productive. Selling feels vulnerable.
+
+<Callout type="warning" title="If you're in year 2+ with no revenue">
+Stop building new features. Seriously. Go talk to ten potential customers this week. If you can't find ten people who want what you've built, the problem isn't the product. It's the audience, the positioning, or the distribution channel.
+</Callout>
+
+## The AI agent advantage
+
+The reason this is even possible in 2026 is AI agents. Five years ago, a solo founder with eight products would be a joke. Today it's a stretch, but it's not absurd.
+
+I treat my agents like a team. They have specializations: one handles front-end work, another does research, another writes tests. I have an org chart. I have a task board. I review their output like a manager reviewing a junior developer's PRs.
+
+This doesn't replace the need for human judgment. It replaces the need for human hours on tasks that are repetitive, well-defined, or research-heavy. The strategic decisions, the product taste, the user conversations: those are still mine.
+
+<StatBlock stats={[
+  { label: "Products", value: "8" },
+  { label: "Human employees", value: "0" },
+  { label: "AI agents", value: "10+" },
+  { label: "Morning hours", value: "~2-3" },
+]} />
+
+## The case for staying
+
+I could quit my CTO role. I've thought about it. But the research on hybrid entrepreneurship keeps me grounded. The day job gives me a salary, health insurance, a team to learn from, and problems at a scale my side projects haven't reached yet.
+
+More importantly, it keeps me honest. When you're burning savings, you make desperate decisions. You launch too early or too late. You chase revenue instead of building something people actually want. The day job removes that pressure and lets me play the long game.
+
+The trade-off is speed. I'm slower than a full-time founder. But I'm also still here after five years, still building, still learning, still solvent. A lot of the people who quit their jobs to "go all in" burned out, ran out of money, or pivoted to consulting within 18 months.
+
+<Callout type="info" title="Hybrid entrepreneurship by the numbers">
+Researchers at the University of Wisconsin found that hybrid entrepreneurs (those who keep day jobs) have significantly lower failure rates. The stability doesn't kill ambition. It funds patience.
+</Callout>
+
+## What I'd tell myself five years ago
+
+Stop romanticizing the build. Start romanticizing the customer. Your code doesn't matter if nobody uses it. Your architecture doesn't matter if nobody pays for it. Ship faster, talk to users sooner, and treat distribution as the product.
+
+And keep waking up at 6. The quiet hours are worth it.

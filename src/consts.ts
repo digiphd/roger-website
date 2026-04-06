@@ -6,5 +6,8 @@ export const SITE_URL = "https://rogerchappel.com";
 export const SOCIAL = {
   twitter: "https://x.com/roger_creator",
   github: "https://github.com/digiphd",
+  linkedin: "https://www.linkedin.com/in/rogerchappel/",
+  tiktok: "https://www.tiktok.com/@roger.chappel",
+  email: "mailto:roger@rogerchappel.com",
   axislabs: "https://axislabs.dev",
 } as const;

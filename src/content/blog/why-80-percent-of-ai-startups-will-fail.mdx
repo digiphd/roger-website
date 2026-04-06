@@ -1,0 +1,130 @@
+---
+title: "Why 80% of AI Startups Will Fail"
+description: "AI makes code free. That changes what wins. Here's what I'm betting on instead."
+pubDate: 2026-04-07
+tags: ["ai", "startups", "strategy"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+Everyone is building an AI startup right now. Y Combinator's latest batches tell the story: AI companies went from roughly 20% of applications to over 60% in just two years. Every founder with access to an API key thinks they're sitting on the next billion-dollar company.
+
+Most of them are wrong.
+
+<Highlight emoji="📉">
+When the cost of building software drops to near zero, code stops being a moat. And most AI startups are selling code.
+</Highlight>
+
+This isn't pessimism. It's pattern recognition. I've seen this before, and history has a clear playbook for what happens next.
+
+## The numbers don't lie
+
+Let's start with what we actually know.
+
+<StatBlock stats={[
+  { label: "AI projects abandoned by 2025", value: "~30%" },
+  { label: "Companies capturing real AI value", value: "25-30%" },
+  { label: "YC apps that are AI startups", value: "60%+" },
+  { label: "Dot-com survivors after 2001", value: "~10%" },
+]} />
+
+Gartner projected that 30% of AI projects would be abandoned by 2025. That prediction landed almost exactly right. McKinsey's 2024 Global Survey found that only 25-30% of companies reported capturing significant value from their AI initiatives. The rest? Pilots that never shipped. Features that didn't move metrics. Products that nobody switched to.
+
+Stanford's HAI AI Index makes the funding picture even clearer. VC dollars are heavily concentrated in foundation models (the Anthropics and OpenAIs of the world). That leaves the application layer, where most startups are building, massively overcrowded and underfunded relative to the competition.
+
+<Callout type="warning" title="The crowding problem">
+PitchBook data shows AI startup failure rates are trending higher than traditional SaaS. More entrants, more noise, thinner differentiation. When everyone can build the same wrapper in a weekend, survival depends on something other than the product itself.
+</Callout>
+
+## We've seen this movie before
+
+The dot-com bubble is the obvious parallel, and it's obvious because it's accurate.
+
+In 1999, anyone with a domain name and a business plan could raise money. By 2002, over 90% of those companies were gone. But the ones that survived (Amazon, Google, eBay) didn't win because they had the best websites. They won because they built distribution, locked in data advantages, and embedded themselves into workflows that were painful to leave.
+
+The same pattern is playing out now. The AI application layer is the new "we'll figure out the business model later" territory. Thousands of startups are building thin wrappers around the same foundation models, competing on features that can be replicated in days.
+
+<CompareTable
+  left={{ title: "What kills AI startups", items: [
+    "Building on someone else's moat (API wrappers)",
+    "Competing on features that LLMs will absorb",
+    "No distribution strategy beyond Product Hunt",
+    "Burning cash on a problem users solve for free",
+    "Assuming the model stays frozen"
+  ] }}
+  right={{ title: "What lets them survive", items: [
+    "Owning proprietary data that improves with use",
+    "Deep workflow integration (hard to rip out)",
+    "Built-in distribution through network effects",
+    "Speed of execution that compounds over time",
+    "Adapting faster than the platform shifts"
+  ] }}
+/>
+
+## Code is free. So what actually matters?
+
+If I can build a functional SaaS product in a weekend with AI agents (and I can, and I have), then the product itself is not the value. The value is everything around it.
+
+Here's what I think the real moats are now:
+
+<Step number={1} title="Distribution">
+Can you get the product in front of the right people without spending your way there? SEO, community, content, partnerships, embedded workflows. If your go-to-market strategy is "build it and they will come," you're already dead.
+</Step>
+
+<Step number={2} title="Data flywheels">
+Does the product get better as more people use it? If usage generates data that improves the product, which attracts more users, which generates more data, you have something defensible. Without this loop, you're running on a treadmill.
+</Step>
+
+<Step number={3} title="Workflow integration">
+How deep are you in the user's daily process? The harder it is to rip your product out, the longer you survive. This is why Salesforce is still Salesforce despite being widely disliked. Switching costs are real moats.
+</Step>
+
+<Step number={4} title="Speed of execution">
+When the barrier to entry is zero, the advantage goes to whoever ships fastest and iterates hardest. Not one launch, but continuous compounding. Systems beat sprints.
+</Step>
+
+## What I'm doing about it
+
+I'm not building one AI startup. I'm building a portfolio of AI-native SaaS products under [Axislabs](https://axislabs.dev), and the approach is deliberately different from what I see most founders doing.
+
+<Highlight emoji="⚡">
+I treat AI agents as a force multiplier. A team of specialized agents building alongside me, not replacing me. The human in the loop provides taste, strategy, and the ability to spot what the market actually needs.
+</Highlight>
+
+Here's my operating thesis:
+
+**Software is getting cheaper.** That's a fact, not a prediction. The cost of building will keep dropping. So I'm not betting on any single product being a winner. I'm betting on the system that produces products: the ability to ship fast, validate fast, and kill fast.
+
+**Inflation will erode purchasing power.** I believe we'll see significant erosion by 2030. That changes what software people will pay for. It needs to save real money or make real money. "Nice to have" tools will get cut first.
+
+**Automation beats ambition.** A solo founder with the right systems can outpace a team of ten operating manually. The game is building those systems: automated testing, automated deployment, automated feedback loops. The compounding returns are enormous.
+
+<Callout type="info" title="The portfolio approach">
+Instead of going all-in on one idea and hoping it works, I launch multiple products, each targeting a specific workflow with real data advantages. The ones that get traction get more investment. The ones that don't get killed quickly. The portfolio absorbs the risk that any single bet can't.
+</Callout>
+
+## The 20% that will survive
+
+Not every AI startup will fail. The survivors will share a few traits:
+
+1. **They own their data.** Not just using GPT. They have proprietary datasets that make their product better than anything built on public APIs alone.
+2. **They're embedded in workflows.** Not a tab you open once a week. A tool that lives inside the process you already follow.
+3. **They have distribution before they have polish.** They found their users before they finished their product.
+4. **They move faster than the platform shifts.** When OpenAI ships a new capability that obsoletes a feature, they've already adapted.
+
+<Callout type="tip" title="The test I use">
+Before building anything, I ask: "If someone cloned this product tomorrow using the same AI models, what would stop users from switching?" If the answer is nothing, the idea isn't worth pursuing.
+</Callout>
+
+## The bottom line
+
+The AI gold rush is real, but most people are selling pickaxes that anyone can forge. The winners won't be the ones who build the best AI product. They'll be the ones who build the best systems around AI products: distribution, data, integration, and speed.
+
+I'd rather be the one building the systems than the one hoping a single product catches lightning.
+
+If you're thinking about this the same way, I'm sharing the playbook as I go. Follow along on [X](https://x.com/roger_creator) or check out what we're building at [Axislabs](https://axislabs.dev).

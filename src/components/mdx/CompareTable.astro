@@ -1,0 +1,39 @@
+---
+/**
+ * A simple two-column comparison block.
+ * Good for before/after, pros/cons, do/don't comparisons.
+ */
+interface Props {
+  left: { title: string; items: string[] };
+  right: { title: string; items: string[] };
+  leftColor?: string;
+  rightColor?: string;
+}
+
+const { left, right, leftColor = "text-red-400", rightColor = "text-emerald-400" } = Astro.props;
+---
+
+<div class="my-8 grid grid-cols-1 sm:grid-cols-2 gap-4 not-prose">
+  <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-5">
+    <p class={`font-semibold text-lg mb-3 ${leftColor}`}>{left.title}</p>
+    <ul class="space-y-2">
+      {left.items.map((item) => (
+        <li class="text-[var(--color-text-secondary)] text-sm flex items-start gap-2">
+          <span class={leftColor}>✗</span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+  <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-5">
+    <p class={`font-semibold text-lg mb-3 ${rightColor}`}>{right.title}</p>
+    <ul class="space-y-2">
+      {right.items.map((item) => (
+        <li class="text-[var(--color-text-secondary)] text-sm flex items-start gap-2">
+          <span class={rightColor}>✓</span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>

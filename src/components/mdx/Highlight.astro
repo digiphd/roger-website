@@ -1,0 +1,18 @@
+---
+/**
+ * A large pull-quote or key takeaway block.
+ * Use to break up long text sections with a standout statement.
+ */
+interface Props {
+  emoji?: string;
+}
+
+const { emoji } = Astro.props;
+---
+
+<blockquote class="my-10 border-l-4 border-[var(--color-accent)] pl-6 py-2 not-prose">
+  <p class="text-xl sm:text-2xl font-medium text-[var(--color-text-primary)] leading-snug italic">
+    {emoji && <span class="not-italic mr-2">{emoji}</span>}
+    <slot />
+  </p>
+</blockquote>

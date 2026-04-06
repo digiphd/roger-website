@@ -5,6 +5,12 @@ pubDate: 2026-04-01
 tags: ["ai", "agents", "building"]
 ---
 
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
 We're in the early innings of AI agents actually being useful. Not the demo-ware "watch me book a flight" kind — I mean agents that do real work, reliably, in production.
 
 At [Axislabs](https://axislabs.dev), I've been building products that lean heavily on AI agents. Here's what I've learned.
@@ -13,29 +19,46 @@ At [Axislabs](https://axislabs.dev), I've been building products that lean heavi
 
 The most common mistake I see is people starting with "let's use GPT-4" or "let's use Claude" and then figuring out the product. That's backwards.
 
+<Highlight emoji="🔄">
+The model is a component. The loop is the product.
+</Highlight>
+
 Start with the workflow loop:
 
-1. What input does the agent receive?
-2. What decisions does it need to make?
-3. What actions does it take?
-4. How do you verify the output?
+<Step number={1} title="Input">
+What does the agent receive? A user request, a webhook, a scheduled trigger?
+</Step>
 
-The model is a component. The loop is the product.
+<Step number={2} title="Decision">
+What does it need to figure out? Which tool to use, what data to fetch, how to structure the response?
+</Step>
+
+<Step number={3} title="Action">
+What does it do? Call an API, write to a database, generate content, send a notification?
+</Step>
+
+<Step number={4} title="Verification">
+How do you know it worked? Validate the output, check against expected results, log everything.
+</Step>
 
 ## Agents need guardrails, not freedom
 
 The fantasy of a fully autonomous agent that "figures it out" is appealing but wrong for production. Every successful agent system I've built has tight guardrails:
 
-- **Structured outputs** — force the model to return JSON that matches your schema
-- **Validation at every step** — check the agent's work before executing actions
-- **Human-in-the-loop escape hatches** — when confidence is low, ask a human
-- **Cost controls** — set token budgets and circuit breakers
+<CompareTable
+  left={{ title: "Without guardrails", items: ["Unpredictable outputs", "Token costs spiral", "Silent failures", "Users lose trust"] }}
+  right={{ title: "With guardrails", items: ["Structured, validated output", "Budget controls and circuit breakers", "Graceful fallback to humans", "Consistent, reliable behaviour"] }}
+/>
 
 The goal isn't to limit the AI. It's to make it predictable enough to trust.
 
+<Callout type="tip" title="Production rule of thumb">
+If your agent can't explain why it chose a particular action, it shouldn't be taking that action autonomously.
+</Callout>
+
 ## Tool use is where the magic happens
 
-The real power of agents isn't in generating text — it's in using tools. A well-designed tool interface lets an agent:
+The real power of agents isn't in generating text — it's in using tools. A well-designed tool interface lets an agent interact with your systems:
 
 ```typescript
 const tools = [
@@ -64,6 +87,12 @@ Keep tools simple, well-documented, and composable. The agent will figure out ho
 
 You wouldn't ship code without tests. Don't ship agents without evals.
 
+<StatBlock stats={[
+  { label: "Accuracy target", value: ">95%" },
+  { label: "P95 latency", value: "<3s" },
+  { label: "Cost per task", value: "<$0.05" },
+]} />
+
 I run evaluation suites that test:
 
 - **Accuracy** — does the agent produce the right output for known inputs?
@@ -71,11 +100,17 @@ I run evaluation suites that test:
 - **Cost** — how many tokens does it use on average?
 - **Latency** — is it fast enough for the user experience?
 
-Evals aren't a one-time thing. As your prompts and tools evolve, your evals need to evolve too.
+<Callout type="info" title="Evals drift">
+Evals aren't a one-time thing. As your prompts and tools evolve, your evals need to evolve too. Schedule monthly eval reviews the same way you'd review test coverage.
+</Callout>
 
 ## Where this is heading
 
-We're about 18 months away from agents being a boring, standard part of every SaaS product. The companies building that muscle memory now — learning how to design agent loops, write good evals, and ship reliably — will have a massive advantage.
+<Highlight emoji="🚀">
+We're about 18 months away from agents being a boring, standard part of every SaaS product.
+</Highlight>
+
+The companies building that muscle memory now — learning how to design agent loops, write good evals, and ship reliably — will have a massive advantage.
 
 The best time to start building with agents was six months ago. The second best time is now.
 

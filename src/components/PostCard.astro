@@ -14,12 +14,20 @@ const formattedDate = pubDate.toLocaleDateString("en-AU", {
   month: "short",
   year: "numeric",
 });
+
+const ogImage = `/og/${slug}.png`;
 ---
 
 <a
   href={`/blog/${slug}`}
   class="group block rounded-lg px-4 py-4 -mx-4 hover:bg-[var(--color-surface-raised)] transition-colors"
 >
+  <img
+    src={ogImage}
+    alt={title}
+    class="w-full rounded-md border border-[var(--color-border)] mb-3"
+    loading="lazy"
+  />
   <div class="flex items-baseline justify-between gap-4">
     <h3 class="text-lg font-medium text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors">
       {title}

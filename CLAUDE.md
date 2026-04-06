@@ -128,6 +128,30 @@ A good post alternates between text and visual elements:
 - Description: compelling, under 160 chars
 - Tags: 2-4 relevant tags from existing set or create new ones
 - Use H2s for main sections, H3s sparingly
+- Target long-tail keywords a new site can rank for (KD% < 50), not head terms
+- Back up all claims with legitimate research and link to sources
+- Include internal links to other blog posts where relevant
+
+### Author & Structured Data
+
+The site automatically generates rich JSON-LD `BlogPosting` schema for every post, including:
+
+- Author info (name, photo, job title, social links, organization)
+- Headline, description, image, date published
+- Word count, article section (from first tag), keywords
+
+An `AuthorBio` component renders at the bottom of every blog post (between article content and the subscribe/share footer). This is critical for Google E-E-A-T signals. **Do not remove it.**
+
+The author bio pulls from `src/consts.ts` for social links. If you fork this repo, update those constants.
+
+### Research & Citations
+
+Every blog post should include real, verifiable data to support claims:
+
+- Link to primary sources (studies, surveys, official reports)
+- Use specific numbers, not vague claims ("42% of startups" not "many startups")
+- Acceptable sources: academic papers, industry reports (Gartner, McKinsey, CB Insights), official company blogs, government data, peer-reviewed research
+- Avoid: random blog posts as sole sources, outdated stats (>3 years old), unverifiable claims
 
 ## OG Image Generation
 
@@ -161,14 +185,16 @@ pnpm og:preview # Remotion Studio for OG template
 ```
 src/
   content/blog/       # MDX blog posts
-  components/mdx/     # Reusable MDX components
-  components/         # Astro components (Header, Footer, PostCard, etc.)
-  layouts/            # BaseLayout
+  components/mdx/     # Reusable MDX components (Callout, Highlight, Step, etc.)
+  components/         # Astro components (Header, Footer, PostCard, AuthorBio, etc.)
+  layouts/            # BaseLayout (handles meta tags, JSON-LD, OG, theme)
   pages/              # Routes (index, blog, about)
+  pages/blog/[id].astro  # Blog post template (renders MDX + AuthorBio + footer)
   styles/             # Global CSS with theme variables
+  consts.ts           # Site title, description, URL, social links
 remotion/             # OG image compositions
 scripts/              # Build scripts (OG generator)
-public/og/            # Generated OG images
+public/og/            # Generated OG images (committed to repo)
 ```
 
 ## Forking This Repo

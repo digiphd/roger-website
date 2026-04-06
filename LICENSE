@@ -1,21 +1,28 @@
-This repository uses dual licensing:
+# License
 
-## Documentation & Blog Posts
+This repository contains two types of content with different licenses:
 
-All blog posts, written content, and documentation in this repository are
-licensed under the Creative Commons Attribution 4.0 International License.
+## Documentation and Blog Posts
 
-You are free to share and adapt the content, provided you give appropriate
-credit, provide a link to the license, and indicate if changes were made.
+All documentation, blog posts, and written content in this repository (primarily in `/src/content/blog/` and similar directories) are licensed under the Creative Commons Attribution 4.0 International License (CC BY 4.0).
 
-Full license text: https://creativecommons.org/licenses/by/4.0/legalcode
+To view a copy of this license, visit <http://creativecommons.org/licenses/by/4.0/> or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 
-## Code & Code Snippets
+### Summary of CC BY 4.0
 
-All code, configuration files, and code snippets in this repository are
-licensed under the MIT License:
+You are free to:
+- **Share** — copy and redistribute the material in any medium or format
+- **Adapt** — remix, transform, and build upon the material for any purpose, even commercially
 
-MIT License
+Under the following terms:
+- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made
+- **No additional restrictions** — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits
+
+## Code and Code Snippets
+
+All code snippets, scripts, and software code in this repository are licensed under the MIT License.
+
+### MIT License
 
 Copyright (c) 2026 Roger Chappel
 
@@ -36,3 +43,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Clarification
+
+- The website structure, configuration, and build scripts are considered code (MIT License)
+- Blog post content and documentation text are considered documentation (CC BY 4.0)
+- Code examples within blog posts are dual-licensed and may be used under either license

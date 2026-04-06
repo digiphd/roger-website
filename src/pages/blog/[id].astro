@@ -1,8 +1,10 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import AuthorBio from "../../components/AuthorBio.astro";
 import BlogPostFooter from "../../components/BlogPostFooter.astro";
 import { getCollection, render } from "astro:content";
 import { getReadingTime } from "../../utils/readingTime";
+import { SITE_URL, SOCIAL } from "../../consts";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog", ({ data }) => !data.draft);
@@ -25,14 +27,57 @@ const { post, prevPost, nextPost } = Astro.props;
 const { Content } = await render(post);
 
 const readingTime = getReadingTime(post.body ?? "");
+const wordCount = (post.body ?? "").split(/\s+/).filter(Boolean).length;
 const formattedDate = post.data.pubDate.toLocaleDateString("en-AU", {
   year: "numeric",
   month: "long",
   day: "numeric",
 });
+
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": post.data.title,
+  "description": post.data.description,
+  "url": `${SITE_URL}/blog/${post.id}`,
+  "image": `${SITE_URL}/og/${post.id}.png`,
+  "datePublished": post.data.pubDate.toISOString(),
+  "wordCount": wordCount,
+  "articleSection": post.data.tags?.[0] ?? "Technology",
+  "keywords": post.data.tags?.join(", "),
+  "author": {
+    "@type": "Person",
+    "name": "Roger Chappel",
+    "url": `${SITE_URL}/about`,
+    "jobTitle": "CTO & Founder",
+    "description": "Technical founder building AI-native SaaS at Axislabs.dev",
+    "image": `${SITE_URL}/roger.jpg`,
+    "worksFor": {
+      "@type": "Organization",
+      "name": "Axislabs",
+      "url": "https://axislabs.dev",
+    },
+    "sameAs": [
+      SOCIAL.twitter,
+      SOCIAL.github,
+      SOCIAL.linkedin,
+      SOCIAL.tiktok,
+    ],
+  },
+  "publisher": {
+    "@type": "Person",
+    "name": "Roger Chappel",
+    "url": SITE_URL,
+    "image": `${SITE_URL}/roger.jpg`,
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": `${SITE_URL}/blog/${post.id}`,
+  },
+};
 ---
 
-<BaseLayout title={post.data.title} description={post.data.description} ogImage={`/og/${post.id}.png`} article pubDate={post.data.pubDate}>
+<BaseLayout title={post.data.title} description={post.data.description} ogImage={`/og/${post.id}.png`} article pubDate={post.data.pubDate} jsonLd={articleSchema}>
   <article class="py-8">
     <header class="mb-10">
       <div class="flex items-center gap-3 text-sm text-[var(--color-text-muted)] mb-4">
@@ -57,6 +102,8 @@ const formattedDate = post.data.pubDate.toLocaleDateString("en-AU", {
       <Content />
     </div>
   </article>
+
+  <AuthorBio />
 
   <BlogPostFooter
     title={post.data.title}

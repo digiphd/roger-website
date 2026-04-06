@@ -1,6 +1,6 @@
 ---
-title: "5 Products, Zero Audience: My Distribution Problem"
-description: "I built 5 SaaS products before realizing I had no way to sell them. Here's what I'm doing about it."
+title: "I Built 5 Products at 6AM and Nobody Cared"
+description: "Five years of building SaaS before sunrise. Five products ready to sell. Zero audience. Here's what went wrong and what I'm doing about it."
 pubDate: 2026-04-07
 tags: ["startups", "building", "marketing"]
 ---
@@ -11,17 +11,20 @@ import Step from "../../components/mdx/Step.astro";
 import StatBlock from "../../components/mdx/StatBlock.astro";
 import CompareTable from "../../components/mdx/CompareTable.astro";
 
-I have a confession. I've spent the last several months building SaaS products. Five of them are ready to sell. And almost nobody knows they exist.
+My alarm goes off at 5:45. By 6, I'm at my desk dispatching AI agents, reviewing pull requests from overnight runs, and deciding which product gets attention today. By 9, I switch context to my day job as CTO at a startup.
+
+I've done this for five years. Built eight products under [Axislabs.dev](https://axislabs.dev). Five are ready to sell. And almost nobody knows they exist.
 
 <StatBlock stats={[
   { label: "Products built", value: "5+" },
+  { label: "Years building", value: "5" },
   { label: "TikTok followers", value: "~5K" },
   { label: "X/Twitter reach", value: "~0" },
 ]} />
 
-PostDropr is live. Soply just landed its first paying customer from organic Google traffic (which felt incredible and also slightly accidental). The products work. The stack is solid. The problem isn't building. The problem is that I have no audience to sell to.
+PostDropr is live. Soply just landed its first paying customer from organic Google traffic (which felt incredible and also slightly accidental). The products work. The stack is solid. The problem isn't building. The problem is that I've been shouting into an empty room.
 
-## I'm addicted to building
+## Building is my drug of choice
 
 This is embarrassing to admit, but it's true. Building is my comfort zone. There's a dopamine hit that comes from shipping a feature, watching a deployment go green, seeing a product come together. It feels productive. It *is* productive, technically.
 
@@ -31,102 +34,109 @@ But it's also a trap.
 Building without distribution is just expensive journaling. You're writing code that nobody will read.
 </Highlight>
 
-Melissa Perri calls this "The Build Trap" in her book of the same name. Teams (and solo founders) get stuck in a cycle of shipping features because shipping feels like progress. But progress without customers isn't progress. It's motion.
+Melissa Perri calls this "The Build Trap" in her book of the same name. Teams and solo founders get stuck in a cycle of shipping features because shipping feels like progress. But progress without customers isn't progress. It's motion.
 
-I've been in the build trap for months. And I only realized it because I started sharing links on X and watching nothing happen. Zero clicks. Zero engagement. Not because the products are bad, but because I was shouting into an empty room.
+I've been in the build trap for years. And I only realized it because I started sharing links on X and watching nothing happen. Zero clicks. Zero engagement. Not because the products are bad, but because nobody was there to see them.
 
 ## The data backs this up
 
-I'm not the only one with this problem. It's actually the default failure mode for technical founders.
+I'm not the only one with this problem. It's the default failure mode for technical founders.
 
-<StatBlock stats={[
-  { label: "Startups failing from no market need", value: "42%" },
-  { label: "Top challenge for early-stage startups", value: "Distribution" },
-  { label: "Growth boost from building in public", value: "3-5x" },
-]} />
+CB Insights found that [42% of startups fail because of "no market need."](https://www.cbinsights.com/research/report/startup-failure-reasons-top/) But look closer at that stat. Most of those founders *did* build something people could use. They just never found the people. "No market need" often means "no distribution channel," not "no product."
 
-CB Insights found that 42% of startups fail because of "no market need." But look closer at that stat. Most of those founders *did* build something people could use. They just never found the people. "No market need" often means "no distribution channel," not "no product."
+First Round Capital's [annual survey](https://stateofstartups.firstround.com/) consistently ranks distribution as the number one challenge for early-stage startups. Not hiring, not fundraising, not technology. Distribution.
 
-First Round Capital's annual survey consistently ranks distribution as the number one challenge for early-stage startups. Not hiring, not fundraising, not technology. Distribution.
+And indie hackers who build in public, sharing their journey, their numbers, their failures, grow [3 to 5 times faster](https://www.indiehackers.com/post/building-in-public-data) than those who build in silence. I've been building in silence for five years.
 
-And indie hackers who build in public, sharing their journey, their numbers, their failures, grow 3 to 5 times faster than those who build in silence. I've been building in silence.
+## Why I didn't quit my day job (and why that matters)
 
-## The uncomfortable comparison
+The mythology of startups says you need to go all in. Burn the boats. Quit your job. Eat ramen.
 
-Here's what my time allocation has looked like versus what it probably should look like:
+The data says something different. A [University of Wisconsin study](https://pubsonline.informs.org/doi/10.1287/mnsc.2013.1882) found that founders who kept their day jobs were 33% less likely to fail than those who quit to go full-time. Researchers call this "hybrid entrepreneurship," and it turns out the safety net doesn't make you soft. It makes you smarter.
+
+I could quit my CTO role. I've thought about it. But the day job gives me a salary, problems at a scale my side projects haven't reached, and most importantly, it removes the desperation that leads to bad decisions. When you're burning savings, you launch too early, chase revenue instead of value, or pivot to consulting within 18 months.
+
+The trade-off is speed. I'm slower than a full-time founder. But I'm also still here after five years, still building, still solvent. A lot of the people who "went all in" didn't make it this far.
+
+<Callout type="info" title="Hybrid entrepreneurship by the numbers">
+Researchers found that hybrid entrepreneurs who keep day jobs have significantly lower failure rates. The stability doesn't kill ambition. It funds patience.
+</Callout>
+
+## The 6AM routine (honestly)
+
+People ask what my mornings look like. Here's the real version:
+
+<Step number={1} title="Review overnight agent output">
+My AI agents run tasks while I sleep: drafting copy, writing tests, researching competitors. About 60% is usable. The rest gets flagged or scrapped.
+</Step>
+
+<Step number={2} title="Make one strategic decision">
+Which product gets my attention today? I pick one thing and commit. Context-switching across eight products is a guaranteed way to make zero progress on all of them.
+</Step>
+
+<Step number={3} title="Dispatch and build">
+I dispatch agents on tasks, then do the work that requires human judgment: product decisions, user conversations, writing that needs a real voice. Agents handle the volume. I handle the direction.
+</Step>
+
+<Step number={4} title="Ship something before 9AM">
+Before I close the laptop, something is either shipped or queued. No open loops.
+</Step>
+
+This routine let me build five products. It did not help me sell them. That's the point.
+
+## Where I went wrong
 
 <CompareTable
   left={{ title: "What I've been doing", items: ["90% building features", "5% posting on X (to nobody)", "3% thinking about marketing", "2% actual distribution work"] }}
-  right={{ title: "What works", items: ["40% building", "30% content creation", "20% community engagement", "10% distribution experiments"] }}
+  right={{ title: "What actually works", items: ["40% building", "30% content creation", "20% community engagement", "10% distribution experiments"] }}
   leftColor="text-red-400"
   rightColor="text-emerald-400"
 />
 
-I'm not saying building doesn't matter. But the ratio has been completely wrong. I've been treating distribution as an afterthought when it should be roughly half the work.
+I'm not saying building doesn't matter. But the ratio has been completely wrong. I treated distribution as an afterthought when it should have been half the work.
 
-## The plan
-
-I'm not going to hire a marketer. I'm not going to run ads. I don't have the budget for either, and honestly, at this stage, those aren't the right moves anyway.
-
-The plan is simple: personal brand content. Every day. Starting now.
-
-<Step number={1} title="One video per day on TikTok">
-TikTok is my biggest platform at ~5,000 followers, and it's the best platform for organic reach right now. Average organic reach on TikTok is 15 to 20% of your followers. Compare that to Instagram (5 to 10%) or Facebook (2 to 5%). The algorithm rewards consistency and gives new content a real shot.
-</Step>
-
-<Step number={2} title="Repurpose everywhere">
-Same content, reformatted for X, Instagram, and Facebook. Not reposted. Repurposed. Different formats, different hooks, same core message. This turns one piece of content into four.
-</Step>
-
-<Step number={3} title="30 to 60 minutes daily, non-negotiable">
-This has to fit into a real schedule. I'm still building products. I'm still shipping features. But I'm carving out 30 to 60 minutes every morning for content before I write a single line of code.
-</Step>
-
-<Step number={4} title="Build in public">
-Share the real numbers. The revenue (or lack of it). The wins. The failures. People connect with honesty, not polish. This blog is part of that.
-</Step>
-
-## Why personal brand, not product marketing
-
-<Callout type="info" title="The funnel">
-Personal brand → trust → audience → product awareness → customers. You can't skip to the end.
-</Callout>
-
-Nobody cares about your product until they care about you. That sounds like influencer nonsense, but it's the reality of selling on the internet in 2026. People buy from people they trust. Trust comes from showing up consistently and proving you know what you're talking about.
-
-I can't market PostDropr to an audience of zero. But I can build an audience by talking about the things I know: shipping products, working with AI agents, bootstrapping on free tiers, making the same mistakes over and over and eventually learning from them.
-
-The audience comes first. The product promotion comes second.
-
-## Why TikTok as the primary channel
-
-<CompareTable
-  left={{ title: "TikTok", items: ["15-20% organic reach", "Algorithm favours new creators", "Short-form fits my schedule", "5K existing followers"] }}
-  right={{ title: "X/Twitter", items: ["Declining organic reach", "Requires existing network", "Thread culture takes time", "Near-zero followers"] }}
-  leftColor="text-emerald-400"
-  rightColor="text-amber-400"
-/>
-
-This isn't about abandoning X. It's about playing to my strengths. TikTok gives me the best shot at reaching people who don't already know me. Once I have something to repurpose, X becomes part of the distribution strategy too.
-
-## What I'm measuring
-
-<Callout type="tip" title="The only metric that matters early on">
-Consistency. Not views, not followers, not revenue from content. Just: did I post today? Everything else is a lagging indicator.
-</Callout>
-
-For the first 30 days, the only thing I'm tracking is whether I showed up. Did I make the video? Did I repurpose it? Did I spend the time?
-
-After 30 days, I'll look at the numbers and adjust. But right now, the biggest risk isn't a bad strategy. It's that I'll get pulled back into building mode because it's comfortable, and convince myself that one more feature is more important than one more video.
-
-It's not.
-
-## The honest truth
-
-I'm writing this post as much for accountability as for anyone reading it. I've known distribution was the bottleneck for weeks. I kept building anyway. Every time I thought about making content, I found a bug to fix or a feature to add instead.
+Every time I thought about making content, I found a bug to fix instead. Every time I considered writing a cold email, I added a feature. Building feels productive. Selling feels vulnerable. I chose comfort for five years.
 
 <Highlight emoji="🔑">
 The hardest part of distribution isn't the strategy. It's breaking the habit of hiding behind your code editor.
 </Highlight>
 
-Five products. Zero audience. That's the starting line, not the finish. Let's see where daily content gets me in 90 days.
+## The plan from here
+
+I'm not hiring a marketer. I'm not running ads. I don't have the budget, and at this stage those aren't the right moves anyway.
+
+The plan is brutally simple: personal brand content. Every day.
+
+<Step number={1} title="One video per day on TikTok">
+TikTok is my biggest platform at ~5,000 followers, and the best organic reach platform that exists. Average organic reach on TikTok sits around [15 to 20% of followers](https://www.socialinsider.io/blog/tiktok-engagement-rate/). Compare that to Instagram (5 to 10%) or Facebook (2 to 5%). The algorithm rewards consistency and gives new content a real shot regardless of follower count.
+</Step>
+
+<Step number={2} title="Repurpose everywhere">
+Same content, reformatted for X, Instagram, and Facebook. One piece of content becomes four.
+</Step>
+
+<Step number={3} title="30 to 60 minutes daily, non-negotiable">
+This has to fit into a real schedule. I'm carving out time every morning for content before I write a single line of code. Building comes second now.
+</Step>
+
+<Step number={4} title="Build in public for real">
+Share the actual numbers. The revenue (or lack of it). The wins. The failures. People connect with honesty, not polish. This blog is part of that.
+</Step>
+
+## Why personal brand before product marketing
+
+<Callout type="tip" title="The funnel nobody wants to hear">
+Personal brand → trust → audience → product awareness → customers. You can't skip to the end. I tried for five years.
+</Callout>
+
+Nobody cares about your product until they care about you. That sounds like influencer nonsense, but it's the reality of selling on the internet in 2026. People buy from people they trust. Trust comes from showing up consistently.
+
+I can't market PostDropr to an audience of zero. But I can build an audience by talking about what I know: shipping products, working with AI agents, bootstrapping on free tiers, making the same mistakes over and over.
+
+## What I'd tell myself five years ago
+
+Stop romanticizing the build. Start romanticizing the customer. Your code doesn't matter if nobody uses it. Your architecture doesn't matter if nobody pays for it. Ship faster, talk to users sooner, and treat distribution as the product.
+
+Five products. Zero audience. That's the starting line, not the finish.
+
+Let's see where 90 days of daily content gets me. I'll report back with real numbers.

@@ -8,6 +8,6 @@ export const SOCIAL = {
   github: "https://github.com/digiphd",
   linkedin: "https://www.linkedin.com/in/rogerchappel/",
   tiktok: "https://www.tiktok.com/@roger.chappel",
-  email: "mailto:roger@rogerchappel.com",
+  email: "mailto:roger@axislabs.dev",
   axislabs: "https://axislabs.dev",
 } as const;

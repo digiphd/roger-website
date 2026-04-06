@@ -1,0 +1,99 @@
+---
+title: "The $0 Stack: Shipping SaaS on Free Tiers"
+description: "The exact tools I use to build and ship multiple SaaS products without spending a cent on infrastructure. Neon, Vercel, Cloudflare, and more."
+pubDate: 2026-04-05
+tags: ["saas", "devtools", "building"]
+draft: false
+---
+
+I have 8 SaaS products in various stages of development. My monthly infrastructure bill is $0.
+
+That's not a flex. It's a strategy. When you're bootstrapping multiple products, every dollar spent on infrastructure before you have revenue is a dollar that makes you feel pressure to rush, cut corners, or worse, quit.
+
+Here's the exact stack I use and why.
+
+## The stack
+
+| Layer | Tool | Free tier |
+|-------|------|-----------|
+| **Database** | [Neon](https://neon.tech) | 0.5 GB storage, autoscaling to zero |
+| **Frontend + API** | [Vercel](https://vercel.com) | 100 GB bandwidth, serverless functions |
+| **Static sites** | [Cloudflare Workers](https://workers.cloudflare.com) | 100k requests/day |
+| **Auth** | [Better Auth](https://better-auth.com) | Open source, self-hosted |
+| **Payments** | [Stripe](https://stripe.com) | No monthly fee, pay per transaction |
+| **Email/Newsletter** | [Buttondown](https://buttondown.com) | 100 subscribers free |
+| **DNS** | [Cloudflare](https://cloudflare.com) | Free plan with full DNS |
+| **Repo + CI** | [GitHub](https://github.com) | Free for public and private repos |
+| **Monitoring** | Vercel Analytics | Free tier included |
+
+No AWS. No Docker in production. No Kubernetes. No $50/month database you forget to turn off.
+
+## Why Neon over Supabase, PlanetScale, or a $5 VPS
+
+Neon's killer feature for bootstrappers is autoscaling to zero. When nobody's using your product at 3am, you're not paying for a database sitting idle. When you get a traffic spike, it scales up.
+
+The catch: cold starts. Neon's free tier can take 1 to 3 seconds to wake up from a cold start. I fixed this with a simple `withRetry()` wrapper that handles the initial connection timeout gracefully. Users see a slightly slower first load, never an error.
+
+```typescript
+async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i === retries - 1) throw e;
+      await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+  throw new Error("Unreachable");
+}
+```
+
+One gotcha: if you're using Neon's connection pooler, remove `channel_binding=require` from your connection string. It causes silent auth failures that will waste your afternoon.
+
+## Why Better Auth over Clerk or Auth0
+
+Clerk is great but it's $25/month once you pass the free tier. Auth0 is enterprise pricing dressed in startup clothing.
+
+Better Auth is open source and runs in your own app. No external dependency, no pricing surprise, no vendor lock-in. It handles email/password, OAuth, sessions, and MFA. I've shipped it across multiple products and never hit a limitation that mattered.
+
+The tradeoff is setup time. Clerk is faster to integrate. But I'm building 8 products. Investing a few hours in a self-hosted auth solution pays for itself by product three.
+
+## Cloudflare Workers for marketing sites
+
+Every product needs a marketing site. Vercel is overkill for a static site that just needs to look good and load fast.
+
+Cloudflare Workers serve static assets from the edge, 100k requests per day free, and custom domains are included. I deploy with `wrangler` and forget about it. My marketing sites load in under a second globally.
+
+## The pattern that makes it work
+
+The key isn't any individual tool. It's the pattern:
+
+1. **Same stack everywhere.** Next.js, React, Tailwind, Drizzle ORM, Neon. Every product uses the same foundation. Context switching costs drop to near zero.
+2. **Shared components.** Auth flows, billing integration, admin dashboards. Build once, copy across products.
+3. **Static where possible.** Marketing sites are static. Docs are static. Only the app itself needs server-side rendering.
+4. **Pay per use, not per month.** Every tool in the stack charges for usage, not a flat monthly fee. Zero users = zero cost.
+
+## When to upgrade
+
+Free tiers aren't forever. The goal isn't to stay free. It's to stay free until you have revenue.
+
+My rule: upgrade when a paying customer would notice the free tier limitation. Not before. Cold starts annoying? That's fine while you have 10 users. Cold starts annoying while you have 100 paying users? Time to upgrade Neon to the $19/month plan.
+
+Until then, $0.
+
+## The full list
+
+If you're starting a SaaS today and want to spend nothing until you have customers:
+
+- **Neon** for Postgres (free, scales to zero)
+- **Vercel** for Next.js apps (free, generous limits)
+- **Cloudflare Workers** for static/marketing sites (free, edge-deployed)
+- **Better Auth** for authentication (free, open source)
+- **Stripe** for payments (free until you process payments)
+- **Buttondown** for email (free under 100 subs)
+- **GitHub** for code and CI (free)
+- **Cloudflare** for DNS (free)
+
+Total: $0/month. Total capability: enough to ship, launch, and get your first paying customers.
+
+Stop paying for infrastructure you don't need yet.

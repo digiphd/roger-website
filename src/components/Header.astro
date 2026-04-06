@@ -43,17 +43,23 @@ const currentPath = Astro.url.pathname;
       <button
         id="theme-toggle"
         type="button"
-        aria-label="Toggle dark mode"
+        aria-label="Toggle theme"
         class="p-2 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-raised)] transition-colors"
       >
-        <!-- Sun icon (shown in dark mode) -->
+        <!-- Sun icon (light mode active) -->
         <svg id="icon-sun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="5" />
           <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
         </svg>
-        <!-- Moon icon (shown in light mode) -->
+        <!-- Moon icon (dark mode active) -->
         <svg id="icon-moon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+        </svg>
+        <!-- System icon (auto mode active) -->
+        <svg id="icon-system" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
         </svg>
       </button>
     </div>
@@ -61,24 +67,46 @@ const currentPath = Astro.url.pathname;
 </header>
 
 <script>
-  function updateIcons() {
-    const isDark = document.documentElement.classList.contains('dark');
-    document.getElementById('icon-sun')!.classList.toggle('hidden', !isDark);
-    document.getElementById('icon-moon')!.classList.toggle('hidden', isDark);
+  type Theme = 'light' | 'dark' | 'system';
+
+  function getSystemDark(): boolean {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
-  // Init: check localStorage, then system preference
-  const stored = localStorage.getItem('theme');
-  if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
+  function applyTheme(theme: Theme) {
+    const isDark = theme === 'dark' || (theme === 'system' && getSystemDark());
+    document.documentElement.classList.toggle('dark', isDark);
+
+    document.getElementById('icon-sun')!.classList.toggle('hidden', theme !== 'dark');
+    document.getElementById('icon-moon')!.classList.toggle('hidden', theme !== 'light');
+    document.getElementById('icon-system')!.classList.toggle('hidden', theme !== 'system');
   }
-  updateIcons();
+
+  // Cycle: light → dark → system
+  const cycle: Theme[] = ['light', 'dark', 'system'];
+
+  function getStored(): Theme {
+    const s = localStorage.getItem('theme');
+    if (s === 'light' || s === 'dark') return s;
+    return 'system';
+  }
+
+  // Init
+  applyTheme(getStored());
+
+  // Listen for system preference changes when in system mode
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (getStored() === 'system') applyTheme('system');
+  });
 
   document.getElementById('theme-toggle')?.addEventListener('click', () => {
-    const isDark = document.documentElement.classList.toggle('dark');
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    updateIcons();
+    const current = getStored();
+    const next = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+    if (next === 'system') {
+      localStorage.removeItem('theme');
+    } else {
+      localStorage.setItem('theme', next);
+    }
+    applyTheme(next);
   });
 </script>

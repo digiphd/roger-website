@@ -1,17 +1,27 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import BlogPostFooter from "../../components/BlogPostFooter.astro";
 import { getCollection, render } from "astro:content";
 import { getReadingTime } from "../../utils/readingTime";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog", ({ data }) => !data.draft);
-  return posts.map((post) => ({
+  // Sort by date descending (newest first)
+  const sorted = posts.sort(
+    (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+  );
+
+  return sorted.map((post, i) => ({
     params: { id: post.id },
-    props: { post },
+    props: {
+      post,
+      prevPost: i < sorted.length - 1 ? { id: sorted[i + 1].id, title: sorted[i + 1].data.title } : null,
+      nextPost: i > 0 ? { id: sorted[i - 1].id, title: sorted[i - 1].data.title } : null,
+    },
   }));
 }
 
-const { post } = Astro.props;
+const { post, prevPost, nextPost } = Astro.props;
 const { Content } = await render(post);
 
 const readingTime = getReadingTime(post.body ?? "");
@@ -42,13 +52,11 @@ const formattedDate = post.data.pubDate.toLocaleDateString("en-AU", {
     </div>
   </article>
 
-  <!-- Back link -->
-  <div class="pt-8 border-t border-[var(--color-border)]">
-    <a
-      href="/blog"
-      class="text-sm text-[var(--color-accent)] hover:text-[var(--color-accent-light)] transition-colors"
-    >
-      &larr; Back to all posts
-    </a>
-  </div>
+  <BlogPostFooter
+    title={post.data.title}
+    tags={post.data.tags}
+    slug={post.id}
+    prevPost={prevPost}
+    nextPost={nextPost}
+  />
 </BaseLayout>

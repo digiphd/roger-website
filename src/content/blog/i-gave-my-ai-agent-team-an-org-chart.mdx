@@ -1,0 +1,84 @@
+---
+title: "I Gave My AI Agent Team an Org Chart"
+description: "What happens when you treat AI agents like employees: task boards, specializations, dispatch rules, and the software I built to manage it all."
+pubDate: 2026-04-06
+tags: ["ai", "agents", "building"]
+draft: false
+---
+
+I have 10 AI agents. They have names, specializations, and a task board. One of them reviews the others' code. Another one only does video rendering. There's a dispatch table that decides who works on what.
+
+This sounds ridiculous. It also works better than anything else I've tried.
+
+## How it started
+
+It started the way most things start: badly.
+
+I had one agent. It did everything. Code, reviews, deployments, research. The problem with a generalist agent is the same problem with a generalist employee. It's okay at everything and great at nothing. Context gets muddled. A code review starts referencing a marketing task from three prompts ago.
+
+So I split it up. One agent for frontend work. One for infrastructure. One for code review. Immediately better.
+
+Then I needed to coordinate them. Who's working on what? Who's idle? What's blocked? I tried Notion. I tried Linear. I tried a plain text file.
+
+None of them worked because none of them were designed for AI agents as the primary users. They're designed for humans who happen to use AI sometimes. I needed the opposite.
+
+## CrewCmd: task management for agent teams
+
+So I built [CrewCmd](https://crewcmd.dev).
+
+It's a local-first task management system designed from the ground up for AI agent teams. Tasks flow through a lifecycle: inbox, queued, in progress, review, done. Agents get assigned work, update their status, and flag blockers. I see everything on a board.
+
+The key insight was treating agents like a small team of junior developers. They need:
+
+- **Clear, scoped tasks.** Not "build the feature" but "add the email validation to the signup form in `src/components/SignupForm.tsx`."
+- **One task at a time.** Agents that juggle multiple tasks produce worse output than agents that focus.
+- **A review step.** Never merge agent code without another agent (or human) reviewing it. My agent Sentinel does code review. It catches real bugs.
+- **Explicit acceptance criteria.** "Done" means the acceptance criteria are met, not "I wrote some code and it compiles."
+
+## The org chart
+
+Here's what my agent team actually looks like:
+
+| Agent | Role | Focus |
+|-------|------|-------|
+| **Neo** | CEO / Coordinator | Strategy, dispatch, portfolio oversight |
+| **Forge** | Full-stack dev | PostDropr, SilentAgents |
+| **Blitz** | Full-stack dev (fast) | RSCreative, EverContent, Webpipe |
+| **Cipher** | Architect | ClutchCut, complex systems |
+| **Sentinel** | Code reviewer | Security, quality gates |
+| **Maverick** | Quant trader | Trading algorithms |
+| **Razor** | Video rendering | ClutchCut pipeline |
+| **Havoc** | Infra / DevOps | Deployments, CI/CD |
+
+Each agent has a default domain and a fallback. If Forge finishes PostDropr work and there's nothing queued, it picks up SilentAgents tasks. If Blitz is idle, it pulls from RSCreative, then EverContent, then Webpipe.
+
+The dispatch logic is simple: check the task board, find the highest priority unassigned task in the agent's domain, assign it, and send the agent a scoped prompt with acceptance criteria.
+
+## What I learned the hard way
+
+**Don't use single-shot mode for multi-file work.** Early on I tried running agents in one-shot mode (send prompt, get code back). The output was consistently half-baked. Agents need to explore the codebase, understand context, iterate. Interactive sessions produce dramatically better code.
+
+**Scope tasks to one component.** "Build the dashboard" is a bad task. "Add the revenue chart to `src/components/Dashboard.tsx` using the data from the `/api/analytics` endpoint" is a good task. The smaller and more specific, the better the output.
+
+**Always verify before reporting.** Agents will tell you they're done when they're not. "PR created" doesn't mean the PR exists, or that it passes CI, or that it actually addresses the task. I learned to make agents verify their own work: check the PR URL resolves, check CI passes, check acceptance criteria are met.
+
+**Agents need task management more than humans do.** Humans can hold context in their heads, remember what they were working on yesterday, and prioritize intuitively. Agents can't. Every session starts fresh. Without a task board, they have no memory of what matters.
+
+## The results
+
+Since implementing proper agent management:
+
+- Features ship faster because agents don't waste time on the wrong thing
+- Code quality improved because Sentinel catches issues before merge
+- I spend less time doing agent work and more time doing human work: strategy, design, customer conversations
+- The team scales. Adding a new agent is adding a row to the dispatch table and a paragraph to its system prompt
+
+## Is this over-engineered?
+
+Maybe. Ten agents with an org chart and a custom task management system for a solo founder. It sounds like parody.
+
+But here's the thing: I'm shipping 8 products. Actual products, with real users, real billing, real infrastructure. Not demos. Not prototypes. Products.
+
+The org chart isn't the point. The point is that treating AI agents as team members, with clear roles, clear tasks, and clear accountability, produces better output than treating them as fancy autocomplete.
+
+Give your agents a job title. Give them a task board. Watch what happens.

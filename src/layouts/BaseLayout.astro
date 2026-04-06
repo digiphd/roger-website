@@ -99,6 +99,15 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL);
         },
       }),
     })} />
+    <!-- Prevent flash of wrong theme -->
+    <script is:inline>
+      (function() {
+        const s = localStorage.getItem('theme');
+        if (s === 'dark' || (!s && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body
     class="min-h-screen flex flex-col bg-[var(--color-surface)] text-[var(--color-text-primary)]"

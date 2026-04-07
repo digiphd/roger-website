@@ -5,21 +5,35 @@ import { AUTHOR, SOCIAL, GITHUB_USERNAME, NEWSLETTER_ID } from "../consts";
 
 <BaseLayout title="About" description={`${AUTHOR.name} — ${AUTHOR.aboutDescription}`}>
   <section class="py-8">
-    <!-- Hero photo placeholder — Roger will provide -->
-    <div class="relative w-full h-48 sm:h-64 rounded-xl overflow-hidden mb-8 bg-[var(--color-surface-raised)] border border-[var(--color-border)]">
-      <img
-        src={AUTHOR.photo}
-        alt={AUTHOR.name}
-        class="w-full h-full object-cover"
-      />
-      <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-surface)] via-transparent to-transparent"></div>
+    <div class="flex flex-col md:flex-row gap-8 md:gap-10 items-start">
+      <!-- Photo -->
+      <div class="w-full md:w-[280px] lg:w-[320px] shrink-0">
+        <img
+          src="/images/roger-setup.jpg"
+          alt="Roger at his desk"
+          class="w-full rounded-xl border border-[var(--color-border)] object-cover"
+          loading="eager"
+          width="600"
+          height="800"
+        />
+      </div>
+
+      <!-- Intro text -->
+      <div class="flex-1 min-w-0">
+        <h1 class="text-3xl font-bold">About me</h1>
+        <p class="text-lg text-[var(--color-text-secondary)] mt-2">Builder. Engineer. Founder.</p>
+
+        <div class="prose prose-lg max-w-none mt-6">
+          {AUTHOR.aboutIntro.slice(0, 2).map((paragraph) => (
+            <p set:html={paragraph} />
+          ))}
+        </div>
+      </div>
     </div>
 
-    <h1 class="text-3xl font-bold">About me</h1>
-    <p class="text-lg text-[var(--color-text-secondary)] mt-2">Builder. Engineer. Founder.</p>
-
+    <!-- Remaining intro + topics -->
     <div class="prose prose-lg max-w-none mt-8">
-      {AUTHOR.aboutIntro.map((paragraph) => (
+      {AUTHOR.aboutIntro.slice(2).map((paragraph) => (
         <p set:html={paragraph} />
       ))}
       <h2>What I write about</h2>

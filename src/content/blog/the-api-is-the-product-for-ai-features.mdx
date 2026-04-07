@@ -1,0 +1,301 @@
+---
+title: "The API Is the Product for AI Features"
+description: "The model call is only one dependency. If you want AI features that survive real usage, the API contract, latency budget, fallbacks, and orchestration layer matter more than the demo."
+pubDate: 2026-04-08
+tags: ["ai", "api", "backend", "architecture"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+A lot of teams still think of an AI feature as a model call with a nice interface around it.
+
+That's backwards.
+
+In production, the model is just one dependency. The real product is the API contract and the orchestration around it.
+
+<Highlight emoji="🔌">
+If you're shipping AI into a real application, the API is the product: inputs, outputs, latency budget, fallbacks, state transitions, and what happens when one part of the chain fails.
+</Highlight>
+
+This is one of the biggest differences between demo AI and production AI.
+
+A demo only needs to be impressive once. A product needs to behave consistently every day under weird inputs, slow providers, partial failures, and users who click refresh at the worst possible time.
+
+## The model call is the easy part
+
+Most teams can get to a first working AI feature quickly.
+
+Take some user input. Build a prompt. Send it to a model. Show the response.
+
+The problems start when you ask questions like:
+
+- what input shape do we actually support?
+- how do we validate requests before they hit the expensive path?
+- what if the provider is slow?
+- what if the model gives us something structurally valid but product-invalid?
+- what do we return while background work continues?
+- what does the client do if one downstream step succeeds and another fails?
+
+Those questions are product questions disguised as backend questions.
+
+## API design decides whether the feature survives
+
+When I say the API is the product, I mean that the boundary matters more than most teams think.
+
+A good AI API is not just a transport layer. It's the contract that defines how intelligence shows up inside your application.
+
+### Good AI APIs are explicit about:
+
+- required inputs
+- optional context
+- asynchronous vs synchronous behavior
+- progress and status reporting
+- output shape
+- fallback behavior
+- retry safety
+- error classes
+- versioning when prompts or models change materially
+
+<CompareTable
+  left={{ title: "Weak AI API", items: [
+    "One generic prompt endpoint",
+    "Opaque failures",
+    "Unstructured responses",
+    "No job ID or progress state",
+    "Frontend has to guess what happened",
+  ] }}
+  right={{ title: "Strong AI API", items: [
+    "Typed requests for specific workflows",
+    "Structured errors and status",
+    "Stable output contracts",
+    "Job IDs and lifecycle events",
+    "Client can respond predictably",
+  ] }}
+/>
+
+If the API is vague, every consumer of that feature becomes fragile.
+
+That includes your own frontend.
+
+## Latency budgets are product design
+
+One of the biggest mistakes in AI features is pretending latency is only an infra concern.
+
+It isn't. Latency changes the product experience directly.
+
+A feature that returns in 700ms can feel interactive. A feature that takes 12 seconds needs a completely different UX. A feature that may take 3 minutes should probably not pretend to be synchronous at all.
+
+This means you need a latency budget before you decide the architecture.
+
+<Step number={1} title="Decide the user experience first">
+Is this meant to feel instant, fast-but-waiting, or background async?
+</Step>
+
+<Step number={2} title="Work backwards from that budget">
+Choose models, context size, tool depth, and orchestration steps that fit the intended experience.
+</Step>
+
+<Step number={3} title="Split paths when needed">
+Use one path for fast drafts and another for heavy refinement or post-processing.
+</Step>
+
+A lot of teams overload one API route with too many responsibilities. They want one endpoint to validate input, enrich context, call multiple tools, ask the model, run post-processing, and deliver a polished answer in one shot.
+
+That might work in staging. It usually fails in the real world.
+
+## Fallbacks are part of the feature, not an afterthought
+
+If your AI feature has no fallback behavior, it isn't production-ready.
+
+Fallbacks can be simple:
+
+- a smaller model
+- a cached last-known-good result
+- a rules-based path
+- a draft-only response instead of a full analysis
+- human review or retry queue
+
+The important thing is that fallback behavior is **designed**, not improvised.
+
+<Callout type="warning" title="No fallback means one provider outage becomes a product outage">
+If a single model timeout can blank your whole feature, your architecture is still in prototype mode.
+</Callout>
+
+This is where API design matters again. The client needs to understand whether it received a full result, a degraded result, a queued result, or a failure that can be retried.
+
+That should be represented explicitly in the contract.
+
+## Orchestration is what turns a model call into a feature
+
+Most useful AI features are not one-step features.
+
+They look more like this:
+
+1. validate input
+2. fetch context
+3. call one or more internal tools
+4. call the model
+5. validate output
+6. transform into product shape
+7. persist result
+8. notify client or downstream systems
+
+That means the feature is really an orchestrated workflow.
+
+And once you accept that, the architecture gets clearer.
+
+You need:
+
+- durable state
+- explicit stages
+- logging per stage
+- retry policy per stage
+- observability across the full path
+
+<Highlight emoji="🧭">
+The orchestration layer is where product quality lives. The model is just one step in the chain.
+</Highlight>
+
+This is why backend and systems thinking matter so much in AI product development. The hard part is not getting a cool answer once. The hard part is making the whole flow reliable, measurable, and cheap enough to run often.
+
+## Versioning matters more than teams expect
+
+AI features drift.
+
+Prompts change. Models change. Tool outputs change. Guardrails get tighter. Sometimes the same input produces different quality a month later because the surrounding system changed.
+
+If you don't version your API behavior, debugging gets ugly fast.
+
+At minimum, serious AI features should let you track:
+
+- model version
+- prompt or system policy version
+- toolchain version
+- output schema version
+- fallback path used
+
+That makes it possible to answer the question every product team eventually gets asked:
+
+"Why did this result look different last week?"
+
+## Your client should never have to guess
+
+A bad AI API pushes ambiguity up into the frontend.
+
+The UI starts making assumptions:
+
+- maybe this is still processing
+- maybe the output is partial
+- maybe retrying is safe
+- maybe that error means timeout
+- maybe this result is final
+
+That creates fragile UX and hard-to-debug behavior.
+
+A better API tells the client exactly what happened.
+
+For example, a response might include:
+
+- `status: queued | processing | completed | failed | degraded`
+- `result_type: full | draft | fallback`
+- `job_id`
+- `retry_after`
+- `error_code`
+- `model_version`
+
+This is not overengineering. It's product clarity.
+
+## The right abstraction is a workflow API
+
+For many AI features, the best abstraction is not "chat completions inside my app." It's a workflow API tailored to the user-facing job.
+
+Not:
+
+`POST /generate`
+
+More like:
+
+- `POST /briefs/extract-key-points`
+- `POST /videos/create-storyboard`
+- `POST /sales/research-account`
+- `POST /support/draft-response`
+
+Those APIs are easier to validate, easier to observe, easier to secure, and easier to evolve.
+
+They also force the team to think in product terms instead of provider terms.
+
+<Callout type="tip" title="Design around the business job">
+The closer your API maps to the actual user task, the easier it is to control quality, latency, permissions, and fallbacks.
+</Callout>
+
+## What I would insist on before shipping
+
+If a team told me they were about to launch a new AI feature, I'd want these basics in place.
+
+<Step number={1} title="Typed input and output contracts">
+No hand-wavy payloads. Clear schemas at the boundary.
+</Step>
+
+<Step number={2} title="A chosen latency model">
+Instant, waiting, or async. Pick one and design honestly around it.
+</Step>
+
+<Step number={3} title="Fallback behavior">
+Define what the feature does when the ideal path fails.
+</Step>
+
+<Step number={4} title="Observability">
+Track cost, latency, retries, validation failures, and fallback rate.
+</Step>
+
+<Step number={5} title="Version awareness">
+Be able to explain output changes over time.
+</Step>
+
+<StatBlock stats={[
+  { label: "Track", value: "latency" },
+  { label: "Track", value: "fallbacks" },
+  { label: "Track", value: "cost" },
+  { label: "Track", value: "schema drift" },
+]} />
+
+## AI product quality is mostly interface quality
+
+There's a useful mental model here.
+
+People think they're evaluating the intelligence of the feature. Most of the time, they're actually evaluating the quality of the interface around that intelligence.
+
+Does it respond in the way the product promised?
+Does it fail cleanly?
+Does it give consistent structure?
+Does it recover?
+Does it integrate cleanly with the rest of the app?
+
+Those are API and orchestration questions.
+
+<Highlight emoji="🏗️">
+In production, AI quality is mostly interface quality: contract quality, orchestration quality, and failure-handling quality.
+</Highlight>
+
+That's why I keep coming back to the same point.
+
+The API is the product.
+
+If you get that layer right, you can swap models, tighten prompts, add tools, and improve quality over time.
+
+If you get that layer wrong, every model upgrade just produces a new class of bugs.
+
+So yes, keep improving prompts. Keep testing models. Keep pushing capability.
+
+But if you want AI features that survive real usage, spend at least as much time on the API contract, latency model, and fallback story.
+
+That's the actual product surface your users depend on.
+
+---
+
+*If you're building AI features inside real web apps, find me on [X](https://x.com/roger_creator).*

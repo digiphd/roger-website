@@ -1,0 +1,138 @@
+---
+title: "5 Products, Zero Audience: My Distribution Problem"
+description: "I built 5 SaaS products but have almost no audience. Building is the easy part. Here's why distribution is the real moat and what I'm doing about it."
+pubDate: 2026-04-07
+tags: ["startups", "distribution", "building-in-public"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+I have five working SaaS products. PostDropr, Soply, ClutchCut, EverContent, SilentAgents. All built under [Axislabs.dev](https://axislabs.dev). All functional. Most are 90% or more complete.
+
+Combined revenue from side projects: near zero. Combined audience: roughly 5,000 TikTok followers and a ghost town everywhere else.
+
+<StatBlock stats={[
+  { label: "Products built", value: "5+" },
+  { label: "Products at ~90%", value: "5" },
+  { label: "TikTok followers", value: "~5K" },
+  { label: "Side project revenue", value: "~$0" },
+]} />
+
+This post is the honest version. Not the "I built a portfolio of AI-native products" version (I wrote that post too). This is the part where I admit that I've been solving the wrong problem for years.
+
+## The builder trap is real
+
+Here's what my average morning used to look like. Alarm at 5:45. Desk by 6. Dispatch AI agents, review overnight PRs, pick which product gets attention. Ship something before 9. Switch to the day job.
+
+That routine is incredible for building products. It's terrible for selling them.
+
+<Highlight emoji="🪤">
+Every hour I spent adding a feature was an hour I didn't spend finding one person who needed it.
+</Highlight>
+
+Melissa Perri wrote an entire book about this called *The Build Trap*. The thesis: teams and solo founders get stuck shipping features because shipping feels like progress. But progress without customers is just motion. I've been in motion for five years.
+
+The pattern is embarrassingly predictable. I'd think about writing a piece of content. Then I'd find a bug. I'd consider a cold email. Then I'd add a feature instead. Building feels productive. Selling feels vulnerable. I picked comfort every single time.
+
+## The numbers say I'm not alone
+
+[CB Insights analyzed hundreds of failed startups](https://www.cbinsights.com/research/report/startup-failure-reasons-top/) and found that 42% failed because of "no market need." But dig into that stat. Most of those founders built something usable. They just never connected it to the people who needed it. "No market need" is often code for "no distribution channel."
+
+The AI era makes this worse, not better. When everyone can build, building stops being a differentiator.
+
+<Callout type="warning" title="The AI startup graveyard">
+[Gartner predicted](https://www.gartner.com/en/newsroom/press-releases/2024-07-29-gartner-predicts-30-percent-of-generative-ai-projects-will-be-abandoned-after-proof-of-concept-by-end-of-2025) that 30% of generative AI projects would be abandoned after proof of concept by end of 2025. [RAND Corporation](https://www.pertamapartners.com/insights/ai-project-failure-statistics-2026) puts the overall AI project failure rate at 80%. AI startups fail at roughly 90%, significantly higher than the ~70% rate for traditional tech startups.
+</Callout>
+
+The failure mode isn't "bad product." It's invisibility. You can have the best tool in the world and it means nothing if your go-to-market strategy is "post on X and hope."
+
+That was my strategy. I'm not joking.
+
+## Distribution is the actual moat now
+
+I wrote about [why 80% of AI startups will fail](/blog/why-80-percent-of-ai-startups-will-fail), and the core argument is this: when code is nearly free to produce, code is no longer a moat. The moat is everything around the code. Distribution. Data. Workflow integration. Speed.
+
+Of those four, distribution is the one that matters first. You can't build a data flywheel without users. You can't integrate into workflows if nobody's using your product. You can't iterate on feedback you're not getting.
+
+<CompareTable
+  left={{ title: "What I've been doing", items: ["95% building features", "3% posting on X to nobody", "2% thinking about marketing", "0% actual distribution work"] }}
+  right={{ title: "What the data says works", items: ["40% building the product", "30% creating content", "20% engaging with communities", "10% running distribution experiments"] }}
+  leftColor="text-red-400"
+  rightColor="text-emerald-400"
+/>
+
+The ratio has been completely wrong. I treated distribution as something that happens after you build. It should have been happening the entire time.
+
+<Highlight emoji="🔑">
+Another feature won't save you if nobody knows you exist. I've been adding features to products that don't have users. That's not building a business. That's building a hobby with a login page.
+</Highlight>
+
+## The uncomfortable math on organic reach
+
+If I'm going to fix this, I need to pick the right channel. Here's what the data actually says about organic reach in 2026.
+
+<StatBlock stats={[
+  { label: "TikTok engagement", value: "3.70%" },
+  { label: "Instagram engagement", value: "0.48%" },
+  { label: "Facebook engagement", value: "0.15%" },
+  { label: "X/Twitter engagement", value: "0.12%" },
+]} />
+
+Those numbers come from [Social Insider's 2026 benchmarks](https://www.socialinsider.io/social-media-benchmarks) and [Digital Information World's analysis](https://www.digitalinformationworld.com/2026/03/2026-social-media-benchmark-tiktok.html). TikTok's engagement rate is nearly 8x Instagram's and 30x Twitter's. More importantly, [over 70% of brand video traffic on TikTok comes from the For You feed](https://almcorp.com/blog/tiktok-brand-growth-instagram-organic-reach-decline-2025/), meaning the algorithm gives new content a real shot regardless of follower count.
+
+Meanwhile, [Instagram organic reach fell 30 to 40% across every post format](https://almcorp.com/blog/tiktok-brand-growth-instagram-organic-reach-decline-2025/) in 2025. X engagement dropped to 0.12% even as brands increased posting frequency by 40%.
+
+The math is obvious. TikTok is where a solo founder with zero budget has the best chance of being seen. I already have ~5,000 followers there. That's my starting line.
+
+## Building in public actually works (with data)
+
+There's a reason so many indie hackers talk about building in public. It's not just vibes.
+
+[OpenHunts studied 387 product launches](https://awesome-directories.com/blog/indie-hackers-launch-strategy-guide-2025/) and found that sharing authentic posts about struggles, wins, and real numbers converts at 23.1% per engaged post on Indie Hackers. One founder in the study acquired 67 paying customers from four months of honest build-in-public posts, compared to 3 customers from a Product Hunt launch.
+
+That's a 22x difference. Not from a better product. From showing up and being honest about the process.
+
+<Callout type="info" title="The trust funnel">
+Personal brand → trust → audience → product awareness → customers. You can't skip to the end. Building in public is how you start the sequence when you have nothing else.
+</Callout>
+
+I've been building in silence for five years. Every product I shipped was a tree falling in an empty forest.
+
+## The plan: content before code
+
+I'm not hiring a marketer. I'm not running ads. I don't have that budget. The plan is simple and it starts tomorrow.
+
+<Step number={1} title="One video per day on TikTok">
+Short-form content about building products, working with AI agents, and the real numbers behind bootstrapping. TikTok gives new creators a fair shot and I already have a small base there. Consistency is the only strategy that works at this stage.
+</Step>
+
+<Step number={2} title="Repurpose across platforms">
+Same content, reformatted for X, Instagram Reels, and this blog. One piece of work becomes four distribution touchpoints. I'm not creating unique content for each platform. I'm creating once and distributing everywhere.
+</Step>
+
+<Step number={3} title="30 to 60 minutes on content before writing any code">
+This is the hardest change. Content comes first now, before I open the code editor. If I don't protect the time, building will eat it every day. It always has.
+</Step>
+
+<Step number={4} title="Share real numbers, not polished stories">
+Revenue (or lack of it). Traffic. Failures. What's working and what isn't. People connect with honesty, not marketing copy. This blog post is exhibit A.
+</Step>
+
+## What I'd tell myself five years ago
+
+Stop building the sixth product. Go find ten people who need the first one. Talk to them. Make content about the problem you're solving, not the solution you've built. Ship less code and more words.
+
+<Highlight emoji="🎯">
+The best product with zero distribution loses to a mediocre product with a thousand true fans. Every time.
+</Highlight>
+
+Five products. Near-zero audience. That's where I'm starting. Not where I'm ending.
+
+I'm giving this 90 days of daily content and I'll report back with real numbers. If the thesis is right, distribution compounds. If it's wrong, at least I'll have failed at something new instead of repeating the same mistake for year six.
+
+Follow along on [TikTok](https://tiktok.com/@roger_creator) or [X](https://x.com/roger_creator). The numbers will be public.

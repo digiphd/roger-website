@@ -1,0 +1,313 @@
+---
+title: "Why Most AI Apps Die in the Backend"
+description: "Prompts and polished UI get attention, but most AI products actually fail in queues, retries, state, evals, and data contracts."
+pubDate: 2026-04-08
+tags: ["ai", "backend", "engineering", "architecture"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+A lot of AI products look impressive in a demo.
+
+Type a prompt. Stream some text. Generate an image. Maybe even call a tool or two.
+
+Then they hit real usage and start falling apart.
+
+Not because the model is bad. Not because the interface is ugly. Because the backend was treated like plumbing instead of the product.
+
+<Highlight emoji="🧱">
+Most AI apps don't die in the prompt. They die in the backend: bad queues, weak retries, missing state, noisy data contracts, and no real recovery path when things go wrong.
+</Highlight>
+
+This is familiar territory if you come from backend and web app engineering.
+
+The AI layer gets all the attention because it's the magic. But once users show up, the boring engineering questions take over:
+
+- What happens when the model times out?
+- What happens when the user refreshes halfway through a job?
+- What happens when the webhook arrives twice?
+- What happens when you need to replay a failed step?
+- What happens when your model output is technically valid but operationally useless?
+
+Those aren't AI questions. They're systems questions.
+
+## The demo trap
+
+A surprising number of AI products are still being built like hackathon demos.
+
+The architecture often looks like this:
+
+1. user submits prompt
+2. app calls model
+3. app returns result
+
+That works right up until you need reliability, observability, cost controls, permissions, or multi-step workflows.
+
+<CompareTable
+  left={{ title: "Demo mindset", items: [
+    "One request in, one response out",
+    "No job state",
+    "No replay path",
+    "No output validation",
+    "No durable audit trail",
+  ] }}
+  right={{ title: "Production mindset", items: [
+    "Background jobs with explicit state",
+    "Retries and idempotency",
+    "Validation at every boundary",
+    "Structured outputs and fallbacks",
+    "Full traceability when things fail",
+  ] }}
+/>
+
+The model can be impressive and the product can still be brittle.
+
+That's because the value is not just in generating output. The value is in getting the right output, at the right time, in the right format, with enough reliability that users trust it.
+
+## Where AI apps actually break
+
+Here are the main failure points I keep seeing.
+
+### 1. Jobs without real state
+
+A lot of AI workflows are long-running now.
+
+Generate a video. Analyze a batch of documents. Enrich a CRM. Run a multi-agent task. Review a pull request. Produce several assets from one source file.
+
+If that workflow doesn't have explicit state, you're in trouble.
+
+You need to know:
+
+- queued
+- processing
+- waiting for tool result
+- failed
+- retrying
+- completed
+- partially completed
+
+<Callout type="warning" title="Chat history is not state">
+If your system depends on reading old messages to infer what happened, you don't have a workflow engine. You have a fragile transcript.
+</Callout>
+
+The backend has to own lifecycle. Not the frontend. Not the chat thread. Not the model.
+
+### 2. No idempotency, no safety
+
+AI systems love duplicate work.
+
+Users click twice. Webhooks resend. Workers restart. A client retries after a timeout even though the first request actually succeeded.
+
+Without idempotency, your system can:
+
+- charge twice
+- generate duplicate assets
+- send duplicate emails
+- create inconsistent records
+- corrupt state when two workers race each other
+
+This is standard backend engineering, but teams somehow forget it when the word AI appears in the architecture diagram.
+
+### 3. Weak output contracts
+
+One of the biggest mistakes in AI apps is treating model output as if it were already application-safe.
+
+It isn't.
+
+Even when a model returns valid JSON, that doesn't mean the output is complete, sensible, or aligned with business rules.
+
+A production AI backend needs contracts at the boundaries:
+
+- schema validation
+- required fields
+- value constraints
+- fallback logic
+- confidence or quality checks
+- human review where the blast radius is high
+
+<Highlight emoji="🎯">
+The model output is not the truth. It's just another upstream dependency.
+</Highlight>
+
+Once you think about it like that, the backend design gets much better.
+
+## Queues are where the real product starts
+
+Most useful AI applications are asynchronous whether the UI admits it or not.
+
+Even if the user sees a chat box, the backend is usually doing one of two things:
+
+- pretending a long-running workflow is synchronous
+- or quietly operating as a queue-driven system underneath
+
+The second approach is the one that scales.
+
+### Why queues matter
+
+Queues give you:
+
+- backpressure
+- retry control
+- priority handling
+- worker isolation
+- observability per step
+- safer scaling under bursty traffic
+
+Without queues, every spike becomes a frontend problem and every provider hiccup becomes a user-visible failure.
+
+<Step number={1} title="Accept the request">
+Persist the request, assign it an ID, validate inputs, and return control to the client fast.
+</Step>
+
+<Step number={2} title="Process in workers">
+Call models, tools, APIs, and post-processing services in the background where retries and timeouts can be managed properly.
+</Step>
+
+<Step number={3} title="Publish state changes">
+Push progress back to the UI or store it for polling. Let the client react to durable state, not guesswork.
+</Step>
+
+This is especially important for media workflows, research pipelines, and multi-agent systems where one failure shouldn't poison the whole chain.
+
+## Retries are not a footnote
+
+AI providers time out. Tool calls fail. External APIs throttle. Workers crash mid-step.
+
+Retries are not optional.
+
+But retries without discipline are just another bug source.
+
+Good retry design needs:
+
+- idempotency keys
+- bounded retry counts
+- exponential backoff
+- dead-letter handling
+- clear distinction between retryable and non-retryable failures
+
+A model returning malformed output might be retryable. A user uploading the wrong file type is not. Those should not be handled the same way.
+
+## The hidden killer is bad data contracts
+
+A lot of AI product pain is not model failure. It's data mismatch.
+
+The frontend sends one shape. The backend expects another. The tool layer returns something half-normalized. The model gets unclear context. Then a post-processor tries to clean up the mess.
+
+That creates a silent entropy tax.
+
+The fix is boring and powerful:
+
+- consistent schemas
+- explicit versioning
+- normalized internal objects
+- typed interfaces between stages
+- clear ownership of transformation logic
+
+This is where backend-heavy founders have an edge. We've seen this movie before with APIs, background jobs, third-party integrations, and event-driven systems.
+
+AI just makes the consequences sharper.
+
+## Evals belong in the backend too
+
+A lot of people talk about evals as if they only belong in prompt engineering.
+
+They don't.
+
+Evals are backend infrastructure.
+
+If your product depends on model quality, you need repeatable ways to measure output against expected behavior. That means storing test cases, expected patterns, failure examples, and versioned prompt or model changes.
+
+<StatBlock stats={[
+  { label: "Need to track", value: "quality" },
+  { label: "Need to track", value: "latency" },
+  { label: "Need to track", value: "cost" },
+  { label: "Need to track", value: "fallback rate" },
+]} />
+
+A proper AI backend should tell you:
+
+- which model version handled the job
+- how long each stage took
+- how many retries occurred
+- whether validation passed first time
+- when a fallback path was triggered
+- how the quality score changed after a prompt or model update
+
+Without that, you are shipping blind.
+
+## The trust layer is built in ops, not copywriting
+
+Founders often try to solve trust at the UI layer.
+
+They add better explanations. More polished loading states. Friendlier prompts.
+
+That helps a bit. But user trust mostly comes from consistent behavior.
+
+Users trust AI products when:
+
+- jobs don't disappear
+- failures are visible and recoverable
+- duplicate actions don't happen
+- results arrive in stable formats
+- the system behaves predictably under load
+
+That's backend work.
+
+<Callout type="tip" title="Trust is operational">
+A reliable AI product feels smart even when the model is average. An unreliable AI product feels broken even when the model is brilliant.
+</Callout>
+
+## What I'd build first in any serious AI app
+
+If I were reviewing a new AI product, these are the backend pieces I'd want to see early.
+
+<Step number={1} title="Durable job records">
+Every meaningful task gets a persistent record with explicit status and timestamps.
+</Step>
+
+<Step number={2} title="A queue-backed execution layer">
+Long-running work should not depend on one fragile request-response cycle.
+</Step>
+
+<Step number={3} title="Validation at every boundary">
+Inputs, model outputs, tool results, and final artifacts should all be checked before moving forward.
+</Step>
+
+<Step number={4} title="Retry and recovery paths">
+Failures should be classifiable, replayable, and observable.
+</Step>
+
+<Step number={5} title="Metrics that matter">
+Latency, cost, success rate, retry rate, fallback rate, and quality drift.
+</Step>
+
+None of this is glamorous. That's the point.
+
+## The backend is the moat
+
+In the short term, model capabilities get commoditized fast.
+
+The durable edge in AI products is not just the prompt layer. It's the operating layer around the model: the state management, the data contracts, the queue design, the eval infrastructure, the cost controls, and the reliability story.
+
+That's why I think backend engineers are unusually well positioned for this wave.
+
+We've spent years building systems that survive partial failure, strange inputs, race conditions, retries, and scale. AI products need exactly that mindset.
+
+<Highlight emoji="⚙️">
+The real moat in most AI products is not the model. It's the backend system that makes the model usable in production.
+</Highlight>
+
+So if you're building AI apps, don't just obsess over prompts and demos.
+
+Look at your queues. Look at your state machine. Look at your retry policy. Look at your contracts.
+
+That's where most of the product really lives.
+
+---
+
+*If you're building AI products from a backend-first perspective, find me on [X](https://x.com/roger_creator).*

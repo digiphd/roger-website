@@ -1,0 +1,290 @@
+---
+title: "Smart Token Consumption Is the New 10x Engineer"
+description: "The biggest gains in agentic engineering come from better token economics: right-sized models, tighter loops, less context bloat, and fewer wasteful check-ins."
+pubDate: 2026-04-08
+tags: ["ai", "engineering", "agents", "cost"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+Everyone wants the 10x engineer story.
+
+One person, one repo, one AI coding tool, and somehow output goes vertical.
+
+That can happen. But in practice, the real multiplier isn't just model quality. It's token economics.
+
+Once you move from "AI helps me code" to agentic workflows, where one orchestrator can spawn multiple sub-agents across repos, tools, and recurring jobs, token consumption stops being a side note. It becomes part of the architecture.
+
+<Highlight emoji="💸">
+The teams getting 10x productivity gains from AI are not the teams burning the most tokens. They're the teams that know when to spend, when to cache, when to compact, and when to use a smaller model.
+</Highlight>
+
+This is the shift most people miss.
+
+A lot of developers still think in single-session terms: open the repo, load a huge amount of context, ask the strongest model available, repeat. That works for occasional deep work. It breaks down fast once you have recurring jobs, heartbeats, PR review loops, background agents, and orchestration across multiple projects.
+
+The cost problem isn't hypothetical anymore. OpenAI's current API pricing makes the trade-off obvious: GPT-5.4 is priced at **$2.50 per 1M input tokens** and **$15.00 per 1M output tokens**, while GPT-5.4 mini is **$0.75 per 1M input tokens** and **$4.50 per 1M output tokens**, with cached input dramatically cheaper for both ([OpenAI pricing](https://openai.com/api/pricing/)).
+
+That means model choice is no longer just a quality decision. It's an operating model decision.
+
+<StatBlock stats={[
+  { label: "GPT-5.4 input", value: "$2.50 / 1M" },
+  { label: "GPT-5.4 cached input", value: "$0.25 / 1M" },
+  { label: "GPT-5.4 mini input", value: "$0.75 / 1M" },
+  { label: "GPT-5.4 nano input", value: "$0.20 / 1M" },
+]} />
+
+## The old idea of the 10x engineer is too narrow
+
+The original version of a 10x engineer was simple: one unusually effective developer writes code faster than everyone else.
+
+That idea was always a bit shallow, but it's especially outdated now.
+
+The modern leverage point isn't typing speed. It isn't even raw reasoning ability. It's workflow design.
+
+Can you route the right work to the right model?
+Can you stop agents from rereading the same context over and over?
+Can you reduce useless scheduled check-ins?
+Can you design memory so the system carries forward only what matters?
+
+Those questions matter more than whether a frontier model can write a slightly prettier function.
+
+I wrote recently that [the 100x engineer doesn't write code](/blog/the-100x-engineer). I'd extend that idea one step further: the best agentic operators are also cost architects.
+
+<CompareTable
+  left={{ title: "Naive agent workflow", items: [
+    "Use the biggest model for everything",
+    "Reload the full repo every session",
+    "Schedule frequent heartbeats and cron checks",
+    "Let agents produce long, chatty outputs",
+    "Keep every prior message in context forever",
+  ] }}
+  right={{ title: "Smart token workflow", items: [
+    "Match model size to task type",
+    "Reuse stable prefixes and cached context",
+    "Check in only when timing actually matters",
+    "Ask for compact, structured outputs",
+    "Persist distilled memory, not raw chatter",
+  ] }}
+/>
+
+## Where token waste actually comes from
+
+Most teams assume the expensive part is the hard problem-solving.
+
+Usually it isn't.
+
+The biggest waste tends to come from repetition.
+
+### 1. Re-reading the same context
+
+This is the classic failure mode.
+
+A coding agent opens a repo, loads architecture docs, reads a bunch of files, builds context, then does 10 minutes of actual work. An hour later a cron job wakes up another agent, which reads the same repo and the same docs again just to answer a small status question.
+
+That pattern compounds fast.
+
+OpenAI's prompt caching exists for exactly this reason. For supported models, prompts with reused prefixes over 1,024 tokens can get automatic caching discounts, and cached prompts are typically retained for a short active window rather than forever ([OpenAI prompt caching](https://openai.com/index/api-prompt-caching/)). That's useful, but it does **not** remove the need for better workflow design. If your orchestration is wasteful, caching just makes waste a bit cheaper.
+
+<Callout type="tip" title="Token rule of thumb">
+If the same context is being loaded repeatedly, ask whether it should be cached, summarized, or persisted as structured memory instead of being reread raw.
+</Callout>
+
+### 2. Oversized models on low-value work
+
+Not every task needs a frontier model.
+
+A premium model is worth paying for when the task is architecturally expensive to get wrong: core feature design, system-level refactors, security-sensitive reasoning, multi-file implementation planning, or tricky debugging.
+
+It is usually overkill for:
+
+- status checks
+- simple classification
+- queue triage
+- formatting content
+- extracting structured data
+- recurring monitoring loops
+- first-pass summarization
+
+This is the easiest win in agent systems. Keep the expensive model for expensive judgment. Everything else gets a leaner model.
+
+### 3. Cron jobs with no real ROI
+
+This one catches almost everyone.
+
+You build a nice automation layer. Agents check PRs every hour. The main thread pings sub-agents every hour. A research agent wakes up every few hours to scan the same sources. A portfolio agent checks a task board too often. Individually, none of these seems costly. Together, they become a tax.
+
+The problem is each scheduled run has a hidden fixed cost:
+
+- load instructions
+- reload memory
+- reread context
+- produce output
+- maybe trigger downstream follow-up
+
+If the task didn't need to run that often, you're burning tokens to feel productive.
+
+<Highlight emoji="⏰">
+Bad scheduling is one of the fastest ways to turn a good agent system into a token furnace.
+</Highlight>
+
+In most setups, reducing frequency beats adding more clever prompts. A status check that runs 4 times a day instead of 24 times a day can save far more than any prompt tweak.
+
+### 4. Verbose agent output
+
+A lot of token waste is self-inflicted by output shape.
+
+If an agent is meant to answer with a checklist, don't let it produce an essay. If it's doing machine-to-machine handoff, the output should be compact and structured. If it's sending status, it should send the delta, not the full novel.
+
+Shorter outputs do two things:
+
+1. They reduce immediate output cost.
+2. They reduce future input cost because less text gets dragged into later context windows.
+
+This matters because output tokens are often materially more expensive than input tokens. On GPT-5.4, output tokens are currently **6x** the cost of input tokens ([OpenAI pricing](https://openai.com/api/pricing/)).
+
+## The real optimization stack
+
+If I were designing an agentic engineering system from scratch with token efficiency in mind, I'd optimize in this order.
+
+<Step number={1} title="Route work by value, not ego">
+Use the best model where mistakes are costly. Use smaller models where the work is repetitive, narrow, or easy to verify.
+</Step>
+
+<Step number={2} title="Design for compact handoffs">
+Agents should pass summaries, decisions, and structured state forward, not giant transcripts.
+</Step>
+
+<Step number={3} title="Persist memory selectively">
+Store stable facts, decisions, and status. Don't persist every conversation in full and then reread it forever.
+</Step>
+
+<Step number={4} title="Reduce heartbeat and cron frequency">
+Every recurring check should justify its own existence. If the timing can drift, it probably should.
+</Step>
+
+<Step number={5} title="Exploit stable prefixes and caching">
+Keep system prompts, policy blocks, and repeated context stable enough that the platform can discount reused input.
+</Step>
+
+## Smart token consumption is a product skill, not just an infra skill
+
+This is where early agent teams are making a category mistake.
+
+They treat token cost like cloud spend, something infra can worry about later.
+
+That misses the point. Token consumption changes product behavior.
+
+If your agents are expensive to run, you will avoid running them as often as you should. If they are too slow because they carry giant context windows, the workflow becomes annoying. If your cron design is bloated, your margins get worse the moment usage increases.
+
+Token strategy affects:
+
+- response speed
+- gross margin
+- whether automation feels safe to trigger often
+- whether agent teams can scale across multiple products
+- whether a small startup can afford deeper orchestration
+
+This is especially relevant for lean startups. A small team can absolutely get outsized leverage from agentic workflows, but only if the workflow is built around efficient context management.
+
+## The practical split: when to use which model class
+
+Here's the rough heuristic I use.
+
+### Use a premium model for:
+
+- architecture and system design
+- multi-file implementation planning
+- difficult debugging with ambiguous root causes
+- code review where quality matters more than speed
+- prompts that drive other agents or expensive downstream actions
+- final pass on high-value user-facing output
+
+### Use a smaller model for:
+
+- triage and routing
+- recurring board checks
+- extracting action items from notes
+- summarization and compaction
+- formatting structured content
+- first-pass research clustering
+- repetitive repo hygiene tasks
+
+<Callout type="info" title="This is not about using weak models">
+A smaller model isn't the cheap, bad option. It's the right-sized option when the task is narrow, the output format is constrained, or verification is easy.
+</Callout>
+
+That's the mindset shift. The question is not "what's the smartest model?" The question is "what's the cheapest model that can complete this task reliably within the guardrails?"
+
+## The hidden edge is compaction
+
+The teams that get serious about agent systems eventually rediscover the same thing: compaction matters.
+
+Every system accumulates conversational sludge. Old plans, stale status updates, discarded branches of reasoning, repeated reminders, huge repo descriptions that were useful once and then never needed in full again.
+
+If you don't compact, your system drags dead weight forever.
+
+Compaction can take a few forms:
+
+- replacing long chat history with a short state summary
+- turning recurring instructions into stable policy blocks
+- converting repo context into distilled architecture notes
+- promoting only durable facts into memory
+- trimming handoffs to unresolved questions, decisions, and next actions
+
+This is where a lot of token savings come from. Not from some clever trick, but from refusing to keep paying for context that no longer earns its place.
+
+## This is the real 10x behavior
+
+GitHub's Copilot research found developers completed tasks **up to 55% faster** in their study environment ([GitHub research](https://github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness/)). Stack Overflow's 2024 Developer Survey found **76%** of respondents were using or planning to use AI tools in development, and **81%** said productivity gains were the biggest expected benefit ([Stack Overflow 2024 AI survey](https://survey.stackoverflow.co/2024/ai/)).
+
+So yes, the productivity upside is real.
+
+But once AI usage becomes embedded in the workflow, the question changes. It's no longer "can AI make one developer faster?" It's "can this system keep delivering leverage without exploding cost and complexity?"
+
+<Highlight emoji="🧠">
+The real 10x engineer in an agentic world is the one who designs workflows that keep intelligence high and token waste low.
+</Highlight>
+
+That engineer understands model routing, context discipline, memory design, output compression, and schedule tuning. They don't just know how to prompt. They know how to operate.
+
+## If you're building agent workflows, start here
+
+If I had to boil this down into a short operating checklist, it'd be this.
+
+<Step number={1} title="Audit recurring jobs first">
+List every heartbeat, cron, and scheduled check. Ask whether each one truly needs its current frequency.
+</Step>
+
+<Step number={2} title="Separate premium reasoning from routine work">
+Make model selection explicit. Don't let every task default to the strongest and most expensive option.
+</Step>
+
+<Step number={3} title="Compact aggressively">
+Distill long threads into state. Persist decisions, not chatter.
+</Step>
+
+<Step number={4} title="Constrain outputs">
+Require short, structured handoffs wherever possible. Essays are expensive.
+</Step>
+
+<Step number={5} title="Measure cost per workflow, not just per model">
+The expensive thing may not be the model itself. It may be the loop wrapped around it.
+</Step>
+
+The next generation of engineering leverage won't come from one heroic developer sitting in one repo with one giant model.
+
+It'll come from small teams who know how to orchestrate many agents, across many contexts, with discipline.
+
+That's where the real edge is.
+
+And a lot of that edge is just smart token consumption.
+
+---
+
+*If you're building agentic workflows and wrestling with model routing, scheduling, or context design, find me on [X](https://x.com/roger_creator).*

@@ -1,0 +1,341 @@
+---
+title: "How to Secure AI-Generated Code Before Production"
+description: "AI can help you ship faster, but it can also help you ship vulnerabilities faster. Here's a practical security checklist for AI-built apps before they hit production."
+pubDate: 2026-04-08
+tags: ["ai", "security", "backend", "compliance"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+AI coding tools have changed the speed of software development.
+
+That's the upside.
+
+The downside is they can also speed up the creation of insecure software.
+
+A developer with Claude Code, Codex, Gemini CLI, or whatever comes next can now move across frontend, backend, infra, and CI/CD much faster than before. That's useful. It also means people are shipping code into production that they didn't fully reason through, didn't fully test, and in some cases don't fully understand.
+
+<Highlight emoji="⚠️">
+AI-generated code is not inherently insecure. Blindly trusted AI-generated code is.
+</Highlight>
+
+That's the real issue.
+
+The conversation should not be "should we use AI to write software?" That ship has sailed.
+
+The better question is: **what security, compliance, and governance practices do you need if AI is now part of your delivery pipeline?**
+
+If you're building real products, the answer is not paranoia. It's discipline.
+
+## The risk is not just bad code, it's compressed scrutiny
+
+The reason this matters is not that AI suddenly invented new classes of vulnerabilities.
+
+Most of the risks are old:
+
+- insecure auth flows
+- bad secret handling
+- dependency issues
+- injection vulnerabilities
+- over-permissive access
+- weak session management
+- broken CI/CD controls
+
+What's changed is the rate.
+
+A weak engineer used to be limited by speed. Now they can generate a lot of code very quickly and mistake throughput for correctness.
+
+A lot of teams are quietly replacing deep review with shallow confidence.
+
+<CompareTable
+  left={{ title: "Unsafe AI shipping mindset", items: [
+    "The code compiles, ship it",
+    "The model probably handled security",
+    "We'll scan it later",
+    "We don't need a real review for small changes",
+    "The package was popular so it must be fine",
+  ] }}
+  right={{ title: "Secure AI shipping mindset", items: [
+    "Generated code gets reviewed like junior output",
+    "Security controls live in the pipeline, not just in people's heads",
+    "Dependencies are treated as supply-chain risk",
+    "Auth and session flows get special scrutiny",
+    "Production release requires policy gates",
+  ] }}
+/>
+
+That's the posture shift teams need.
+
+## Start with governance, not tooling
+
+A lot of teams jump straight to scanners.
+
+Scanners matter, but governance comes first.
+
+If your team is using AI to build production software, you need a simple, explicit policy for how that code is allowed to move into production.
+
+That policy should answer questions like:
+
+- what classes of changes must be human-reviewed?
+- what security checks are mandatory in CI/CD?
+- what compliance baselines do we align with?
+- what model or agent is allowed to touch which environments?
+- what logs and audit trails do we retain?
+- who signs off on exceptions?
+
+<Callout type="info" title="Treat AI-built code like junior developer output">
+Not because it's always bad, but because the correct operating model is review, verification, and guardrails. Confidence is not evidence.
+</Callout>
+
+This is also where compliance becomes useful.
+
+For Australian teams, the **Essential Eight** is a practical baseline for reducing common cyber risk. ASD's guidance is explicitly risk-based and built around implementing prioritized mitigation strategies to reach an appropriate maturity level for your environment ([ASD Essential Eight](https://www.cyber.gov.au/business-government/asds-cyber-security-frameworks/essential-eight/essential-eight-maturity-model)). For broader organizational controls, teams may also map to ISO 27001 or SOC 2 style controls depending on customer expectations.
+
+The point is not to turn every startup into an audit bureaucracy. The point is to have a baseline that forces consistent thinking.
+
+## Secure by design matters more in the AI era
+
+CISA's Secure by Design guidance makes a point that more software teams need to internalize: security should be a core product requirement, not something dumped on the customer after release ([CISA Secure by Design](https://www.cisa.gov/securebydesign)).
+
+That hits differently in the AI coding era.
+
+Because if AI lets you ship faster, then the pressure to defer security gets worse, not better.
+
+A team using AI well should be increasing the amount of secure-by-default engineering they do, not reducing it.
+
+That means things like:
+
+- MFA available and encouraged
+- sane default permissions
+- logging on by default
+- session expiry policies
+- strong secret management
+- safe dependency policies
+- review gates before production
+
+<Highlight emoji="🛡️">
+The right use of AI is not "move fast and ignore security." It's "move fast and encode security into the system so speed doesn't degrade quality."
+</Highlight>
+
+## Supply-chain security is now a first-class concern
+
+One of the easiest ways to ship a vulnerability is through your dependencies.
+
+That was already true before AI coding tools. It's worse now because models happily suggest packages, snippets, and integrations with very little judgment about supply-chain risk.
+
+This is where teams need to be much more deliberate.
+
+### Minimum controls I would expect
+
+- dependency scanning in every repo
+- lockfiles committed and reviewed
+- automated alerts for vulnerable packages
+- provenance and integrity checks where possible
+- explicit review before introducing new critical dependencies
+- CI/CD gates on high-severity dependency issues
+
+GitHub's supply-chain tooling, including dependency security and Dependabot-style alerts, is a practical baseline for many teams ([GitHub supply chain security docs](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain)).
+
+For code scanning, tools like **CodeQL** are useful because they can surface semantic vulnerability patterns across a codebase rather than just syntax issues ([CodeQL](https://codeql.github.com/)).
+
+A practical stack might include:
+
+- **Dependabot** or Renovate for dependency visibility and updates
+- **CodeQL** for code scanning
+- **Trivy**, **Snyk**, or equivalent for package/container scanning
+- secret scanning in CI
+- signed releases or provenance tooling where feasible
+
+## You need CI/CD gates, not just best intentions
+
+A lot of security conversations die in Slack because everyone agrees in theory and nothing is enforced in the pipeline.
+
+That doesn't work.
+
+If AI-generated code can land quickly, then your pipeline needs to be opinionated.
+
+### A sane minimum release gate for AI-built code
+
+<Step number={1} title="Static analysis and linting">
+Catch obvious issues early. Not enough on its own, but still required.
+</Step>
+
+<Step number={2} title="Dependency and container scanning">
+Block known vulnerable dependencies and images before they ship.
+</Step>
+
+<Step number={3} title="Secret scanning">
+Prevent tokens, keys, and credentials from leaking into the repo or build artifacts.
+</Step>
+
+<Step number={4} title="Auth and permission review for sensitive changes">
+Anything touching sessions, permissions, billing, infra, or account access gets elevated review.
+</Step>
+
+<Step number={5} title="Human approval before production">
+Especially for code substantially written by AI, major auth changes, or changes with high blast radius.
+</Step>
+
+If a repo has none of this, it's not serious production infrastructure yet. It's just hopeful automation.
+
+## Prompt injection and insecure output handling are now app-layer concerns
+
+Traditional app security is still here. But AI apps add their own patterns.
+
+OWASP's work on LLM application security is useful because it names the issues clearly: prompt injection, insecure output handling, supply-chain vulnerabilities, sensitive information disclosure, excessive agency, and more ([OWASP GenAI Security Project](https://genai.owasp.org/llm-top-10/)).
+
+This matters even if your product is "just a normal SaaS app" using AI in one feature.
+
+If the output of a model is fed into another system without validation, you can create downstream security issues very quickly.
+
+Examples:
+
+- model-generated SQL or filters passed through too loosely
+- model-generated Markdown or HTML rendered unsafely
+- agent outputs triggering tools without proper policy checks
+- retrieval systems pulling in malicious instructions from untrusted sources
+
+<Callout type="warning" title="Never trust model output just because it's structured">
+Valid JSON can still contain unsafe actions, broken assumptions, or malicious content once it reaches the next step in the system.
+</Callout>
+
+## Authentication and session hygiene deserve special attention
+
+Auth is one of the easiest places for AI-generated code to create hidden risk.
+
+Because auth code often looks straightforward while containing subtle problems:
+
+- token expiry too long
+- refresh token misuse
+- weak rotation logic
+- tokens stored in risky places
+- insufficient device/session invalidation
+- privilege escalation edge cases
+- unsafe "on behalf of" flows
+
+You mentioned JWTs, and that's a good example.
+
+JWTs are not inherently bad, but they are easy to misuse. A token that lives too long, is exposed too broadly, or can be replayed too easily increases risk fast. If a token can be intercepted, copied from an unsafe client context, or reused before expiry, the attacker doesn't care that the implementation looked clean in the diff.
+
+A few practical rules:
+
+- keep access tokens short-lived
+- rotate refresh tokens properly
+- prefer secure cookie patterns over risky browser storage where the architecture allows it
+- support revocation and session invalidation
+- layer MFA where appropriate
+- treat impersonation and delegated access flows as high-risk features
+
+<Highlight emoji="🔐">
+Anything touching auth, sessions, permissions, or account recovery should get more review than average AI-generated code, not less.
+</Highlight>
+
+## Zero trust is the right mental model
+
+A lot of people hear "zero trust" and think it's just enterprise jargon.
+
+The useful version is simple: **don't assume trust because something is inside your system boundary. Verify explicitly, minimize privilege, and design for compromise.**
+
+That mindset works well for AI-built systems because it avoids the most dangerous assumption of all: "the code came from our toolchain, so it's probably fine."
+
+Zero trust in practice can mean:
+
+- least-privilege service accounts
+- scoped tokens and expiring credentials
+- strong separation between environments
+- policy checks before tool execution
+- network and service segmentation where needed
+- auditable access paths
+- no hidden admin bypasses
+
+This is especially important when agents and coding tools start touching more of the stack.
+
+## AI can help with security too, but don't outsource judgment
+
+There's a real upside here.
+
+Newer models are getting better at spotting classes of bugs, risky flows, and insecure defaults. Security review is one of the highest-value uses of AI-assisted development.
+
+But cyber security is still its own discipline.
+
+It requires a different way of thinking. Not just writing code, but reasoning about:
+
+- attacker goals
+- attack paths
+- privilege boundaries
+- abuse cases
+- chained weaknesses
+- impact under real adversarial pressure
+
+That's why I would use AI as a **force multiplier for review**, not as an excuse to skip review.
+
+A good workflow is:
+
+1. AI helps generate or refactor code
+2. automated scanners and policy checks run in CI/CD
+3. AI-assisted review helps look for suspicious patterns
+4. a human signs off before high-risk code reaches prod
+
+## My practical checklist before shipping AI-generated code
+
+If I had to reduce this to a simple release checklist, it'd look like this.
+
+<Step number={1} title="Set a compliance and governance baseline">
+Essential Eight, ISO-style controls, or a similar internal policy. Something real, not vibes.
+</Step>
+
+<Step number={2} title="Treat AI-built code as review-required by default">
+Especially for auth, infra, payments, permissions, or data handling.
+</Step>
+
+<Step number={3} title="Harden the supply chain">
+Dependency scanning, lockfile review, secret scanning, provenance where feasible.
+</Step>
+
+<Step number={4} title="Enforce CI/CD gates">
+No vulnerable dependencies, no leaked secrets, no high-risk code merging without sign-off.
+</Step>
+
+<Step number={5} title="Review auth and session logic separately">
+JWTs, refresh flows, impersonation, delegated access, MFA, and expiry policies get elevated scrutiny.
+</Step>
+
+<Step number={6} title="Validate AI outputs before downstream use">
+Prompt injection and insecure output handling are real risks, not theory.
+</Step>
+
+<Step number={7} title="Use zero trust thinking">
+Least privilege, explicit verification, narrow access, strong auditing.
+</Step>
+
+<StatBlock stats={[
+  { label: "Review target", value: "auth" },
+  { label: "Review target", value: "supply chain" },
+  { label: "Review target", value: "CI/CD gates" },
+  { label: "Review target", value: "AI output handling" },
+]} />
+
+## The bottom line
+
+You can absolutely build secure apps in the AI coding era.
+
+But only if you stop treating model output as trustworthy by default.
+
+The future is not "humans code everything manually again." That's not happening.
+
+The future is teams that combine AI speed with real engineering discipline: governance, review, secure defaults, supply-chain controls, auth hygiene, zero trust, and proper release gates.
+
+That's how you get the upside without turning your production stack into a security experiment.
+
+Ship faster if you want.
+
+Just don't outsource your judgment.
+
+---
+
+*If you're using AI to build production software and want to compare notes on security, governance, or backend architecture, find me on [X](https://x.com/roger_creator).*

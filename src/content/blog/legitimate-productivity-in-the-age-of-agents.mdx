@@ -1,0 +1,367 @@
+---
+title: "Building AI Agents So I Can Live More"
+description: "Why I'm building an AI operating layer to create real output, reduce screen time, and buy back more life, not just more commits."
+pubDate: 2026-04-08
+tags: ["ai", "productivity", "agents", "engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+I think about productivity more than is probably healthy.
+
+But if I'm honest, productivity is not actually the end goal.
+
+The real goal is freedom.
+
+More time with family. More time outside. More time walking, training, thinking, and living. Less time pinned to a laptop doing repetitive coordination work that should have been delegated to software years ago.
+
+That is a big part of why I'm building with AI agents.
+
+Not to become some screen-addicted productivity robot. The opposite.
+
+I want an operating layer that keeps useful work moving when I'm away from the keyboard. I want legitimate output without having to personally sit in front of every task. I want the business to keep compounding without every gain requiring more screen time.
+
+Of course, there is a paradox here.
+
+To build that kind of freedom, you have to work very hard up front. You have to build the orchestration layer, the management layer, the review layer, the voice layer, and the human checkpoints that make the whole thing trustworthy.
+
+So the question is no longer just, "How do I get more done today?"
+
+It becomes, "How do I build a system that produces legitimate output around the clock without turning into noise, drift, and fake momentum?"
+
+<Highlight emoji="🧠">
+The hard part is not getting an agent to do 1,000 actions. The hard part is getting an agent team to do 50 useful ones that actually count.
+</Highlight>
+
+## Why commit count started mattering to me
+
+One of the things I've become weirdly focused on is my GitHub contribution graph.
+
+I'm trying to get it consistently over 50 commits a day.
+
+That probably sounds like vanity. On some level, maybe it is. But for me it's become a forcing function.
+
+It makes me ask a useful question every day: did we actually produce real changes, or did we just talk about doing work?
+
+Of course, commit count is easy to game.
+
+You can get an AI to make 1,000 pointless commits to a README file. You can split one meaningless change into 20 tiny commits. You can create activity without creating progress.
+
+That is not what I'm after.
+
+I'm after what I think of as **legitimate productivity**.
+
+That means the commits need to reflect real work:
+
+- scoped changes
+- meaningful progress
+- a clean audit trail
+- easy rollback if something breaks
+- forward motion on actual product, ops, marketing, or infrastructure
+
+<Callout type="warning" title="Commit count is not the goal">
+Commit count is just a proxy. The real goal is sustained, traceable, high-quality output.
+</Callout>
+
+## Developers already have a term for part of this
+
+A lot of what I'm reaching for maps to ideas developers already know well:
+
+- **atomic commits**
+- **small pull requests**
+- **separation of concerns**
+- **clear review boundaries**
+- **high signal change history**
+
+Those practices matter even more with agents in the loop.
+
+By default, most AI coding agents do not behave this way.
+
+They tend to lump multiple concerns together, make broad changes across the stack, and produce one oversized commit that technically works but is painful to review.
+
+That's fine for a prototype. It's bad for a real operating system around software delivery.
+
+<Highlight emoji="🧱">
+If you want legitimate agent productivity, you need to force atomic behavior. Agents do not default to it.
+</Highlight>
+
+That means:
+
+- smaller task scopes
+- separate frontend and backend changes where possible
+- one logical change per commit
+- one coherent unit of review per PR
+- clear acceptance criteria before work starts
+
+This isn't bureaucracy. It's what makes speed trustworthy.
+
+## Fake productivity vs legitimate productivity
+
+This is the split I keep coming back to.
+
+<CompareTable
+  left={{ title: "Fake productivity", items: [
+    "High activity, low business value",
+    "Huge PRs with mixed concerns",
+    "Commits designed to inflate the graph",
+    "Agents working without clear task boundaries",
+    "Humans buried in cleanup and review",
+  ] }}
+  right={{ title: "Legitimate productivity", items: [
+    "High output tied to real objectives",
+    "Atomic commits and scoped pull requests",
+    "Agents working against a clear queue",
+    "Human review focused where risk is real",
+    "A visible audit trail of meaningful changes",
+  ] }}
+/>
+
+The fake version feels exciting for a while.
+
+The legitimate version compounds.
+
+That's what I care about.
+
+## Why commits alone are not enough
+
+Commit history is useful if your job is mostly software delivery.
+
+But once you start running a broader AI-first operation, commit count becomes too narrow.
+
+Some of the most valuable work an agent can do isn't code at all:
+
+- content research
+- blog drafting
+- summarizing sales calls
+- producing customer-facing assets
+- reviewing metrics
+- triaging tasks
+- writing internal docs
+- finding regressions
+
+That's why I think **token consumption** becomes a broader productivity metric in agentic systems.
+
+Not because spending more tokens is inherently good. It isn't. But token consumption can cover a much wider slice of output than commits do.
+
+If you think in tokens, you can measure work across engineering, marketing, research, and operations.
+
+<StatBlock stats={[
+  { label: "Good commit metric", value: "code output" },
+  { label: "Better system metric", value: "token-backed work" },
+  { label: "Real constraint", value: "human review time" },
+  { label: "Real goal", value: "legitimate output" },
+]} />
+
+The trap is obvious though.
+
+You can waste tokens just as easily as you can waste commits.
+
+So the right question is not, "How many commits did we make?" or "How many tokens did we burn?"
+
+It's: **how much legitimate work did the system complete, and how much human effort did it save without creating risk?**
+
+## What a real 24/7 agent team actually needs
+
+A lot of people imagine a future where you spin up a team of agents, point them at a business, and let them figure it out.
+
+I don't think that's how this works.
+
+You don't want total free agency.
+
+If agents constantly decide what matters on their own, you lose alignment. You end up with work happening in the wrong direction, at the wrong priority, with too little context about what actually matters.
+
+At the same time, if the human has to micromanage every single move, you don't get leverage.
+
+So the real challenge is building a system that sits in the middle.
+
+A real 24/7 agent team needs:
+
+<Step number={1} title="A strong task pipeline">
+Agents need a queue of work that is actually worth doing. If the board is weak, the team starves or drifts.
+</Step>
+
+<Step number={2} title="Tight task scoping">
+The smaller and clearer the task, the more likely the output is reviewable, atomic, and correct.
+</Step>
+
+<Step number={3} title="Routing logic">
+Different tasks need different agents, different models, and different review expectations.
+</Step>
+
+<Step number={4} title="Human checkpoints">
+High-risk, high-value, or visually sensitive work still needs a human in the loop.
+</Step>
+
+<Step number={5} title="A place for exceptions">
+When an agent gets stuck, needs approval, or finds something ambiguous, that should become a clean escalation, not silent failure.
+</Step>
+
+That is the part people underestimate.
+
+The bottleneck is not just model capability. It's operations.
+
+## Review is one of the biggest hidden costs
+
+One reason it's hard to 10x legitimate productivity is that review takes time.
+
+If your agents are productive but every output still creates a giant review burden, you haven't really solved the problem. You've just moved the work around.
+
+That shows up in a few ways:
+
+- PRs are too big
+- changes mix multiple features
+- frontend and backend changes are tangled together
+- tests are incomplete
+- visual QA still needs a human
+- the reviewer has to reconstruct intent from messy diffs
+
+This is why I keep coming back to atomic commits and small PRs.
+
+They reduce reviewer load.
+
+They also reduce fear. A small, well-scoped PR is much easier to approve than a monster branch that touched 23 files across five concerns.
+
+<Callout type="tip" title="Small PRs are a productivity multiplier">
+They speed up review, lower risk, improve auditability, and make it easier to keep multiple agents moving in parallel.
+</Callout>
+
+## Testing is still messy
+
+This is another reality check for anyone who thinks agent teams can just run fully autonomously today.
+
+Testing is still hard.
+
+Yes, agents can write unit tests. Yes, they can write end-to-end flows in Playwright. Yes, they can click around an app and catch obvious breakages.
+
+That's useful.
+
+But there is still a large category of things a human notices faster:
+
+- visual weirdness
+- product feel
+- edge-case UX
+- whether a flow actually makes sense
+- whether the result aligns with business intent
+
+So the question is not whether humans stay in the loop.
+
+They do.
+
+The question is **where** they stay in the loop.
+
+That's the operating-system problem.
+
+## Why I built CrewCMD
+
+This is a big reason I built CrewCMD.
+
+Not because I think one tool magically solves AI orchestration.
+
+It doesn't.
+
+I built it because I needed a hybrid operating layer for an AI-first team, one that helps me stay in control without being chained to the screen.
+
+I wanted:
+
+- a real task pipeline
+- a place to assign work to agents
+- visibility into what is queued, in progress, blocked, or ready for review
+- a clean way to escalate human-required work
+- enough structure that agents can move, without disappearing into autonomous nonsense
+
+<Highlight emoji="⚡">
+The goal was never full autonomy. The goal was high-leverage human-in-the-loop execution.
+</Highlight>
+
+That is a very different thing.
+
+Long term, I think the interface for this becomes much lighter too. Less dashboard babysitting. More voice. More ambient coordination. More moments where I can be on a walk, with family, or away from the desk and still steer the system at a high level.
+
+Some tasks don't need human review.
+
+If an agent fixes a simple bug, updates a dependency, or scaffolds an internal tool, maybe a human only needs to spot-check it.
+
+Other tasks absolutely do need review.
+
+If the change is business-critical, customer-facing, high-risk, or visually important, a human needs to see it.
+
+The trick is building a system that knows the difference, or at least makes that difference visible.
+
+## The real challenge is feeding the system
+
+Here's the part that still feels under-discussed.
+
+Even if your agents are good, and even if your review loop is decent, you still need enough good work to feed them.
+
+On one project, that gets hard fast.
+
+A good team of agents can burn through a backlog in one night if the tasks are well-scoped.
+
+So one strategy I've been thinking more about is batching.
+
+Instead of trying to invent the next task every hour, you spend a dedicated block of time building the queue:
+
+- break initiatives into atomic units
+- define review boundaries
+- label high-risk work
+- decide which tasks can run without human interruption
+- preload the system with enough meaningful work to keep momentum up
+
+That feels much closer to reality than the fantasy of infinite autonomous task generation.
+
+## My current definition of productivity
+
+The older I get, the less impressed I am by visible busyness.
+
+My current definition of productivity is something like this:
+
+<Callout type="info" title="My working definition">
+Productivity is the rate at which a system turns attention, capital, and machine effort into legitimate outcomes without losing quality, context, or control.
+</Callout>
+
+That is what I'm chasing.
+
+Not just more commits.
+
+Not just more tokens.
+
+Not just more agent activity.
+
+I want a system where a human can set direction, load a queue, apply judgment where it matters, and let agents produce a high volume of real work in the gaps.
+
+That is very different from simply automating everything in sight.
+
+## The path to 10x is not what most people think
+
+If there is a path to 10x legitimate productivity, I don't think it comes from one magical model or one giant autonomous agent.
+
+I think it comes from stacking a lot of operational truths together:
+
+- atomic commits
+- small PRs
+- scoped tasks
+- explicit review gates
+- reliable testing where possible
+- human QA where necessary
+- clear escalation paths
+- enough queued work to keep the system fed
+- metrics that track real output, not vanity
+
+That is less glamorous than the hype version.
+
+It's also much more likely to work.
+
+And if I can get that operating properly, then maybe the GitHub graph takes care of itself.
+
+Not because we gamed it.
+
+Because we built a system that actually ships.
+
+---
+
+*If you're working on agent teams, legitimate productivity, or human-in-the-loop operating systems, find me on [X](https://x.com/roger_creator).*

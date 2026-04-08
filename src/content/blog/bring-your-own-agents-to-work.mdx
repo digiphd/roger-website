@@ -1,0 +1,426 @@
+---
+title: "Bring Your Own Agents to Work"
+description: "Personal AI agents are coming to work. The hard part isn't adoption. It's governance, permissions, auditability, and safe interfaces."
+pubDate: 2026-04-09
+tags: ["ai", "agents", "governance", "engineering", "security"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+The next AI fight at work won't be about whether people use agents.
+
+That part is basically over.
+
+The real fight is what happens when high-agency employees show up with their own tuned agent stack, their own prompts, their own memory, their own MCP servers, and their own opinions about how work should get done.
+
+Not just "I use ChatGPT sometimes."
+
+I mean: **I have a personal engineering system that writes code, reviews PRs, drafts specs, talks to APIs, summarizes meetings, and helps me think faster than your default enterprise tooling.**
+
+That collision is coming fast.
+
+Salesforce found that over half of workers already using generative AI at work were doing so with unapproved tools, while nearly 7 in 10 had never received safe-use training ([Salesforce](https://www.salesforce.com/news/stories/ai-at-work-research/)). That's not a tooling curiosity. That's the first wave of bring-your-own-agents.
+
+<Highlight emoji="🧠">
+The big enterprise AI problem is shifting from model access to agent governance: who can use what, against which systems, with what permissions, under whose audit trail, and with what separation between personal and company context.
+</Highlight>
+
+If you're an engineer, founder, CTO, or security lead, that's the problem worth solving now.
+
+Not because the future is some enterprise slide deck full of vague "AI transformation." Because the practical version is much more concrete:
+
+- one engineer wants to plug their personal agent into GitHub, Linear, Slack, Notion, and production logs
+- the company has its own approved internal agents with different rules
+- both stacks are useful
+- both stacks touch sensitive systems
+- and neither side wants to give up speed
+
+That's not a prompt problem.
+
+It's an interface, identity, and governance problem.
+
+## BYOA is the next BYOD
+
+We already lived through a version of this.
+
+People brought their own phones, cloud drives, messaging apps, and SaaS tools to work because the approved stack was slower than the consumer stack.
+
+AI agents are the same pattern, just with much higher leverage.
+
+A personal phone can leak messages.
+A personal agent can leak architecture, customer data, strategy documents, source code, credentials, and operational intent.
+
+At the same time, banning personal agents outright is not a serious long-term strategy.
+
+The people pushing hardest on AI are often your highest-leverage operators. They're the people who are already compressing research, writing, coding, planning, and decision support into one workflow. Telling them to abandon that and work entirely through a lagging internal chatbot is a good way to lose both productivity and goodwill.
+
+<CompareTable
+  left={{ title: "Naive company response", items: [
+    "Ban all personal AI tools",
+    "Force everyone into one approved assistant",
+    "Treat AI like a browser plugin problem",
+    "Assume trust if the user is an employee",
+    "Rely on policy docs instead of technical controls",
+  ] }}
+  right={{ title: "What actually scales", items: [
+    "Allow capability with clear boundaries",
+    "Separate personal and company contexts",
+    "Treat agents like identity-bearing software actors",
+    "Enforce least privilege and explicit approvals",
+    "Log and review high-risk actions",
+  ] }}
+/>
+
+That's the key mindset shift.
+
+You're not managing "AI usage."
+You're managing **software agents acting on behalf of humans across business systems**.
+
+That should immediately make you think about IAM, audit logs, risk tiers, access scopes, and approval workflows.
+
+## The real issue isn't model quality
+
+A lot of enterprise AI discussion still sounds like this:
+
+- which model should we standardize on?
+- should we buy Copilot, Gemini, Claude, or something else?
+- should the agent use RAG?
+- can we host the model privately?
+
+Those questions matter. They're just not the main event.
+
+A company can pick an excellent model and still have a terrible agent operating model.
+
+Because the hard problems are things like:
+
+- Can a personal agent read internal docs but not retain them in personal memory?
+- Can an engineer use their private coding agent on company code without exporting confidential context to a consumer account?
+- Can the company prove which agent suggested or executed a sensitive change?
+- Can an agent propose production actions without silently taking them?
+- Can two agents, one personal and one employer-controlled, coordinate without blurring identity and responsibility?
+
+<Callout type="info" title="The governance gap">
+Most teams are still arguing about which assistant to buy when the real design work is permissions, boundaries, and accountability across agent-driven workflows.
+</Callout>
+
+This is why I think the next wave of productivity won't be won by the company with the nicest chat UI.
+
+It'll be won by the company that builds the safest interface between personal leverage and organizational control.
+
+## A 10x engineer with a private agent stack changes the threat model
+
+If you've read my posts on [AI agents and real productivity](/blog/legitimate-productivity-in-the-age-of-agents/) or [the 100x engineer](/blog/the-100x-engineer/), you know I think personal agent stacks are real leverage.
+
+A good engineer with a tuned stack is not just coding faster.
+They're compressing cognition.
+
+They can:
+
+- turn vague tickets into implementation plans
+- generate and review code in parallel
+- summarize incident context from multiple systems
+- pre-draft architecture decisions
+- triage logs and docs without losing momentum
+- keep a working memory of how they like to build
+
+That's powerful.
+
+It's also exactly why companies should stop pretending these are just harmless note-taking tools.
+
+Once an agent has tool access, memory, and cross-system visibility, it's no longer just a text generator. It's an operator.
+
+NIST's AI Risk Management Framework and its generative AI profile both point in this direction: trustworthy AI depends on governance, design-time controls, use-time controls, and evaluation, not just model capability ([NIST AI RMF](https://www.nist.gov/itl/ai-risk-management-framework)).
+
+That maps cleanly to workplace agents.
+
+The question becomes:
+
+**What is this agent allowed to know, do, remember, trigger, and prove?**
+
+That's a much better question than "is the model smart enough?"
+
+## Where personal and employer agents will collide
+
+I think the collision happens in five places.
+
+### 1. Identity
+
+Who is the actor?
+
+Is it:
+
+- Roger the employee?
+- Roger's personal agent?
+- Roger's employer-provided engineering agent?
+- a workflow agent started by Roger but running inside company infrastructure?
+
+Those are not the same thing.
+
+But most current tooling collapses them into one messy blob.
+
+When everything happens through one chat window, identity gets fuzzy fast. That is bad for both security and management.
+
+### 2. Permissions
+
+A human might be allowed to read a system without being allowed to automate actions in it.
+
+A personal agent might be allowed to draft a PR but not merge it.
+
+A company agent might be allowed to read an internal handbook but not sync that data into a personal vector store.
+
+These distinctions matter.
+
+<Highlight emoji="🔐">
+In agentic systems, the most important permission is not just "can access." It's "can access for what purpose, through which interface, with what downstream actions allowed." 
+</Highlight>
+
+### 3. Auditability
+
+When something goes wrong, companies need more than a transcript.
+
+They need to know:
+
+- which human initiated the work
+- which agent handled it
+- which tools were invoked
+- what data sources were accessed
+- whether approvals were required and granted
+- what final action was taken
+
+This is one of the reasons chat history is not enough. As I wrote in [Why Most AI Apps Die in the Backend](/blog/why-most-ai-apps-die-in-the-backend/), transcripts are not a substitute for state, control, and traceability.
+
+### 4. Data separation
+
+This is the ugly one.
+
+The most useful personal agents are the ones that remember you: your preferences, your writing style, your heuristics, your recurring tasks, your half-finished ideas.
+
+That same memory model becomes dangerous at work if it starts mixing:
+
+- proprietary code
+- customer data
+- internal strategy
+- security procedures
+- personal notes and external projects
+
+If your architecture can't separate those contexts cleanly, you're building a future breach report.
+
+### 5. Interface safety
+
+The more value an agent has, the more tools it touches.
+
+And the more tools it touches, the more dangerous bad interfaces become.
+
+OWASP's LLM Top 10 keeps calling out the obvious failure modes here: prompt injection, insecure output handling, sensitive information disclosure, excessive agency, and supply-chain risk ([OWASP](https://genai.owasp.org/llm-top-10/)).
+
+That matters even more when the interface is not just "answer this question" but "go do this across six systems."
+
+## The practical design principle: treat agents like employees with badges
+
+The most useful mental model I've found is this:
+
+**Agents should be treated less like features and more like workers with scoped badges.**
+
+Not human workers, obviously. But operationally, the analogy helps.
+
+A worker has:
+
+- an identity
+- a role
+- a manager or owner
+- systems they can access
+- actions they can take
+- approvals they need for risky work
+- a record of what they did
+
+That's how agent platforms should work too.
+
+<Step number={1} title="Give each agent a distinct identity">
+No more invisible automation blobs. Personal agent, employer agent, and workflow agent should be distinguishable in logs, approvals, and system events.
+</Step>
+
+<Step number={2} title="Use least privilege by default">
+An agent should get the minimum tool and data access required for its role, not whatever its human operator happens to have globally.
+</Step>
+
+<Step number={3} title="Separate memory domains">
+Personal memory, company memory, customer-specific memory, and ephemeral task memory should not be treated as one giant context bucket.
+</Step>
+
+<Step number={4} title="Require explicit approval for high-risk actions">
+Reading docs is different from changing billing, rotating credentials, deploying code, or sending external messages.
+</Step>
+
+<Step number={5} title="Log actions as events, not just chat">
+Store durable records of tool calls, approvals, outputs, and state transitions so auditability survives beyond the conversation window.
+</Step>
+
+This is the same spirit as good backend engineering, just applied to agents. The product is not the clever prompt. The product is the safe operating layer around it.
+
+## What companies should allow
+
+I don't think the answer is "only use company agents."
+
+That's too blunt, and it misunderstands why personal stacks are compelling in the first place.
+
+A better model is to define categories.
+
+### Category A: personal-only agents
+
+Allowed to help with generic thinking, writing, learning, and public information.
+
+Not allowed to touch:
+
+- company data
+- private repos
+- internal tickets
+- customer systems
+- secrets
+
+### Category B: company-connected personal agents
+
+Allowed to connect to approved company systems through sanctioned interfaces.
+
+Requirements should include:
+
+- SSO or delegated company auth
+- explicit scopes
+- revocable access
+- organization-side logging
+- memory restrictions
+- terms that prevent training on private data
+
+### Category C: employer-controlled agents
+
+These run inside company infrastructure or approved vendors with company-owned policies, audit trails, and retention settings.
+
+These should handle the high-trust workflows:
+
+- codebase access
+- internal documentation
+- prod-adjacent operations
+- customer support actions
+- finance or legal workflows
+
+This is where a lot of orgs will land: not banning personal agents, but restricting where they can cross the boundary into company systems.
+
+That's a much more realistic posture.
+
+## What a sane engineering policy looks like
+
+If I were writing a practical BYOA policy for an engineering org, it would look something like this.
+
+<Step number={1} title="Define approved connection points">
+Don't let agents plug into company systems through random browser sessions and copied API keys. Publish approved interfaces, scopes, and auth patterns.
+</Step>
+
+<Step number={2} title="Classify systems by risk tier">
+Docs and low-sensitivity tickets are not the same as production infra, payroll, or customer data. Agent permissions should reflect that.
+</Step>
+
+<Step number={3} title="Make personal-vs-company context explicit">
+Users should know when they're in personal memory, shared team memory, or company-retained workflow context.
+</Step>
+
+<Step number={4} title="Require human approval at the blast-radius boundary">
+PR creation might be automatic. PR merge, infrastructure changes, customer communications, or data exports should not be.
+</Step>
+
+<Step number={5} title="Train people on safe use">
+This sounds boring, but Salesforce's data shows the boring part is exactly what's missing. If people have no guidance, they will invent risky workflows on their own.
+</Step>
+
+<Step number={6} title="Instrument for audit and incident response">
+If an agent accessed sensitive systems or produced a bad action chain, you need enough telemetry to reconstruct what happened quickly.
+</Step>
+
+<StatBlock stats={[
+  { label: "Need clear policy", value: "55%+" },
+  { label: "Workers lacking AI training", value: "~70%" },
+  { label: "Primary control", value: "least privilege" },
+  { label: "Primary architecture", value: "separated contexts" },
+]} />
+
+## The company stack still matters
+
+None of this means the employer should shrug and say, "fine, everyone bring whatever agents you want."
+
+Quite the opposite.
+
+The company stack matters because it should provide the secure rails:
+
+- standardized auth
+- approved connectors
+- logging and observability
+- policy enforcement
+- secrets management
+- data retention controls
+- review paths for sensitive actions
+
+That infrastructure is how you support high-performing engineers without turning the org into chaos.
+
+In other words, the employer should own the roads, not necessarily every vehicle.
+
+That feels like the right compromise.
+
+## What builders should do right now
+
+If you're building agent products, internal platforms, or AI-enabled developer tooling, I'd focus on these questions immediately.
+
+### 1. Can your system represent multiple agent identities cleanly?
+
+Not just users. Agents.
+
+Personal agent, shared team agent, company agent, workflow agent. Different actors, different logs, different scopes.
+
+### 2. Can you separate memory by policy, not just convenience?
+
+A lot of products still treat memory as a feature upgrade.
+
+It should be a governance primitive.
+
+### 3. Can your tools expose safe interfaces?
+
+The more useful the tool layer becomes, the more important constrained actions, typed inputs, validation, and approval checkpoints become. This overlaps heavily with the same backend discipline I talked about in [The API Is the Product for AI Features](/blog/the-api-is-the-product-for-ai-features/).
+
+### 4. Can you explain and replay what happened?
+
+If an agent opened a PR, changed a ticket, queried an internal doc set, and proposed a deploy, you should be able to reconstruct that chain without reading a thousand lines of chat.
+
+### 5. Can you preserve speed without hiding risk?
+
+This is the design challenge.
+
+Too much friction and good people route around your platform.
+Too little control and you've built a breach machine.
+
+The best products in this space will make the safe path the fast path.
+
+## My view
+
+Bring-your-own-agents is not a fringe scenario.
+It's the natural endpoint of personal AI leverage getting better faster than enterprise procurement cycles.
+
+The winning organizations won't be the ones that ban it the hardest.
+They'll be the ones that design for it honestly.
+
+<Highlight emoji="⚡">
+The future of work is not one company agent replacing every personal workflow. It's a governed multi-agent environment where personal leverage can plug into company systems through safe interfaces, clear permissions, hard audit trails, and strict data boundaries.
+</Highlight>
+
+That is a much more interesting problem than "which model should we buy?"
+
+And for technical leaders, it's the one that matters.
+
+Because once your best people are effectively operating as human-plus-agent systems, governance is no longer admin overhead.
+
+It's product design.
+
+---
+
+*If you're building internal agent platforms, thinking through AI governance, or wrestling with safe interfaces for human-plus-agent teams, find me on [X](https://x.com/roger_creator).*

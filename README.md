@@ -56,6 +56,7 @@ I'm Roger Chappel, a technical founder based in Australia. I build AI-powered pr
 | `pnpm dev` | Start local dev server at `localhost:4321` |
 | `pnpm build` | Build the production site to `./dist/` |
 | `pnpm preview` | Preview the build locally before deploying |
+| `pnpm og` | Generate Open Graph images for blog posts before opening a PR |
 
 ## Deployment
 

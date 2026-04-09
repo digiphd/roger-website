@@ -1,0 +1,179 @@
+---
+title: "The SaaS I'm Building for a Problem Nobody Talks About"
+description: "Why I built Soply around institutional knowledge rot, the invisible tax of undocumented work, and why this problem matters more than most teams realize."
+pubDate: 2026-04-09
+tags: ["saas", "ai", "operations", "knowledge"]
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+Most software is built to solve obvious pain.
+
+Save time. Cut costs. Generate leads. Track revenue. Secure systems.
+
+But one of the worst problems inside growing teams is almost invisible while it is happening.
+
+Institutional knowledge rot.
+
+That is the problem behind [Soply.ai](https://soply.ai), and it is why I think this category matters a lot more than people realize.
+
+## The problem nobody budgets for
+
+Every team has this moment.
+
+One person knows how a critical workflow actually works.
+
+Maybe it is how customer refunds get handled when Stripe and the CRM disagree. Maybe it is how onboarding is really done, not how the Notion page says it is done. Maybe it is the weird sequence for publishing a release without breaking the analytics pipeline.
+
+The knowledge lives in a person's head, or inside a Slack thread, or trapped in a screen recording nobody will ever watch again.
+
+Then one of three things happens:
+
+- they go on leave
+- they change roles
+- they quit
+
+Now the company pays the tax.
+
+Not in one dramatic event. In tiny, expensive fragments.
+
+Repeated questions. Broken handoffs. Slow onboarding. Work done differently by each new person. Mistakes nobody intended.
+
+<Highlight emoji="🧠">
+Institutional knowledge does not usually disappear all at once. It decays a little every week until the team starts calling the damage "normal."
+</Highlight>
+
+## Why this problem gets ignored
+
+Because it does not look urgent until it already cost you money.
+
+If your error rate spikes, you notice.
+
+If a customer cancels because support is inconsistent, you might notice.
+
+If a new hire takes 6 weeks to become useful instead of 2, that loss gets smeared across the calendar and nobody writes a postmortem for it.
+
+Knowledge rot is one of those operational problems that hides inside other symptoms.
+
+The team says:
+
+- onboarding is slow
+- quality is inconsistent
+- only a few people can do key tasks
+- documentation is outdated
+- every handoff feels messy
+
+What they usually mean is: the business has stopped converting real work into reusable knowledge.
+
+## Why I built Soply
+
+Soply is built around a simple idea.
+
+People are much more willing to record themselves doing work than they are to write clean documentation from scratch.
+
+That matters.
+
+Because the usual advice for this problem is still "just document better," which is manager-speak for "do unpaid writing homework after the real work is done."
+
+That almost never sticks.
+
+So instead of asking people to write SOPs from a blank page, Soply starts with what teams already produce naturally: a video of someone doing the task.
+
+From there, the system turns that into structured SOPs the team can reuse.
+
+<CompareTable
+  left={{ title: "How most teams handle process", items: ["Write docs later", "Store screen recordings in a folder", "Hope someone updates Notion", "Rely on the same person to explain it again"] }}
+  right={{ title: "What Soply is built for", items: ["Capture the task once", "Convert video into a usable SOP", "Create repeatable training material", "Reduce dependence on tribal knowledge"] }}
+/>
+
+## This is not a documentation problem
+
+That is the mistake I think most people make.
+
+It looks like a documentation problem. It is actually a continuity problem.
+
+If your company cannot reliably preserve how work gets done, then every bit of growth creates drag.
+
+More people means more interpretation.
+
+More handoffs means more variance.
+
+More customers means more surface area for inconsistency.
+
+<StatBlock stats={[
+  { label: "People needed to create a bottleneck", value: "1" },
+  { label: "Teams affected", value: "Every growing team" },
+  { label: "Typical visibility", value: "Low" },
+]} />
+
+That is why I like this problem space.
+
+It is painful, costly, and still under-discussed because it hides behind normal operations.
+
+## Why now
+
+Two reasons.
+
+First, teams are moving faster and changing tools constantly.
+
+A workflow documented 90 days ago can already be wrong. New AI tools, new automations, new vendor stacks, new internal processes. The shelf life of team knowledge is shrinking.
+
+Second, video is already how people teach work now.
+
+They record Looms. They do walkthroughs. They narrate a process once because it is faster than writing. The raw material already exists. The missing piece is turning that material into something durable.
+
+<Callout type="info" title="The behavior already exists">
+I am not trying to create a new habit from scratch. Teams already explain work with video. The opportunity is converting that habit into operational memory.
+</Callout>
+
+That is a much better starting point than demanding better documentation discipline from busy teams.
+
+## What makes this pain real
+
+The pain is not "our docs are messy."
+
+The pain is things like:
+
+### A founder becomes a bottleneck
+
+Every important workflow routes back through one person because nobody trusts the documentation.
+
+### A new hire takes too long to ramp
+
+Not because they are bad, but because the real process exists in fragments across calls, messages, and tribal memory.
+
+### Quality drifts across the team
+
+Two people do the same task in different ways. Both think they are right. Customers feel the inconsistency even if management cannot name it yet.
+
+### Process improvement never compounds
+
+The team gets better at doing the work, but the knowledge does not get captured in a form the next person can actually use.
+
+That is the silent tax.
+
+## My thesis
+
+I think the next wave of useful SaaS is not just about helping people generate more output.
+
+It is about helping teams retain and operationalize what they already know before it leaks away.
+
+That is why I built Soply.
+
+Not because documentation is exciting. It is not.
+
+Because invisible operational decay is expensive, and most teams do not have a good system for stopping it.
+
+<Highlight emoji="🎯">
+The companies that preserve know-how well will move faster than the ones that keep rediscovering their own process.
+</Highlight>
+
+That is not a glamorous category.
+
+It is a very real one.
+
+And that is usually where the best SaaS opportunities live.

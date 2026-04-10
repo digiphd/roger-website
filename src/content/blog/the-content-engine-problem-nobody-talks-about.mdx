@@ -1,0 +1,198 @@
+---
+title: "The Content Engine Problem Nobody Talks About"
+description: "Scaling content with AI is easy. Making it actually feel like you, and not generic slop, is the hardest thing about building a brand in public."
+pubDate: 2026-04-11
+tags: ["content", "ai", "building", "saas"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+Everyone knows the advice now: post more, ship faster, repurpose everything, let the tools do the heavy lifting.
+
+That part is real. Social media is where attention is. If you are building in public, it is still the best distribution layer available. The problem is what happens after you commit to volume.
+
+At first, content automation feels like leverage. Then it turns into a quality control problem. Then it turns into an identity problem.
+
+<Highlight emoji="🎯">
+The hard part is not making more content. The hard part is making more content without flattening your voice into the same recycled format everyone else is using.
+</Highlight>
+
+I wrote before about the pain of building products with no audience in [Five Products, Zero Audience](/blog/five-products-zero-audience). That problem is still real. Great work does not distribute itself. You have to publish.
+
+But publishing consistently at a level you are proud of is brutal, especially once video becomes part of the system.
+
+<StatBlock
+  stats={[
+    { value: "20M+", label: "videos uploaded to YouTube every day, according to YouTube Press" },
+    { value: "200B", label: "YouTube Shorts daily views, according to YouTube Press" },
+    { value: "5.24B", label: "active social media user identities globally in 2025, according to DataReportal" },
+  ]}
+/>
+
+Source notes: [YouTube Press](https://blog.youtube/press/) says more than 20 million videos are uploaded to YouTube each day and Shorts now average more than 200 billion daily views. [DataReportal's Digital 2025 Global Overview Report](https://datareportal.com/reports/digital-2025-global-overview-report) says global social media user identities reached 5.24 billion.
+
+That is the backdrop. You are not competing against a few smart creators in your niche. You are competing against a machine that now produces an absurd amount of content every hour.
+
+## Video is where the whole thing breaks
+
+Text is manageable. A tweet can be fixed. A LinkedIn post can be tightened. Even a blog post can be edited back into shape.
+
+Video is different. Video is a stack of dependencies pretending to be one asset.
+
+You need a point of view. Then a script. Then footage. Then a clean opening. Then pacing. Then cuts. Then captions. Then b-roll. Then audio that does not sound weird. Then visuals that support the point instead of distracting from it. Then an ending that earns the watch time.
+
+<Callout type="warning" title="Why video becomes the bottleneck">
+A good video is not one creative decision. It is a sequence of creative decisions, and if two or three of them feel off, the whole thing feels fake.
+</Callout>
+
+This is why I do not buy the simple line that "AI will make content easy." It can make production faster. That is not the same thing.
+
+It can help you get from raw idea to rough draft faster. It can help cut dead space, resize clips, generate captions, find reusable moments, and schedule distribution. I am very bullish on that. I have literally built tools around that idea, and I touched on that mindset in [The API Is the Product for AI Features](/blog/the-api-is-the-product-for-ai-features).
+
+But the closer you get to the actual creative center of the work, the less reliable full automation becomes.
+
+## The slop problem is pattern exposure
+
+The thing nobody wants to say out loud is that most AI assisted content is easy to recognize now.
+
+Not because the grammar is bad. Usually the grammar is fine. Not because the formatting is broken. Usually the formatting is clean. It is recognizable because the patterns keep repeating.
+
+Same hook. Same fake tension. Same rhythm. Same "here is the shocking truth" setup. Same forced curiosity. Same overexplained ending. Same polished emptiness.
+
+<Callout type="info" title="People can feel pattern fatigue before they can explain it">
+Audiences do not need to articulate why a piece feels off. They just need to scroll past it. That is enough.
+</Callout>
+
+This is already visible across short form video. A lot of TikTok and Reels content now sounds like it came from the same ghostwriter. Different faces, same cadence.
+
+That is the real AI slop problem. It is not only bad output. It is convergent output.
+
+And once the patterns become visible, your brand starts to disappear inside them.
+
+There is also growing evidence that audiences notice this. Research highlighted by the [Nürnberg Institute for Market Decisions](https://www.nim.org/en/research/projects-and-studies/current-studies/consumer-attitudes-toward-ai-generated-marketing-content) found participants were less inclined to click on and engage with products featured in AI generated ads. Separate reporting from [EMARKETER](https://www.emarketer.com/content/exclusive-ai-slop-creator-content) showed enthusiasm for AI generated creator content dropping from 60% in 2023 to 26% in 2025 as feeds filled up with what viewers call AI slop.
+
+<StatBlock
+  stats={[
+    { value: "60% → 26%", label: "consumer enthusiasm for AI generated creator content, 2023 to 2025, per EMARKETER" },
+    { value: "Lower clicks", label: "participants were less inclined to engage with AI generated ads, per NIM" },
+    { value: "Recommended feeds", label: "Instagram says feeds mix followed accounts with recommended content" },
+  ]}
+/>
+
+That last point matters because the distribution environment changed too. In [Instagram Ranking Explained](https://about.instagram.com/blog/announcements/instagram-ranking-explained), Instagram says feed content includes both accounts you follow and recommended content it thinks you will enjoy. That means you are not only publishing for your followers. You are constantly being tested against everything else the algorithm can slot into the feed.
+
+So the tradeoff gets sharper:
+
+Scale the content engine, and you risk sounding like everybody else.
+
+Protect authenticity too hard, and you stay stuck producing at pure human speed.
+
+## What actually should be automated
+
+I am not anti automation. I am anti pretending that every part of creative work should be automated.
+
+A lot of the best leverage is still in the boring layers. That is where tools shine. This is the same general argument I made in [Smart Token Consumption Is the New 10x Engineer](/blog/smart-token-consumption-is-the-new-10x-engineer): the win is not using more compute everywhere, it is using systems where they remove waste.
+
+<CompareTable
+  left={{
+    title: "What everyone says you should automate",
+    items: [
+      "The whole script",
+      "Your hook style",
+      "Your opinions",
+      "Your delivery and cadence",
+      "Your brand voice",
+      "The final creative call"
+    ]
+  }}
+  right={{
+    title: "What actually should stay human",
+    items: [
+      "Your real point of view",
+      "What is worth saying right now",
+      "What sounds like you and what does not",
+      "What examples come from actual experience",
+      "What tradeoffs you are willing to stand behind",
+      "Whether a piece should ship at all"
+    ]
+  }}
+/>
+
+What I do want automated:
+
+- clipping long videos into usable shorts
+- caption generation and cleanup
+- aspect ratio changes for different platforms
+- finding repeatable content segments
+- drafting descriptions, metadata, and publish packages
+- scheduling and queue management
+- turning one source asset into multiple format-specific outputs
+
+That is useful leverage. It removes friction. It gives you another shot at consistency.
+
+<Callout type="tip" title="A good tool removes drag">
+If a tool helps you publish the work you already believe in, it is leverage. If it starts deciding what your voice is, it is probably eating the brand.
+</Callout>
+
+## What should not be outsourced
+
+Your voice is not a formatting layer.
+
+Your voice is what you notice, what you ignore, what you are willing to say plainly, and what kind of tradeoffs you care about. It comes from repetition, taste, and scars. That is why the best founder content still feels personal even when it is polished.
+
+This is also why so many AI products feel thin in the market. The tech can work and the content can still miss. I wrote about a similar gap in [Why Most AI Apps Die in the Backend](/blog/why-most-ai-apps-die-in-the-backend) and again in [The Interface Layer for Personal AI](/blog/the-interface-layer-for-personal-ai). Systems matter. Interfaces matter. But if the output does not feel grounded in a real operator, people lose trust fast.
+
+The piece that stays human is judgment.
+
+Not just "taste" in the abstract. Actual judgment.
+
+What to say. What not to say. Which clip feels honest. Which sentence sounds like posturing. Which story is too generic. Which opinion have you actually earned.
+
+## The pipeline I think makes sense
+
+This is the setup I keep coming back to. Not perfect, just useful.
+
+<Step number={1} title="Start with a real take">
+Write the raw opinion first. No prompt engineering theater. Just the actual point you believe and the examples that made you believe it.
+</Step>
+
+<Step number={2} title="Use tools after the insight exists">
+Once the idea is real, use software to cut footage, clean captions, reformat assets, create variants, and queue distribution.
+</Step>
+
+<Step number={3} title="Review for voice, not only correctness">
+A piece can be factually correct and still sound fake. The review step is where you kill the generic phrasing and put your own cadence back in.
+</Step>
+
+<Step number={4} title="Repurpose from strong source material">
+One honest long-form asset can feed clips, posts, threads, and follow-up ideas. Weak source material just creates more weak derivatives.
+</Step>
+
+<Callout type="quote" title="The boring truth">
+The best content pipeline is usually not fully automated. It is a system where humans make the key calls and software handles the repetitive parts.
+</Callout>
+
+This is slower than the fantasy. But it is faster than doing everything manually, and it protects the one thing that matters most: people can still recognize you in the work.
+
+That matters more than most teams admit.
+
+Because once your content stops sounding like you, the distribution win is fake. You are publishing more, but compounding less.
+
+## The takeaway
+
+The opportunity on social is still huge. I do not think the answer is to retreat from it. If anything, the content arms race makes distribution more important, not less.
+
+But the goal should not be to automate yourself out of the process.
+
+The goal is to build tools that remove friction around the work: editing, repurposing, packaging, scheduling, reuse.
+
+The part that stays yours is the hard part. Your judgment. Your taste. Your timing. Your opinion. Your standard.
+
+That is not a bug in the system. That is the system.
+
+If you are building a content engine, do not use automation to replace the thing that makes the brand worth following in the first place. Use it to protect your energy so the human part can stay sharp.

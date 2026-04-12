@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a"/>
+      <stop offset="100%" style="stop-color:#1a1a2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Subtle grid -->
+  <g stroke="#ffffff" stroke-opacity="0.03" stroke-width="1">
+    <line x1="0" y1="100" x2="1200" y2="100"/>
+    <line x1="0" y1="200" x2="1200" y2="200"/>
+    <line x1="0" y1="300" x2="1200" y2="300"/>
+    <line x1="0" y1="400" x2="1200" y2="400"/>
+    <line x1="0" y1="500" x2="1200" y2="500"/>
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+  </g>
+  <!-- Accent line -->
+  <rect x="80" y="200" width="4" height="230" fill="#6366f1" rx="2"/>
+  <!-- Text -->
+  <text x="120" y="280" font-family="'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif" font-size="56" font-weight="700" fill="#ffffff">Roger Chappel</text>
+  <text x="120" y="370" font-family="'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif" font-size="32" fill="#a5b4fc">Building the future with AI</text>
+  <!-- URL at bottom -->
+  <text x="80" y="580" font-family="'SF Pro Display', -apple-system, 'Inter', system-ui, sans-serif" font-size="22" font-weight="500" fill="#64748b">rogerchappel.com</text>
+</svg>

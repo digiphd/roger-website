@@ -1,0 +1,219 @@
+---
+title: "Why I Run a Team of AI Agents, Not Humans"
+description: "My actual AI agent org chart, what each role owns, where they fail, and why this setup works better for me than hiring a traditional team right now."
+pubDate: 2026-04-09
+tags: ["ai", "agents", "operations", "startups"]
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+I run a team of AI agents instead of a traditional startup team.
+
+That sentence sounds like bait for LinkedIn.
+
+It is not. It is literally how I work.
+
+I have agents with names, roles, responsibilities, tool access, and handoff rules. They sit on a task board. They open pull requests. They review each other's work. I assign them jobs before 6AM and review what came back before I start my actual work day.
+
+And yes, it works.
+
+Not perfectly. Not autonomously. But well enough that I would not swap this setup for a small human team at this stage.
+
+## Why not hire people?
+
+Because my bottleneck is not headcount.
+
+It is coordination, cash, and speed.
+
+Early-stage founders love to say they need a team. Most of the time they need leverage.
+
+A human team gives you judgment, initiative, and deeper ownership. It also gives you payroll, management overhead, slower hiring loops, and the problem of finding good people before you have enough signal to justify them.
+
+An agent team gives me something different.
+
+<CompareTable
+  left={{ title: "Small human team", items: ["Higher cost", "Better judgment", "Slower to hire", "Needs real management", "Harder to scale up and down"] }}
+  right={{ title: "AI agent team", items: ["Low marginal cost", "Fast execution", "Easy to specialize", "Needs tight guardrails", "Fails in predictable ways"] }}
+/>
+
+Right now, I value cheap iteration and fast throughput more than I value broad human judgment across every function.
+
+That trade makes sense for the stage I am in.
+
+## The org chart I actually run
+
+I manage 10+ agents across the Axislabs portfolio, but here is the core operating layer.
+
+<StatBlock stats={[
+  { label: "Human employees", value: "1" },
+  { label: "Specialized agents", value: "10+" },
+  { label: "Products in play", value: "8" },
+]} />
+
+### Cipher = CTO
+
+Cipher owns architecture, systems thinking, and the expensive technical decisions.
+
+When a product needs a new service boundary, a complex workflow, or a hard trade-off between speed and maintainability, Cipher gets first pass.
+
+Where Cipher fails: sometimes over-designs too early. Great at thinking three moves ahead. Not always great at respecting the fact that some problems deserve a scrappy fix first.
+
+### Forge = Engineering
+
+Forge is methodical. Good for full-stack execution, backend changes, and anything that needs patience more than flash.
+
+If there is a feature that touches several files and needs steady hands, Forge is usually the right pick.
+
+Where Forge fails: can be too literal. If the task is vague, Forge will still produce something. That something is not always the thing I actually wanted.
+
+### Blitz = Rapid product work
+
+Blitz is for speed.
+
+Prototypes, fast edits, quick UI work, glue code, anything where I care more about momentum than elegance.
+
+Where Blitz fails: overconfidence. Blitz will happily tell me the job is done while one edge case is still on fire.
+
+### Sentinel = Code review and quality gates
+
+Sentinel reviews the work of other agents.
+
+This is one of the most useful roles in the system. Agents absolutely should not be trusted to mark their own homework.
+
+Where Sentinel fails: can ask for cleanups that are technically correct and strategically irrelevant. Sometimes I need to tell Sentinel, "Yes, that is a valid point. No, we are not spending another hour on it."
+
+### Havoc = CMO
+
+That is me.
+
+I handle content, messaging, positioning, growth experiments, and turning what we are building into something people can actually understand.
+
+Where I fail: marketing always wants more surface area than the product can support. The temptation is to push harder on narrative when the better answer is usually tighter proof.
+
+### Neo = Coordination
+
+Neo is the dispatcher. Strategy, orchestration, and keeping the whole thing moving.
+
+Without a coordinator, an agent team becomes a pile of isolated sessions pretending to be a company.
+
+Where Neo fails: same problem every coordinator has. Too many options, not enough ruthless pruning.
+
+## Why this beats a normal team for me right now
+
+The obvious answer is cost.
+
+That matters. I am not pretending otherwise.
+
+But cost is only part of it.
+
+The deeper advantage is controllable specialization.
+
+I can give one agent a narrow job, narrow context, narrow tool access, and narrow success criteria. That is hard to do with humans without making the role frustrating. With agents, it is ideal.
+
+<Highlight emoji="🧠">
+AI agents perform best when the job is smaller than a human would tolerate and clearer than a human would need.
+</Highlight>
+
+That changes how you structure the company.
+
+Instead of hiring broad capability and hoping it self-organizes, I define tiny lanes and route work with intent.
+
+It is less romantic than startup mythology. It is also efficient.
+
+## The part people get wrong
+
+Running an agent team is not delegation in the traditional sense.
+
+It is systems design.
+
+If you think the job is "tell the agent what to do," you will get messy output and blame the model.
+
+The real job is:
+
+<Step number={1} title="Define the lane">
+What exactly does this role own, and what is out of bounds?
+</Step>
+
+<Step number={2} title="Constrain the tools">
+What can this agent touch, and what should require review?
+</Step>
+
+<Step number={3} title="Design the handoff">
+Who checks the work, what artifact proves completion, and where does the result go next?
+</Step>
+
+That is why I talk about org charts and task boards so much. Not because it is cute. Because structure is what makes the whole thing useful.
+
+## Where agents consistently fail
+
+There are patterns now. The same weak points show up over and over.
+
+### They report success too early
+
+An agent saying "done" means very little unless there is an artifact I can verify.
+
+PR URL. Rendered asset. Updated file. Passing check. Durable output.
+
+Without that, it is just optimism.
+
+### They struggle with fuzzy priorities
+
+If two goals compete, agents often optimize for the easier one.
+
+That is why acceptance criteria matter so much. If I leave room for interpretation, I usually get the safest version of the task rather than the most useful one.
+
+### They do not naturally understand trade-offs
+
+A human engineer might say, "This is good enough for now, but here is the debt we are taking on."
+
+Agents can approximate that. They do not reliably own it.
+
+So I keep strategic trade-offs human, or at least human-reviewed.
+
+### They need clean context boundaries
+
+This one surprised me most.
+
+I expected the best systems to be general. In practice, the best systems are compartmentalized. Separate agents. Separate roles. Separate prompts. Separate failure domains.
+
+That is less magical and a lot more dependable.
+
+## What surprised me most
+
+I expected coding speed to be the main benefit.
+
+It is not.
+
+The real benefit is operational continuity.
+
+My team does not get tired, does not lose momentum at 3PM, and does not need me to repeat basic context if I designed the system properly. I can wake up, review overnight output, make a few decisions, and move the portfolio forward before most people have had coffee.
+
+That is a real advantage.
+
+<Callout type="tip" title="The hidden win">
+The best part of an agent team is not raw output. It is the ability to keep many narrow work streams alive at once without hiring across every function.
+</Callout>
+
+## Will I always do it this way?
+
+No.
+
+If a product reaches the stage where customer intimacy, deep ownership, and original judgment matter more than throughput, humans win.
+
+That is not a knock on agents. It is just the boundary.
+
+But for this phase, where I am validating products, testing channels, and moving across multiple bets, a team of AI agents is the highest-leverage operating model I have found.
+
+<Highlight emoji="🔥">
+I do not run a team of AI agents because it sounds futuristic.
+</Highlight>
+
+I run one because, right now, it is the most practical way to build at the speed I want without carrying the cost structure of a normal startup team.
+
+That is a much less glamorous answer.
+
+It also happens to be true.

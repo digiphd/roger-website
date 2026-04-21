@@ -1,0 +1,213 @@
+---
+title: "What 3 Months of Building Real AI Products Taught Me About the Agent Hype Gap"
+description: "Three months of shipping AI products with real users taught me where agent demos lie, what breaks in production, and what actually holds up."
+pubDate: 2026-04-09
+tags: ["ai", "agents", "building", "startups"]
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+I've spent the last 3 months building AI products that real people actually use.
+
+Not demo flows. Not one-off prototypes. Real products with queues, retries, billing, support issues, weird edge cases, and users who do not care how impressive the architecture diagram looks.
+
+And after living in it every day, I think the agent market has an honesty problem.
+
+<Highlight emoji="⚠️">
+The gap between what agent demos promise and what works in production is still huge.
+</Highlight>
+
+That does not mean agents are useless. Far from it.
+
+It means the useful version is smaller, stricter, and much less magical than the internet wants it to be.
+
+## What the hype says
+
+The hype version goes like this:
+
+- give an agent a goal
+- connect a few tools
+- let it reason its way through the task
+- walk away while it runs the business
+
+That is a great way to get a viral clip.
+
+It is also a great way to ship something brittle.
+
+What I kept seeing in practice was much less glamorous. The more freedom I gave agents, the worse they performed. The tighter I made the loop, the better the product got.
+
+<CompareTable
+  left={{ title: "What agent demos imply", items: ["Open-ended autonomy", "Long tool chains", "Minimal supervision", "One agent can do everything", "Prompting is the product"] }}
+  right={{ title: "What production rewards", items: ["Narrow scopes", "Short loops", "Explicit state and retries", "Specialized agents", "Backend discipline"] }}
+/>
+
+## The numbers that changed my mind
+
+I run a team of 10 AI agents across 8 products.
+
+That sounds like the sort of sentence people use to farm engagement. For me it is just Tuesday.
+
+But here is the part people usually leave out.
+
+<StatBlock stats={[
+  { label: "Products in the portfolio", value: "8" },
+  { label: "Specialized agents", value: "10" },
+  { label: "Usable first-pass output", value: "~60%" },
+  { label: "Human review required", value: "100%" },
+]} />
+
+That 60% number matters.
+
+When I dispatch overnight work, around 60% of the output is usable with light editing or verification. The rest gets revised, rerouted, or thrown out.
+
+If your mental model of agents is "I assign work and it comes back done," you will be disappointed fast.
+
+The actual win is different.
+
+If an agent gets me 60% to 80% of the way there on repeatable work, that is valuable. If it gets me 95% there once in a staged demo, that means nothing.
+
+## The biggest production lie: reasoning is enough
+
+Reasoning helps. It is not enough.
+
+Most agent failures I deal with are not failures of intelligence. They are failures of system design.
+
+The agent picked the wrong tool because the tool descriptions overlapped.
+
+The model produced valid JSON that was operationally useless.
+
+A retry ran twice and created duplicate state.
+
+A long-running job timed out halfway through and the frontend had no idea what happened.
+
+None of those are solved by a smarter prompt.
+
+<Callout type="warning" title="Prompts do not replace product engineering">
+If your agent workflow has no explicit job state, no validation, and no recovery path, the model is not your main problem.
+</Callout>
+
+## Where things actually broke
+
+Three failure modes showed up again and again.
+
+### 1. Agents hate vague ownership
+
+The fastest way to get bad output is to give an agent a broad goal and hope it figures out the rest.
+
+"Improve onboarding" sounds smart. It is a terrible task.
+
+"Add form validation to the signup flow and return a clear error state when the invite token is invalid" works much better.
+
+Agents need scoped work more than they need clever instructions.
+
+That is why I moved from one generalist agent to specialized roles. Cipher handles architecture. Forge handles engineering execution. Sentinel reviews. Havoc handles content and marketing. The org chart is not a gimmick. It is how I reduce context bleed.
+
+### 2. Long tool chains collapse under real traffic
+
+In demos, agents chaining five or six tools looks amazing.
+
+In production, every extra step is another place for latency, cost, and weird failure to pile up.
+
+I have had flows fail because one tool returned a slightly different field name. I have had otherwise good output become useless because one middle step added the wrong assumption and every later step built on top of it.
+
+<Highlight emoji="🧱">
+The best agent loops I run are usually shorter than people expect.
+</Highlight>
+
+Input. Decision. One or two actions. Verification. Done.
+
+That is not boring. That is why users trust it.
+
+### 3. Agents over-report success
+
+This one is brutal.
+
+Agents are often optimistic reporters. They will tell you the task is complete when the branch is wrong, the PR was not created, the selector changed, or the result technically exists but fails the acceptance criteria.
+
+So I stopped taking completion messages seriously on their own.
+
+Now the rule is simple:
+
+<Step number={1} title="Do the work">
+The agent executes within a narrow scope.
+</Step>
+
+<Step number={2} title="Verify the artifact">
+Check the file, the PR, the output, the status, or the rendered result.
+</Step>
+
+<Step number={3} title="Only then report success">
+If it is not verifiable, it is not done.
+</Step>
+
+That one change improved reliability more than swapping models.
+
+## What actually works
+
+The more real users I get, the less interested I am in autonomous fantasy.
+
+What works is boring in the best possible way.
+
+### Tight loops
+
+Good agent products are built around constrained loops, not open-ended missions.
+
+At a product level, that means the agent should know:
+
+- what input it receives
+- what tools it is allowed to use
+- what a good output looks like
+- how failure is detected
+- what happens next
+
+### Explicit state
+
+Queued. Running. Waiting. Failed. Retrying. Complete.
+
+If you cannot answer those states clearly, you do not have an agent product. You have a conversation pretending to be a workflow.
+
+### Human review at the right boundary
+
+I do not review every tiny step. That would defeat the point.
+
+But I do review work at the boundary where mistakes become expensive. User-facing copy. Architecture changes. Anything with billing, security, or public output.
+
+That is not anti-agent. That is just adult supervision.
+
+### Specialization over generalization
+
+A specialist agent with the right context and narrower tools will beat a generalist agent on real work most days.
+
+Not because it is smarter.
+
+Because the operating environment is cleaner.
+
+## My honest take after 3 months
+
+I am still very bullish on agents.
+
+I just think the winners will be the people who stop pretending the magic is the product.
+
+The product is the loop.
+
+The product is the guardrail.
+
+The product is the eval, the retry logic, the task boundaries, the tool design, and the boring verification layer that keeps user trust intact.
+
+<Highlight emoji="🎯">
+Agents are already useful. They are just not useful in the way the hype machine keeps advertising.
+</Highlight>
+
+The market keeps rewarding the most cinematic demo.
+
+Production rewards the team that quietly makes the system dependable.
+
+If you are building in this space, optimize for that.
+
+Users do not care if your agent looked clever for 45 seconds.
+
+They care whether it works again tomorrow.

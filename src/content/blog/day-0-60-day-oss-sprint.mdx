@@ -19,9 +19,13 @@ Not because the world needs another pile of half-finished repos with impressive 
 
 That would be easy. Honestly, with AI coding agents, it might be too easy.
 
-The harder question is whether I can use agents to build faster without building worse. Whether I can create useful software in public, at a consistent pace, while keeping the work reviewable, maintainable, and worth someone else’s time.
+The harder question is whether I can use agents, harness tools, and repeatable engineering workflows to build faster without building worse. Whether I can create useful software in public, at a consistent pace, while keeping the work reviewable, maintainable, and worth someone else’s time.
 
 That is the actual bet.
+
+After all, AI is meant to create leverage and convenience, not just a new kind of grind. That should be especially true for developers. LLMs have been trained heavily on code, docs, tests, and software patterns. If any profession should learn how to benefit from these systems while working with more focus and less repetitive toil, it is ours.
+
+So I am less interested in the fear angle of “AI is coming for developer jobs” than I am in the practical question: how do we leverage it properly, while keeping quality high and life outside the laptop intact?
 
 <Highlight emoji="⚡">
 Speed is easy to fake. Trustworthy speed is the hard part.
@@ -48,6 +52,8 @@ What I care about is whether AI can help create a better operating system for bu
 
 That is why I’m doing this as a public sprint instead of quietly hacking on things in the background.
 
+I also cannot just write off AI as insecure, low-quality code generation, even if plenty of developers are right to be sceptical of the current output. Developers are obsessed with automation. We should be equally obsessed with harnessing these tools in ways that optimise for quality, not just volume.
+
 I want the work to be visible enough that the process can be judged, not just the announcement.
 
 ## What I mean by harness tools
@@ -55,6 +61,12 @@ I want the work to be visible enough that the process can be judged, not just th
 When I say “harness tools”, I don’t mean some grand abstract platform.
 
 I mean the practical scaffolding around LLMs that turns them from impressive autocomplete into useful collaborators.
+
+The analogy is fairly literal for me: a harness on a thoroughbred horse does not make the horse less powerful. It makes the power steerable. It gives a human a set of control levers, constraints, and feedback loops so raw capability can become useful work.
+
+Software abstractions work the same way. A good abstraction wraps a lower-level technology, hides some of its chaos, exposes a simpler control surface, and lets the next layer compound on top. “GPT wrapper” has a bad reputation, but wrappers and abstractions are also how technology matures. The question is whether the wrapper adds judgement, constraints, memory, verification, routing, and recovery — or whether it is just a thin text box over a model.
+
+I’ve written about adjacent pieces of this in [building AI agents so I can live more](/blog/legitimate-productivity-in-the-age-of-agents) and [the interface layer for personal AI](/blog/the-interface-layer-for-personal-ai). This sprint is partly a practical test of those ideas at repo level.
 
 <Step number={1} title="Context systems">
 Ways to give an agent the right information at the right time without dumping the entire universe into the prompt.
@@ -75,6 +87,8 @@ Small PRs, clear commit messages, scoped changes, and artifacts that a human can
 The model matters. The harness matters more.
 
 A powerful LLM inside a messy workflow produces messy work faster. A decent model inside a disciplined workflow can produce something you might actually ship.
+
+This is also where determinism matters. LLMs are not perfectly deterministic, but engineering organisations need outputs that behave as if the process is reliable: conventions followed, tests run, diffs scoped, docs updated, risks named, and handoffs structured the same way every time. The model can be probabilistic. The workflow around it needs to create certainty.
 
 ## The quality vs speed tension
 
@@ -107,6 +121,8 @@ They are in tension.
 
 The question is whether better systems can reduce that tension enough to matter.
 
+Building a heap of OSS AI slop does not respect other people’s time. If someone opens one of these repos, they are giving me a slice of attention they could have spent anywhere else. That means maintainable code, honest docs, small useful scopes, and working examples matter more than ever — especially when AI makes it cheap to generate something that merely looks finished.
+
 ## The personal constraint is part of the test
 
 I’m not doing this in a vacuum.
@@ -116,6 +132,8 @@ I’m a dad. I care about staying fit. I have a CTO role. I have existing respon
 That constraint is part of the challenge, not an excuse bolted on afterwards.
 
 If AI-assisted building is only useful when you can disappear into a cave for 14 hours a day, it is less interesting to me.
+
+The trade is not free, though. I will still need to spend serious time building, testing, reviewing, documenting, and marketing these repos, even though I am giving them away for free. Open source is generous, but it is not effortless.
 
 I want to know what consistency looks like under normal life pressure:
 
@@ -170,6 +188,8 @@ The failure mode is not “I ship too little”. The failure mode is “I ship a
 The daily posts will be build logs, not victory laps.
 
 Some days will be small. Some will be messy. Some will probably involve throwing work away. That is fine.
+
+That is the improvement process in harness engineering: iteration. You never get it completely right the first time. The first version of almost anything is rough. But the bones need to be solid enough that the next loop makes it better instead of just adding polish to a weak foundation.
 
 I’ll try to cover:
 

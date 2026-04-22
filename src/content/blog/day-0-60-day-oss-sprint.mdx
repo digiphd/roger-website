@@ -1,0 +1,198 @@
+---
+title: "Day 0: The Bet Behind the 60 Day OSS Sprint"
+description: "Why I’m attempting a 60-day open source sprint, what I’m trying to prove about AI-assisted building, and how I’ll judge the work beyond raw output volume."
+pubDate: 2026-04-23
+tags: ["open-source", "ai", "agents", "founder-journey", "engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: 60 day open source sprint; supporting phrases: AI coding agents, deterministic AI workflows, open source founder journey, AI software quality */}
+
+I’m going to try a 60 day open source sprint.
+
+Not because the world needs another pile of half-finished repos with impressive commit counts and no users.
+
+That would be easy. Honestly, with AI coding agents, it might be too easy.
+
+The harder question is whether I can use agents to build faster without building worse. Whether I can create useful software in public, at a consistent pace, while keeping the work reviewable, maintainable, and worth someone else’s time.
+
+That is the actual bet.
+
+<Highlight emoji="⚡">
+Speed is easy to fake. Trustworthy speed is the hard part.
+</Highlight>
+
+## Why this challenge exists
+
+I’ve spent a lot of time thinking about what AI changes for software teams.
+
+The obvious answer is output. More code, more content, more prototypes, more PRs, more everything.
+
+But raw output is not very interesting by itself. We already have enough noise. If anything, AI makes the noise problem much worse.
+
+What I care about is whether AI can help create a better operating system for building software:
+
+- clearer scopes
+- faster iteration
+- tighter review loops
+- better context handoff
+- reusable project templates
+- deterministic workflows
+- verification before confidence
+- output that is easy to inspect instead of hard to trust
+
+That is why I’m doing this as a public sprint instead of quietly hacking on things in the background.
+
+I want the work to be visible enough that the process can be judged, not just the announcement.
+
+## What I mean by harness tools
+
+When I say “harness tools”, I don’t mean some grand abstract platform.
+
+I mean the practical scaffolding around LLMs that turns them from impressive autocomplete into useful collaborators.
+
+<Step number={1} title="Context systems">
+Ways to give an agent the right information at the right time without dumping the entire universe into the prompt.
+</Step>
+
+<Step number={2} title="Deterministic workflows">
+Repeatable steps, scripts, templates, and checks that reduce randomness and make work easier to review.
+</Step>
+
+<Step number={3} title="Verification loops">
+Tests, builds, linting, screenshots, diffs, evals, and human checkpoints that prove the work is real.
+</Step>
+
+<Step number={4} title="Reviewable outputs">
+Small PRs, clear commit messages, scoped changes, and artifacts that a human can judge without needing to reverse-engineer the agent’s brain.
+</Step>
+
+The model matters. The harness matters more.
+
+A powerful LLM inside a messy workflow produces messy work faster. A decent model inside a disciplined workflow can produce something you might actually ship.
+
+## The quality vs speed tension
+
+The temptation with AI is to measure the thing that is easiest to see.
+
+How many repos did you ship? How many commits? How many demos? How many blog posts? How many stars?
+
+Those numbers are not meaningless, but they are dangerous if they become the goal.
+
+<CompareTable
+  left={{ title: "Fast but fake", items: [
+    "Lots of shallow repos",
+    "Big claims with thin implementation",
+    "Agents generating confident nonsense",
+    "PRs that are painful to review",
+    "Momentum that collapses under maintenance",
+  ] }}
+  right={{ title: "Fast and useful", items: [
+    "Small tools with clear jobs",
+    "Readable code and honest docs",
+    "Verification before shipping",
+    "Scoped PRs with reviewable diffs",
+    "Systems that compound after the sprint",
+  ] }}
+/>
+
+The point of this sprint is not to pretend quality and speed are magically the same thing.
+
+They are in tension.
+
+The question is whether better systems can reduce that tension enough to matter.
+
+## The personal constraint is part of the test
+
+I’m not doing this in a vacuum.
+
+I’m a dad. I care about staying fit. I have a CTO role. I have existing responsibilities. I do not have unlimited clean-room maker time.
+
+That constraint is part of the challenge, not an excuse bolted on afterwards.
+
+If AI-assisted building is only useful when you can disappear into a cave for 14 hours a day, it is less interesting to me.
+
+I want to know what consistency looks like under normal life pressure:
+
+- shipping while still being present at home
+- keeping health and training in the loop
+- doing real work without turning every night into a grind
+- maintaining taste when the tools make it easy to produce too much
+- building systems that help me recover context quickly after interruptions
+
+This is where I think agents could genuinely change the game.
+
+Not by replacing judgement, but by helping preserve momentum when human attention is fragmented.
+
+## What I hope to learn from open source
+
+I’ve built plenty of things, but open source has its own craft.
+
+It is not just “put code on GitHub”.
+
+Good open source needs taste. It needs docs. It needs examples. It needs issues that make sense. It needs boundaries. It needs maintainers who respect other people’s time.
+
+I want to get better at that.
+
+I want to learn how to make projects easier to understand from the outside. I want to meet people building in similar directions. I want feedback from people who are not inside my head and do not care about my excuses.
+
+That is uncomfortable in a useful way.
+
+<Callout type="info" title="The public part matters">
+The goal is not to perform productivity. The goal is to expose the process enough that the work can be corrected, improved, and judged honestly.
+</Callout>
+
+## What could go wrong
+
+A lot.
+
+AI makes it easier to create slop at scale. It makes it easier to feel productive while producing shallow work. It can generate hallucinated confidence, especially when the output looks polished enough to pass a lazy skim.
+
+There is also a real risk of becoming too dependent on agents.
+
+If I stop understanding the code, the sprint has failed. If quality regresses because the output volume feels exciting, the sprint has failed. If I burn out chasing an arbitrary streak, the sprint has failed. If I damage my reputation by shipping noisy nonsense with my name on it, that is on me.
+
+And the biggest risk might be simpler than all of that:
+
+Speed without taste makes everything worse.
+
+<Highlight emoji="🧯">
+The failure mode is not “I ship too little”. The failure mode is “I ship a lot and none of it deserves to exist”.
+</Highlight>
+
+## What to expect from Days 1–60
+
+The daily posts will be build logs, not victory laps.
+
+Some days will be small. Some will be messy. Some will probably involve throwing work away. That is fine.
+
+I’ll try to cover:
+
+- what I built
+- why it exists
+- how AI helped or got in the way
+- what verification I ran
+- what broke
+- what I learned about open source process
+- what I would do differently next time
+
+The output should be judged by usefulness, consistency, and quality.
+
+Not by raw volume.
+
+If this works, I should end the sprint with a set of useful tools, a better understanding of open source, stronger workflows for AI-assisted engineering, and a clearer view of where LLM developer tools are heading.
+
+If it does not work, I want the failure to be visible enough to learn from.
+
+Either way, I’m curious.
+
+I want to push AI hard enough to find the edge. For better and worse.
+
+So this is Day 0.
+
+The bet starts now.

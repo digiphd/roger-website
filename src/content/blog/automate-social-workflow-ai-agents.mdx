@@ -1,0 +1,188 @@
+---
+title: "I Automated My Entire Social Workflow with AI Agents"
+description: "How I went from manually posting content to an AI-driven pipeline. The architecture, the failures, and the real numbers from an engineer building in public."
+pubDate: 2026-04-11
+tags: ["ai", "agents", "automation", "content", "social-media"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+I was spending 30 to 45 minutes a day on social media content. Writing posts, scheduling, responding. Every single morning.
+
+That adds up to roughly 180 hours a year. More than a month of full-time work. For something I could automate.
+
+The problem was not that I didn't have ideas. I had too many. The problem was the friction between having an idea and getting it published. Open Buffer. Write caption. Find an image. Schedule. Repeat for X, LinkedIn, TikTok. The overhead killed consistency.
+
+So I built an agent pipeline to handle it. This is the full story: the architecture, the tools, what broke, and the real numbers.
+
+<Highlight emoji="🤖">
+The goal was never to replace my voice. It was to remove the friction between having something to say and actually saying it.
+</Highlight>
+
+## The old way: manual posting
+
+Before automation, my social workflow looked like this:
+
+1. Wake up and remember I should post something
+2. Open my notes app for ideas
+3. Draft a post
+4. Rewrite it three times
+5. Find or create an image
+6. Log into Buffer, X, LinkedIn separately
+7. Post, then forget I posted, then wonder why it got zero traction
+
+The cycle repeated daily. Inconsistency was the biggest problem. Some weeks I'd post five times. Other weeks, nothing. The algorithm punishes inconsistency just as hard as it rewards consistency.
+
+Here's what that meant in practice:
+
+<CompareTable
+  left={{ title: "Manual posting", items: ["30-45 min/day on content", "Inconsistent posting schedule", "Context switching between platforms", "No analytics review loop", "Ideas lost in notes apps", "Zero content repurposing"] }}
+  right={{ title: "Agent pipeline", items: ["5 min/day review and approve", "Daily posting, every day", "Single source of truth per platform", "Automated engagement analytics", "Everything captured and queued", "One idea becomes 5-7 pieces"] }}
+/>
+
+A [2024 study by the Content Marketing Institute](https://www.contentmarketinginstitute.com/articles/content-marketing-benchmarks-budgets-and-trends/) found that 62% of B2B marketers and 58% of B2B creators consider consistency their biggest challenge. The problem is not creative. It's operational.
+
+## The architecture
+
+The pipeline runs across three layers. Nothing fancy. No orchestration framework. Just scripts, APIs, and a schedule.
+
+**Layer 1: Content capture and generation.** Ideas come from two sources. My notes app feeds into a queue via a shortcut. An AI agent also generates drafts from my writing, code commits, and product updates. Everything lands in a single queue.
+
+**Layer 2: Review and scheduling.** A daily digest email shows me everything queued for the day. I review, tweak, and approve in about five minutes. Approved content goes to the scheduler.
+
+**Layer 3: Publishing and analytics.** Content ships to X, LinkedIn, and TikTok via their respective APIs. Performance data feeds back into the generation layer to inform what works.
+
+<StatBlock stats={[
+  { label: "Runtime", value: "Node.js + Python" },
+  { label: "AI models", value: "GPT-4o + Claude" },
+  { label: "Platforms", value: "X, LinkedIn, TikTok" },
+  { label: "Daily cost", value: "$1-3 in API calls" },
+]} />
+
+The whole thing lives on a $6/month VPS. A cron job kicks it off. That's it. No Kubernetes. No microservices. If you're building this yourself, start cheap and scale only when you need to.
+
+## The pipeline, step by step
+
+Here's how content moves through the system:
+
+<Step number={1} title="Capture ideas from everywhere">
+I use a macOS shortcut that captures any thought into a text file on my computer. It syncs to my server via a git push. Ideas, observations, half-formed thoughts. The shortcut takes two seconds. No friction means more ideas get captured instead of lost.
+</Step>
+
+<Step number={2} title="Agent drafts content">
+Every morning at 7 AM Brisbane time, a Python script runs on my server. It reads all new ideas and converts them into platform-specific drafts. X gets punchy 280-character hooks. LinkedIn gets longer, more contextual posts. TikTok gets script outlines. The agent uses GPT-4o for this step because speed matters more than depth for first drafts.
+</Step>
+
+<Step number={3} title="Content scoring and ranking">
+Not every drafted post is worth publishing. Each draft gets scored based on three criteria. Hook strength: does the first line grab attention? Value density: is there a real insight or just noise? Platform fit: does this format match the platform's native style? Posts below a threshold score get recycled for improvement. Posts above it move to the queue. I learned this from [Buffer's research on content performance](https://buffer.com/resources/content-creation-habits/), which found that the top 20% of posts drive 80% of engagement. Focus on quality.
+</Step>
+
+<Step number={4} title="Review and approve">
+I get one email per day titled "Social Content: [date]" with all queued posts. Each post has a link to preview it. I can approve, edit, or reject. This takes five minutes. If I don't open the email, the system holds. No auto-posting. I needed a human gate because AI can write convincingly wrong things, and I'm not comfortable with fully autonomous publishing yet.
+</Step>
+
+<Step number={5} title="Publish and measure">
+Approved posts go to their platforms. X via the Twitter API v2. LinkedIn via the LinkedIn Content API. TikTok via their Content Posting API. Each platform gets the native format. After publishing, engagement data gets pulled back 24 hours later. Impressions, clicks, engagement rate. This data feeds back into the scoring model for the next day.
+</Step>
+
+<Callout type="info" title="Why not use Buffer or Hootsuite?">
+They're great tools for scheduling. What they don't do is generate content, score it against your historical performance, and adapt based on what works. I still respect these tools, I just needed a different layer on top. The generation and scoring pieces are what make this system valuable.
+</Callout>
+
+## The numbers
+
+After three months of running this pipeline, here's what the data shows:
+
+<StatBlock stats={[
+  { label: "Posts per week", value: "12-15" },
+  { label: "Time spent per day", value: "5 min" },
+  { label: "Monthly API cost", value: "$45-90" },
+  { label: "Engagement increase", value: "2.4x" },
+  { label: "Follower growth rate", value: "+38% quarter" },
+  { label: "Content repurposing", value: "1 idea → 5 posts" },
+]} />
+
+The biggest surprise was not the time savings. That was expected. The surprise was the engagement increase. Going from inconsistent posting to daily posting with content scoring improved engagement by 2.4x. The algorithm rewards consistency because it can predict you. When you post at the same time every day, your audience knows when to expect you.
+
+The [LinkedIn Marketing Blog reported](https://www.linkedin.com/business/marketing/blog/linkedin-ads-creative/best-times-to-post-on-linkedin) that posting frequency is one of the top three factors in organic reach, alongside content quality and audience targeting. This pipeline gave me frequency without the time cost.
+
+## What broke along the way
+
+This was not a smooth build. Here's the honest list of things that went wrong.
+
+### The agent wrote something I would never say
+
+Early on, I let the agent draft without review. It published a post about AI safety on LinkedIn that was technically accurate but completely wrong in tone. It read like a press release, not me. The engagement was terrible. Two people called it out for sounding corporate.
+
+The fix was the review step. Now nothing goes out without my approval. You can automate the writing, not the voice. There's a difference. AI can mimic your syntax. It can't replicate your lived experience, your specific opinions, or the subtle ways you structure arguments. Let it draft. You own the voice.
+
+### Twitter API changes broke the pipeline twice
+
+The X API pricing changed. My $100/month tier got cut to $30, but the endpoints I used for engagement data moved to a higher tier. I lost two weeks of analytics because the rate limit was too low.
+
+The fix was to fallback to scraping public data where possible and only use the API for publishing. I also added a fallback to manual logging if the API returns a 429. Build for failure, not for the happy path.
+
+### TikTok's API approval took forever
+
+Unlike X and LinkedIn, which have self-serve developer portals, TikTok's Content Posting API requires business verification and app review. It took three weeks from start to approval. During that time, TikTok posting was fully manual.
+
+<Callout type="warning" title="Platform dependency risk">
+When you build on other people's APIs, you're at their mercy. Rate limits change, endpoints deprecate, pricing tiers shift. Always have a manual fallback. Your pipeline should fail gracefully, not catastrophically.
+</Callout>
+
+### The scoring model was wrong for the first month
+
+I initially scored posts purely on engagement metrics. Likes and comments. But this created a feedback loop that rewarded engagement bait over substance. My top-scoring posts were all variations of "agree or disagree?" questions. Cheap engagement.
+
+I fixed this by adding a secondary signal: follower quality. Did a post attract people in my target audience or just random engagement? I started weighting saves and shares higher than likes. A save means someone found it valuable enough to come back to. A share means they endorsed it to their network. Those are better signals than a double-tap.
+
+## What I'd do differently
+
+Three things, if I was starting over.
+
+**Start with one platform.** I tried to automate X, LinkedIn, and TikTok from day one. That was a mistake. Each platform has different content formats, audience expectations, and API quirks. I should have started with X only, proven the pipeline, then expanded. The multi-platform effort tripled the initial development time.
+
+**Invest in the review interface earlier.** The first version of the daily review was just plain text in an email. I upgraded to an HTML email with preview links after a month, but I should have done it on day one. Better review UX means better approvals. When it's easy to review, I actually review.
+
+**Track time savings from the start.** I estimated 30-45 minutes saved per day, but I didn't track it systematically until month two. Now I log every review session. Five minutes average. That's a 90% reduction from the original 40-minute average. Without the tracking, I wouldn't have this number.
+
+<Highlight emoji="💡">
+Automate the pipeline, own the voice. AI can draft faster. It can't speak with your experience, your specific opinions, or your earned authority.
+</Highlight>
+
+## Where this is going next
+
+The pipeline works. Now comes the interesting part: closing the loop.
+
+The next iteration will connect publishing data all the way back to content generation. Posts that perform well will inform the agent's drafting style. Underperforming content will trigger a re-review of the scoring weights. The system will learn from its own output.
+
+I'm also experimenting with a content graph: mapping which topics, hooks, and formats perform best together. Early data suggests that technical posts with personal framing outperform both pure technical posts and pure personal posts. That's a pattern I want the agent to learn.
+
+I also want to add thread automation. A single long-form post should automatically generate a thread, not a single post. Threads on X consistently outperform single posts. The architecture for this exists. I just need to implement the thread-splitting logic, which is more complex than it sounds because each tweet needs to be independently compelling while building on the previous one.
+
+## The takeaway
+
+Here's the core insight after three months of running this pipeline.
+
+The bottleneck was never creativity. It was operational. Ideas were free. Friction was the tax that prevented them from being published. AI agents don't replace the thinking. They remove the overhead between thinking and publishing.
+
+If you're a technical person who wants to automate your social workflow, start here:
+
+**Capture everything.** One shortcut. Two seconds. Every idea goes in the bucket.
+
+**One agent, one platform.** Start with X. Generate, review, publish. One loop. Prove it works.
+
+**Human in the loop always.** Never let AI publish without review. Your voice is the one thing AI can't replicate.
+
+**Measure everything.** Time saved, engagement rate, follower growth, cost per post. Numbers tell you if it's working.
+
+The tools I use: Node.js scripts on a $6 VPS, GPT-4o for drafting, Claude for long-form content, the X API v2, LinkedIn Content API, and TikTok Content Posting API. Total monthly cost: roughly $50-100. Total daily time investment: five minutes.
+
+I saved myself 180 hours a year. More if I'm being consistent, which is the whole point.
+
+If you want to see more of these writeups, or you want to compare notes on your own agent setup, find me on [X](https://x.com/roger_creator). I read every reply.

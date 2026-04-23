@@ -1,0 +1,75 @@
+---
+title: "Day 1: The OSS Sprint Started With an Idea Queue"
+description: "The first day of the 60 Day OSS Sprint was not about writing code faster. It was about turning open-source ideas into a queue agents could safely build from."
+pubDate: 2026-04-24
+tags: ["oss", "agents", "building", "sprint"]
+draft: false
+---
+
+{/* SEO intent: open source idea pipeline; supporting phrases: OSS sprint, agent-ready PRDs, idea qualification, build queue */}
+The tempting version of an open-source sprint is simple: pick a repo name, ask an agent to build it, and count the commit velocity.
+
+That is also how you manufacture chaos.
+
+Day 1 of the 60 Day OSS Sprint started one layer earlier. Before there was a factory, there had to be an idea system. I needed a place where rough project instincts could be captured, scored, rejected, promoted, and eventually turned into something an agent could build without guessing.
+
+That became `oss-ideas`.
+
+Not a Notion board. Not a private scratchpad. A public repo with lifecycle folders, PRD templates, qualification rules, and enough structure that an idea could move from vague to buildable without pretending every thought deserved implementation.
+
+## The queue matters more than the first build
+
+The biggest bottleneck in agentic engineering is not typing speed. It is decision quality.
+
+If the input is sloppy, the output just becomes sloppy faster. An agent can scaffold a project quickly, but it cannot reliably decide whether the project deserves to exist, which scope should be V1, what belongs out of scope, or what verification should prove the work is real.
+
+That is the job of the idea queue.
+
+`oss-ideas` uses a simple lifecycle:
+
+- `ideas/backlog` for rough ideas that are interesting but not ready
+- `ideas/ready` for scoped PRDs that an agent could build from
+- `ideas/in-progress` for active builds
+- `ideas/built` for repos that exist or V1s that have shipped
+
+That folder structure sounds boring. Good. Boring is the point.
+
+The sprint only works if I can look at the queue and know which ideas have earned a build slot. The qualification docs ask for the pitch, why it matters, demand signal, V1 scope, out-of-scope list, verification requirements, and an agent prompt. That forces the idea to survive contact with constraints before it gets rewarded with implementation.
+
+## Speed starts with deciding what not to build
+
+AI makes shipping cheaper. That does not make every idea better.
+
+In fact, cheap shipping makes taste more important. When the cost of generating code drops, the cost of choosing badly goes up because the backlog fills with plausible junk. You can burn a week building things that compile and still have nothing worth maintaining.
+
+That is why I keep coming back to the same founder rule I wrote about in [how I decide what SaaS ideas are worth building](/blog/how-i-decide-what-saas-ideas-are-worth-building): the first question is not "can I build this?" The first question is "should this exist?"
+
+For this sprint, the answer has to be stronger than novelty. A project needs to make the agentic development system itself better, solve a repeated developer pain, or create a reusable piece of open-source infrastructure.
+
+The score is not just repo count. The `oss-ideas` sprint doc is explicit about that. Raw commit count is not the scoreboard by itself. Verified checkpoint commits are.
+
+That line matters because it changes the incentive. I do not want a graveyard of generated repos. I want a compounding system.
+
+## The first tool was a constraint
+
+The deeper insight from Day 1 was that the idea system is part of the factory, not prep work outside the factory.
+
+A good idea queue gives agents better boundaries:
+
+- what problem the repo solves
+- what V1 includes
+- what V1 explicitly does not include
+- which checks prove the work is acceptable
+- when to stop and ask a human
+
+That is the difference between agent output and agent work.
+
+Output is text and files. Work is bounded, reviewable progress against a real objective.
+
+This connects directly to [building with AI agents](/blog/building-with-ai-agents). Start with the loop. The Day 1 loop was capture, qualify, promote, build, verify. The implementation agent comes later.
+
+By the end of the day, the sprint had a spine: a public idea bank, a lifecycle, a qualification test, and a bias toward local-first, deterministic, agent-friendly developer tools.
+
+No heroic coding moment. No launch announcement. Just the operating system before the factory.
+
+That was the right start.

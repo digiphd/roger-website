@@ -11,13 +11,13 @@ Most agent failures look like reasoning failures. A lot of them are context fail
 
 The agent does not know which package manager a repo uses. It guesses the test command. It misses the `AGENTS.md` policy. It edits a path that should have been off limits. It treats a production-sensitive repo the same way it treats a toy CLI.
 
-Day 4 of the sprint was about `repoctx`, the context layer that should have existed before any agent touched a multi-repo workspace.
+Day 4 of the sprint was about [`repoctx`](https://github.com/rogerchappel/repoctx), the context layer that should have existed before any agent touched a multi-repo workspace.
 
 ## Agents should not have to guess how a repo works
 
 The `repoctx` PRD says the quiet part out loud: agents should not have to guess how a repo works.
 
-The tool is meant to scan local repositories and produce a machine-readable workspace map. Not a prose summary for a human to skim. A map that tools like `taskbrief`, `branchbrief`, CrewCMD, Codex, OpenClaw, Claude Code, and GitHub Copilot can use.
+The tool is meant to scan local repositories and produce a machine-readable workspace map. Not a prose summary for a human to skim. A map that tools like [`taskbrief`](https://github.com/rogerchappel/taskbrief), [`branchbrief`](https://github.com/rogerchappel/branchbrief), [CrewCMD](https://github.com/rogerchappel/crewcmd), Codex, OpenClaw, Claude Code, and GitHub Copilot can use.
 
 The map should answer practical questions:
 

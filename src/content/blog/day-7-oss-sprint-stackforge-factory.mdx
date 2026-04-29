@@ -1,0 +1,80 @@
+---
+title: "Day 7: Building the Factory Before Building the Repos"
+description: "Day 7 brought StackForge into the sprint: a deterministic CLI-first project factory for scaffolding agent-friendly repos without hidden network calls or autonomous publishing."
+pubDate: 2026-04-30
+tags: ["oss", "developer-tools", "agents", "workflow"]
+draft: false
+---
+
+{/* SEO intent: deterministic AI agent workflow; supporting phrases: StackForge, project scaffolding CLI, agent-friendly repositories, local-first automation */}
+By Day 7, the pattern was obvious.
+
+The sprint did not need one more repo. It needed a factory for making repos the right way.
+
+That became StackForge.
+
+StackForge is a CLI-first software project factory for developer/operators and agent orchestrators. Its job is not to be a magical autonomous founder. Its job is to take a selected idea and create an agent-friendly repository with the right files, docs, tasks, and validation surface from the beginning.
+
+## The factory is deterministic on purpose
+
+The StackForge README is very clear about the safety model:
+
+- no hidden network calls
+- no implicit GitHub creation
+- no default LLM calls
+- no autonomous merging or publishing
+- no destructive overwrite behavior without explicit intent
+
+That is exactly the posture I want for a tool sitting this close to repo creation.
+
+The command surface is also intentionally concrete:
+
+```bash
+stackforge templates
+stackforge init oss-cli demo --dry-run
+stackforge init oss-cli demo
+```
+
+The V1 release bar is not "build anything from a prompt." It is: list templates, dry-run a deterministic plan, write a local scaffold, include the expected repo files, and pass checks.
+
+That sounds less futuristic. It is much more useful.
+
+## StackForge connects the earlier layers
+
+The interesting thing about StackForge is that it only makes sense because the previous pieces exist.
+
+`oss-ideas` supplies the scoped idea. `agentic-oss-template` supplies the baseline repo hygiene. `taskbrief` supplies task structure. `repoctx` tells the system how repos behave. The playbook defines how agents should work inside the result.
+
+StackForge is the glue.
+
+Its PRD says the problem directly: the pieces existed separately. The sprint needed one deterministic tool that turns a selected idea into a real working repository with docs, agent instructions, templates, task briefs, and review cadence.
+
+That is the factory.
+
+Not a model. Not a chat. A command-line harness around a repeatable workflow.
+
+## Dry runs are a product feature
+
+One design choice I strongly agree with is making dry-run behavior central.
+
+When a tool can create repos, write files, initialize git, and optionally prepare GitHub commands, the operator needs to see the plan before it happens. StackForge's GitHub flow is explicit: GitHub creation is only requested with a flag, the first run remains reviewable, and execution requires another deliberate flag.
+
+That pattern matters for agent orchestration.
+
+Agents should be able to propose high-impact actions without taking them silently. A dry run is the handoff between automation and approval.
+
+This is the practical version of [the API is the product for AI features](/blog/the-api-is-the-product-for-ai-features). The command surface, flags, defaults, and failure modes are the product because agents and humans both depend on them.
+
+## The Day 7 insight
+
+The deeper insight was that founder speed comes from removing setup variance.
+
+If every new repo starts differently, every agent has to relearn the environment. If every repo starts from a consistent template, with PRD, tasks, validation, and policy already in place, the first implementation wave can focus on actual product work.
+
+StackForge does not replace judgment. It makes judgment repeatable.
+
+That is the factory before the repos.
+
+By the end of Day 7, the sprint had moved from individual tools to an integrated build pipeline: idea, context, task, scaffold, agent work, commit discipline, verification, and review.
+
+That is when the 60-day goal stopped feeling like a stunt and started feeling like an operating system.

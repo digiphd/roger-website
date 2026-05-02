@@ -1,0 +1,86 @@
+---
+title: "Day 2: Agents Need Briefs, Not Wishes"
+description: "Day 2 turned rough sprint intent into scoped task briefs, proving that AI coding agents need boundaries, risk, and verification before they need more autonomy."
+pubDate: 2026-04-25
+tags: ["agents", "oss", "engineering", "sprint"]
+draft: false
+---
+
+{/* SEO intent: AI coding agent briefs; supporting phrases: taskbrief, agent task queues, scoped PRDs, verification requirements */}
+The fastest way to waste an AI coding agent is to give it a wish.
+
+"Make this better."
+
+"Build the first version."
+
+"Clean up the repo."
+
+Those prompts feel efficient because they are short. They are not efficient. They just move the ambiguity from the human into the agent run, where it becomes harder to see and more expensive to unwind.
+
+Day 2 of the 60 Day OSS Sprint was about building the layer between rough intent and executable work. That layer is [`taskbrief`](https://github.com/rogerchappel/taskbrief).
+
+## A task brief is a compiler target
+
+`taskbrief` exists for one reason: messy input is not safe agent input.
+
+The repo describes it as a tool for turning voice transcripts, planning blobs, GitHub issues, and cross-repo TODO dumps into structured task briefs. The important part is not the format. It is the boundary.
+
+A good task brief says:
+
+- which repo the work belongs to
+- which branch to use
+- what type of task it is
+- what risk level applies
+- which paths are allowed
+- which paths are forbidden
+- what verification must run
+- what stop conditions require human review
+- what commits are expected
+
+That is a very different object from a prompt.
+
+A prompt asks for output. A brief defines work.
+
+This is the same principle behind [how to manage a team of AI agents](/blog/how-to-manage-ai-agent-teams): if agents are going to behave like teammates, they need the boring management structure teammates get. Assignment. Scope. Review. Escalation. Done criteria.
+
+## The chaos tax shows up immediately
+
+Without briefs, agent work has a hidden tax.
+
+The agent makes assumptions about repo layout. It edits files outside the intended scope. It picks a verification command that happens to pass but does not prove the actual change. It turns one small fix into a broad refactor because the prompt never said not to.
+
+That is not because the model is bad. It is because the task was underspecified.
+
+Day 2 was the point where the sprint stopped treating prompts as magic and started treating them as compiled artifacts. `taskbrief` can produce Markdown, YAML, JSON, and CrewCMD-shaped output. It can classify risk. It can represent human approval requirements. Its docs explicitly say it should not dispatch agents, mutate repositories, create pull requests, or run tests by itself.
+
+That separation matters.
+
+The tool shapes work. The orchestrator dispatches work. The agent executes work. Review decides whether the work lands.
+
+When those responsibilities blur, speed turns into noise.
+
+## Local-first by default, LLM by consent
+
+One detail I like in `taskbrief` is its stance on LLM parsing.
+
+The current repo supports deterministic local parsing, and LLM parsing is an explicit opt-in path. The policy requires disclosure of provider, model, credential source, input, output format, and network behavior before an LLM call.
+
+That is not just security theatre. It is a product philosophy.
+
+Agentic tooling should be honest about when it is deterministic and when it is probabilistic. The more important the boundary, the less I want it hidden behind vibes.
+
+For the sprint, that means a rough brain dump can become a queue, but the queue should still be inspectable before agents touch code.
+
+## The lesson from Day 2
+
+The deeper insight is that autonomy is not the first unlock. Translation is.
+
+Most founders and developers have plenty of intent. The hard part is turning that intent into small, bounded, verifiable units of work at the speed agents can consume them.
+
+`taskbrief` is that translation layer.
+
+It is also a reminder that agentic engineering is not "ask harder." It is designing the handoff between human judgment and machine execution.
+
+By the end of Day 2, the sprint had more than ideas. It had a way to turn selected ideas into work packets with enough structure to be reviewed, queued, and run.
+
+That is when the factory started to feel possible.

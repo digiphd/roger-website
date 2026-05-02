@@ -1,0 +1,164 @@
+---
+title: "Day 9: The Difference Between Shipping Fast and Shipping Blind"
+description: "Day 9 of the 60 Day OSS Sprint: worktree isolation, environment probes, and proof bundles turned fast agentic OSS work into reviewable shipping instead of blind velocity."
+pubDate: 2026-05-01
+tags: ["open-source", "ai-agents", "oss-sprint", "developer-tools", "workflow"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: rank for deterministic agentic OSS building, AI agent developer workflow, worktree isolation for agents, local proof-of-work bundles, and safe AI coding agents. */}
+
+Day 9 was not about making agents faster.
+
+That is the easy part now.
+
+The harder question is whether faster work is still inspectable, repeatable, and safe enough to hand to a human reviewer without asking them to reverse-engineer what happened.
+
+That is the line between shipping fast and shipping blind.
+
+The sprint has been forcing that distinction into the open. It is one thing to have an agent produce a CLI, README, tests, smoke script, and release notes. It is another thing to know which checkout it touched, whether the machine could actually run the work, and what evidence exists after the change.
+
+Day 9 was about that operating layer.
+
+<Highlight emoji="⚙️">
+The real unlock is not autonomous code generation. It is deterministic workflow: isolated lanes, known environment state, and reviewable proof after the run.
+</Highlight>
+
+## What got built
+
+Three tools became the spine of the workflow: `worktreeguard`, `envprobe`, and `proofdock`.
+
+Not because they are flashy. Because they answer the questions that decide whether agent-produced OSS is usable.
+
+<Step number={1} title="Worktreeguard: keep agents out of each other's lanes">
+`worktreeguard` is a local-first CLI for leasing, inspecting, and releasing Git worktrees. It wraps `git worktree` with predictable lanes, JSON lock metadata, dirty/stale/missing worktree detection, and status reports for humans and orchestrators.
+</Step>
+
+That matters because most agent workflows fail in boring ways. Two agents touch the same checkout. A branch gets left dirty. A stale lane sits around and nobody remembers what it was for. The failure mode is not science fiction. It is basic operational sloppiness at machine speed.
+
+`worktreeguard` makes the lane explicit.
+
+An agent gets a task-specific worktree. The lease is written down. Status can be rendered as Markdown or JSON. Release refuses to remove dirty work unless that is explicit. That is not glamorous, but it is the kind of constraint that lets multiple agents work without turning the repo into a crime scene.
+
+<Step number={2} title="EnvProbe: know what the machine can actually do">
+`envprobe` snapshots local build capability before work gets assigned. It reports tool versions, project signals, expected files, Git state, OS/disk basics, and environment signal names only. It does not print secret values and makes no network calls in the core scan.
+</Step>
+
+This solves a different problem: agents often receive tasks as if every machine is the same.
+
+They are not.
+
+One checkout has `pnpm`. Another only has `npm`. One repo has a lockfile. Another does not. One machine has Docker. Another does not. One task requires a token. The safe thing is not to dump the environment into a prompt. The safe thing is to produce a constrained capability profile: here are the tools, here are the missing files, here is the Git state, here are the env signal names and whether they are present.
+
+That is enough for routing and triage without leaking credentials.
+
+<Step number={3} title="Proofdock: turn the run into evidence">
+`proofdock` assembles a local proof-of-work bundle for developer or agent changes. It collects explicit artifacts, runs allowlisted checks, and emits portable JSON, Markdown, HTML, and PR-comment outputs.
+</Step>
+
+This is the handoff layer.
+
+A reviewer should not have to trust a summary that says "tests passed". They should get the proof bundle: artifacts, commands, logs, risks, next steps, and a PR-ready summary. `proofdock` keeps that local and explicit. No hosted service. No telemetry. No automatic PR posting. Just a review packet that survives after the agent stops talking.
+
+## The challenge that showed up
+
+The challenge was not building another CLI.
+
+The challenge was that velocity creates its own fog.
+
+When the sprint is moving slowly, a human can keep the state in their head. Which repo changed? Which checks ran? Which tool was missing? Which branch is safe to review? Which failure is real and which one is just a stale environment?
+
+At agent speed, that breaks.
+
+A vague workflow can look productive right up until the review step. Then the human has to ask basic questions:
+
+- Where did this change happen?
+- Is the working tree clean?
+- Did the build run locally?
+- What machine assumptions were present?
+- Are there artifacts, or just a narrative?
+- Can another agent reproduce the failure or continue the work?
+
+If those answers are not captured during the run, they have to be reconstructed afterward. That is where fast turns into blind.
+
+<Callout type="warning" title="The trap">
+Agentic building does not fail only when the code is wrong. It fails when the workflow cannot explain itself after the code is written.
+</Callout>
+
+## How the workflow handled it
+
+The pattern is simple:
+
+1. Lease the lane before the agent starts.
+2. Probe the environment before assigning or validating the task.
+3. Bundle the proof before asking for review.
+
+That gives the sprint a deterministic shape.
+
+`worktreeguard` answers: this is the lane, this is its branch, this is whether it is dirty, stale, missing, or risky.
+
+`envprobe` answers: this is the machine and project capability profile, with secret values deliberately excluded.
+
+`proofdock` answers: this is the evidence packet: commands, artifacts, summaries, risks, and review notes.
+
+<CompareTable
+  left={{ title: "Shipping blind", items: [
+    "Agent runs in whatever checkout is open",
+    "Environment assumptions live in chat history",
+    "Test claims are summarized but not bundled",
+    "Reviewer has to rediscover the state",
+    "Speed creates cleanup debt",
+  ] }}
+  right={{ title: "Shipping fast", items: [
+    "Agent works inside an explicit leased worktree",
+    "Capabilities are scanned before work is routed",
+    "Evidence is collected into a portable bundle",
+    "Reviewer gets state, artifacts, and risks",
+    "Speed compounds because the workflow is repeatable",
+  ] }}
+/>
+
+The important part is that none of this requires a big platform.
+
+It is files, CLIs, JSON, Markdown, and Git.
+
+That is the point.
+
+The more I build in this sprint, the more convinced I am that deterministic agentic OSS will be won by boring interfaces. The tools that matter are the ones that make state inspectable, not the ones that pretend state does not exist.
+
+## The deeper insight
+
+There is a temptation to treat agentic software development as a model-quality problem.
+
+Better model, better output. Smarter agent, better repo.
+
+That is partly true, but it is not enough.
+
+The real bottleneck is operational determinism.
+
+Can you run more than one agent without collisions? Can you prove what happened? Can you reproduce a failure? Can you route work to a machine that can actually execute it? Can a human reviewer understand the change without reading a thousand lines of chat transcript?
+
+Those are not model questions. They are systems questions.
+
+<Highlight emoji="🧭">
+Deterministic agentic OSS building is less about trusting agents and more about designing workflows where trust is not the primitive. Evidence is.
+</Highlight>
+
+That is why Day 9 mattered.
+
+The sprint is not just producing repos. It is producing the rails that make repo production sane: local-first safety, explicit handoff, and enough structure that fast work remains reviewable.
+
+That is the difference.
+
+Shipping blind is when you move quickly and hope the output is right.
+
+Shipping fast is when the workflow captures enough state that the output can be checked, reproduced, rejected, or continued.
+
+I want the second one.
+
+That is the only version of agentic OSS that scales without turning the human into a forensic accountant.

@@ -1,0 +1,74 @@
+---
+title: "Day 3: Atomic Commits Are a Safety Feature"
+description: "Day 3 focused on atomcommit and the idea that fast AI-generated code only stays useful when every change can be reviewed, explained, and rolled back."
+pubDate: 2026-04-26
+tags: ["git", "agents", "oss", "engineering"]
+draft: false
+---
+
+{/* SEO intent: atomic commits AI generated code; supporting phrases: atomcommit, agent review workflow, rollback, commit planning */}
+Commit history is not admin work. In an agent-heavy sprint, it is the safety harness.
+
+Day 3 was about [`atomcommit`](https://github.com/rogerchappel/atomcommit), a small idea with an outsized role: turn a messy working tree into an atomic commit plan.
+
+The premise is blunt. If agents can change code faster than humans can review it, the diff has to become easier to understand. Otherwise speed just creates a larger review debt.
+
+## Fast code still needs trustworthy history
+
+A lot of AI coding workflows optimize for the final patch. I care just as much about the path.
+
+Was the change scoped? Did docs move separately from runtime behavior? Did tests arrive with the implementation or as a panic cleanup? If something breaks, can I revert one clear commit or do I have to untangle a generated blob?
+
+`atomcommit` is designed around that pressure. Its PRD describes a deterministic local CLI that reads git diff information, groups files into suggested commit slices by path and type, emits Markdown and JSON, adds risk flags, and suggests commit messages.
+
+The important non-goal is just as telling: no auto-commit and no auto-stage.
+
+That is the right boundary. The tool can propose structure. The human or orchestrator still decides what gets staged.
+
+## Atomic commits are not aesthetic
+
+Small commits are often framed as a cleanliness preference. In an agent workflow, they are operational control.
+
+They give you:
+
+- reviewable checkpoints
+- narrower rollback options
+- cleaner blame when something fails later
+- a better audit trail of agent decisions
+- less temptation to wave through a giant diff because the day is moving fast
+
+This connects with the durable agent model in the [Agentic Team Playbook](https://github.com/rogerchappel/agentic-team-playbook): branches are isolated execution contexts, atomic commits are checkpoints, verification is the health check, and pull requests are the human review boundary.
+
+That model is basically production operations thinking applied to code generation.
+
+You would not trust a background worker that mutates state without logs, checkpoints, or retries. I do not want coding agents operating that way either.
+
+## Deterministic first
+
+The `atomcommit` shape is intentionally small. It can inspect `git diff --name-status`, `git diff --stat`, and `git diff --numstat`. It can group obvious categories. It can flag risky files. It can write a plan.
+
+It does not need to be brilliant to be useful.
+
+That is a theme of the sprint already. The highest leverage tools are not always the most autonomous ones. They are often the deterministic ones that remove ambiguity before an agent or human has to make a judgment call.
+
+A commit planner does not need to know the entire product roadmap. It needs to say, "these files look like docs, these look like tests, these touch CI, and this probably deserves a separate commit."
+
+That is enough to make the next decision safer.
+
+## The founder speed tradeoff
+
+There is a real tension here.
+
+If I am trying to move fast, why slow down for commit discipline?
+
+Because sloppy history compounds in the wrong direction. The first messy commit feels like a shortcut. The tenth makes every review harder. The fiftieth makes the repo feel untrusted.
+
+In a normal team, that shows up over months. With agents, it can show up in a day.
+
+That is the uncomfortable lesson of high-throughput development: quality controls have to move closer to the act of creation. You cannot bolt them on after the factory is already producing bad units.
+
+I wrote in [stop building features, start building pipelines](/blog/stop-building-features-start-building-pipelines) that the loop is the product. Here, the loop is not just build and test. It is build, slice, verify, review, and recover.
+
+Day 3 made that explicit.
+
+The sprint needs code. But it needs code with history I can trust.

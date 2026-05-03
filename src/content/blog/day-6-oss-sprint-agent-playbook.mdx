@@ -1,0 +1,90 @@
+---
+title: "Day 6: The Agent Playbook Became the Product"
+description: "Day 6 turned one-off agent prompting into an operating model: branches as execution contexts, atomic commits as checkpoints, and verification as the handoff gate."
+pubDate: 2026-04-29
+tags: ["agents", "engineering", "oss", "workflow"]
+draft: false
+---
+
+{/* SEO intent: AI agent playbook; supporting phrases: agentic-team-playbook, verification checklist, review packs, risk escalation */}
+At some point, the prompt stops being the product.
+
+The operating model becomes the product.
+
+Day 6 of the 60 Day OSS Sprint was about the [Agentic Team Playbook](https://github.com/rogerchappel/agentic-team-playbook): reusable operating instructions, templates, and checklists for building durable AI coding agents.
+
+That wording is deliberate. Durable agents, not clever agents.
+
+Clever is easy to demo. Durable is what survives repeated work.
+
+## From one-off prompting to an operating system
+
+The playbook frames agent work in a way I trust:
+
+- branches are isolated execution contexts
+- atomic commits are checkpoints
+- verification is the health check before handoff
+- review packs are execution logs
+- rollback plans are recovery paths
+- risk escalation is the circuit breaker
+- pull requests are the human review boundary
+
+That is not prompt engineering. That is production discipline.
+
+It also gives the sprint a shared language. When an agent takes a task, I do not want to negotiate the basics every time. I want the repo to already define how to branch, when to stop, what to verify, what belongs in the PR, and which operations need human approval.
+
+This is the same management problem I wrote about in [how to manage a team of AI agents](/blog/how-to-manage-ai-agent-teams). Teams need operating norms. AI teams are not exempt just because they run in terminals.
+
+## The playbook is a constraint system
+
+The useful part of a playbook is not that it tells agents to "be careful."
+
+That does almost nothing.
+
+The useful part is that it turns care into concrete constraints:
+
+- do not touch secrets
+- do not mutate production data without approval
+- keep commits small
+- document verification
+- escalate auth, billing, security, data deletion, or deployment risk
+- leave a review pack when handing work back
+
+Those rules reduce the surface area of failure.
+
+They also make supervision cheaper. I do not need to inspect every line of a transcript to understand whether the work followed the process. I can inspect the branch, commits, verification output, and PR notes.
+
+That is the difference between watching an agent and managing a system.
+
+## Handoffs are where quality lives
+
+Agent work often fails at the handoff.
+
+The code may be fine, but the reviewer does not know what changed, why it changed, what was tested, what was skipped, or what remains risky. That creates friction, and friction makes humans rubber-stamp or stall.
+
+The playbook solves this by treating review packs and pull requests as first-class artifacts.
+
+A good handoff should say:
+
+- objective
+- files changed
+- verification run
+- known risks
+- rollback notes
+- follow-ups
+
+That is not bureaucracy. It is compression. It lets a human review faster without pretending trust is free.
+
+This is why [smart token consumption is the new 10x engineer](/blog/smart-token-consumption-is-the-new-10x-engineer) matters in practice. The best agent workflows do not spend tokens making the same decisions repeatedly. They encode the durable decisions once and reuse them.
+
+## The Day 6 insight
+
+The deeper insight was that the agent playbook itself is an OSS artifact.
+
+It is tempting to think the sprint is about the repos produced by agents. But the process that makes those repos reviewable is just as valuable.
+
+A public playbook gives other builders something to copy before they have their own scars. It also gives my own agents a stable contract across repos, runtimes, and tools.
+
+That is when the sprint shifted from "build many projects" to "build the machine that builds projects."
+
+Day 6 made the machine legible.

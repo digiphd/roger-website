@@ -1,0 +1,130 @@
+---
+title: "Day 11: The Review Queue Became the Product"
+description: "Day 11 of the 60 Day OSS Sprint: prpack, lockfilelens, and workspacewire all point at the same constraint — agents only scale when the review queue gets sharper."
+pubDate: 2026-05-03
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent review workflow; supporting phrases: agentic engineering tools, AI coding agents workflow, AI agent verification, local-first developer tools */}
+
+Day 11 is where the sprint got less romantic and more useful.
+
+The early version of the story was simple: build more tools, use agents to move faster, publish the work, repeat.
+
+That is still true. But it is not the whole system.
+
+The real constraint is the review queue.
+
+If every agent-produced change lands as a vague PR, a noisy diff, a suspicious dependency update, or an unsafe external action, the human becomes the bottleneck immediately. Not because the human is slow. Because the machine has pushed all the judgment downstream.
+
+That is not leverage. That is deferred thinking.
+
+<Highlight emoji="🧾">
+The review queue is not an afterthought in an agentic workflow. It is the product surface where trust is either earned or lost.
+</Highlight>
+
+## The tools in focus
+
+Today the strongest narrative runs through three different kinds of review pressure.
+
+`prpack` turns a branch into a reviewer-ready PR handoff pack. It reads local git metadata and optional artifacts from tools like `branchbrief` and `qualitygate`, then writes a structured Markdown handoff and optional paste-ready PR body.
+
+`lockfilelens` explains package manager and lockfile changes. It can inspect dependency hygiene, flag package-manager drift, and summarize lockfile diffs as Markdown, JSON, or text.
+
+`workspacewire` plans Google Workspace operations without touching live Gmail, Calendar, Drive, or Contacts data. It produces dry-run operation plans with request shape, least-privilege scopes, fixture-backed previews, and safety flags.
+
+Different tools. Same shape.
+
+Make the next human decision easier.
+
+## prpack: the PR body is not admin work
+
+A bad PR body feels small until you are reviewing ten of them.
+
+Then it becomes obvious that the PR body is part of the engineering system. It is the place where intent, evidence, risk, rollout, and follow-up either get compressed into something useful or sprayed across chat history.
+
+`prpack` is deliberately local-first. It does not create the PR. It does not call an LLM. It does not phone home. It does not pretend to replace review.
+
+It builds the pack.
+
+That distinction matters because agents are very good at performing confidence. A handoff pack should make the confidence inspectable. What branch is this? What changed? What quality evidence exists? What risks remain? What should the reviewer look at first?
+
+This connects directly to [the agent handoff layer](/blog/the-agent-handoff-layer). The handoff is where speed becomes either operational or theatrical.
+
+## lockfilelens: dependency changes need translation
+
+Lockfiles are where a lot of review discipline quietly dies.
+
+A generated diff can be huge. Most reviewers do not want to read every resolved package line. Agents are even worse here because they will often say "updated dependencies" as if that explains the risk.
+
+It does not.
+
+`lockfilelens` exists because dependency changes need translation before they hit review. It can inspect npm, pnpm, Yarn, and Bun project signals. It can call out package-manager drift, missing or stale lockfiles, duplicate ecosystem signals, and dependency changes. It can compare lockfiles and classify additions, removals, upgrades, downgrades, and changed packages.
+
+The point is not to make dependency review automatic.
+
+The point is to make the review target visible.
+
+<Callout type="warning" title="The dangerous dependency update is the one nobody understands">
+If an agent changes a lockfile and the reviewer only sees noise, the system has failed before CI runs. The review artifact should say what moved and why it matters.
+</Callout>
+
+That is the broader sprint lesson again: speed without explanation just moves risk around.
+
+## workspacewire: external actions need a rehearsal layer
+
+`workspacewire` is not a coding-review tool in the narrow sense, but it belongs in the same Day 11 story.
+
+Agents touching email, calendar, files, or contacts are operating near personal and business trust boundaries. The first version of that workflow should not be "give the agent OAuth and hope the prompt was clear."
+
+`workspacewire` is a planner. It can describe Gmail, Calendar, Drive, and Contacts actions without starting OAuth, mutating data, storing credentials, or making live requests. The output includes intended method and path, least-privilege scopes, risk notes, fixture-backed preview results, and safety flags proving no live request was made.
+
+That is a review queue for external operations.
+
+Before an agent sends, edits, uploads, deletes, or invites, it should be able to show the plan in a way a human can approve or reject.
+
+That is not bureaucracy. That is how you keep useful automation from becoming reckless automation.
+
+## The challenge: review artifacts can become another pile
+
+The risk with all three tools is that they create more documents than decisions.
+
+A PR pack nobody reads is just ceremony. A lockfile summary that repeats the diff is noise. A workspace operation plan that hides the risky scope in a wall of JSON is not safer.
+
+The standard has to be higher than "generated an artifact."
+
+<CompareTable
+  left={{ title: "Weak review layer", items: ["Long artifacts", "No risk ranking", "Generic summaries", "Reviewer hunts for the point", "Approval depends on vibe"] }}
+  right={{ title: "Useful review layer", items: ["Decision-shaped artifacts", "Specific remaining risks", "Evidence tied to the change", "Reviewer knows where to look", "Approval depends on proof"] }}
+/>
+
+The agentic engineering stack needs fewer magical claims and more decision-shaped outputs.
+
+## The Day 11 insight
+
+Day 11 clarified something I keep circling back to: the human is not outside the system.
+
+A lot of AI tooling talks as if the goal is to remove the human from the loop. That is the wrong frame for most serious work.
+
+The better goal is to stop wasting the human on reconstruction.
+
+Do not make the reviewer reconstruct intent from a diff.
+Do not make the reviewer reconstruct dependency risk from a lockfile.
+Do not make the approver reconstruct external action safety from a prompt.
+
+Put that work into the harness.
+
+That is why the sprint keeps producing small local tools instead of one giant agent platform. The missing layer is not one dashboard. It is a chain of boring, explicit checkpoints around the places where agents usually hand-wave.
+
+Day 10 was about proof.
+
+Day 11 is about the queue that proof lands in.
+
+If the queue gets sharper, the whole system gets faster without asking humans to trust more blindly.
+
+That is the kind of speed I actually want.

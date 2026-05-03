@@ -1,0 +1,138 @@
+---
+title: "Day 10: Turning Agent Speed into Something You Can Trust"
+description: "Day 10 of the 60 Day OSS Sprint: Agent-QC, ProofDock, and ToolTrace all point at the same problem — fast agents need better proof, not louder confidence."
+pubDate: 2026-05-02
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: 60 Day OSS Sprint AI agent verification; supporting phrases: agentic engineering tools, AI coding agents workflow, deterministic AI agents, local-first developer tools */}
+
+Day 10 has a theme: speed is not the hard part anymore.
+
+The hard part is trust.
+
+Once you have agents that can open branches, write code, update docs, and create pull requests, the bottleneck moves. You stop asking, "can this get done?" and start asking, "can I review this without becoming a detective?"
+
+That is a different problem.
+
+It is also the problem that keeps pulling my OSS sprint toward harness tools: small local CLIs that sit around agents and make their work inspectable.
+
+## The tools in focus
+
+Today the strongest narrative is not one repo. It is the line between three of them.
+
+`agent-qc` is the readiness gate. It catches deterministic handoff failures before an agent says done, starting with GitHub markdown body quality and unsafe `gh pr create` body patterns.
+
+`proofdock` is the proof bundle. It collects explicit artifacts, runs allowlisted checks, and renders review outputs as JSON, Markdown, HTML, and PR-comment text.
+
+`tooltrace` is the activity timeline. It turns raw runtime and tool events into grouped review timelines, proof summaries, and embeddable UI.
+
+Different surfaces. Same thesis.
+
+<Highlight emoji="🧱">
+Fast agents need a proof layer. Otherwise the human review queue becomes the place where all the uncertainty gets dumped.
+</Highlight>
+
+That sentence is basically the sprint right now.
+
+## Agent-QC: make "ready" mean something
+
+The current `agent-qc` build is small, but it is pointed at a real failure mode.
+
+Agents can create GitHub PRs with literal escaped newlines in the body. The command succeeds. The PR exists. The link looks legitimate. But the review artifact is bad.
+
+That is the kind of bug that slips through because the agent optimizes for command success, not reviewer experience.
+
+`agent-qc ready` is the beginning of a stricter exit path. It can validate local body files, check existing PR bodies, and scan planned commands for unsafe `gh pr create` or `gh pr edit` usage. Missing optional dependencies are warnings where appropriate, not theatrical failures.
+
+The deeper idea is simple: if a failure is deterministic, do not leave it to model memory.
+
+Put it in a gate.
+
+## ProofDock: evidence should travel with the change
+
+`proofdock` is aimed at a different part of the same handoff problem.
+
+A reviewer should be able to see the evidence that belongs to a change without rummaging through terminal scrollback, chat messages, and half-remembered agent summaries.
+
+The MVP can initialize a config, collect artifacts, render outputs from a proof JSON file, and produce a summary. It has an explicit safety model: local-first, no network calls in the core flow, allowlisted commands, artifact paths that cannot escape the repo, and redaction for obvious token patterns.
+
+That matters.
+
+The agentic workflow needs proof, but it also needs boundaries. A proof collector that grabs everything is not proof. It is a privacy incident waiting for a filename.
+
+<Callout type="tip" title="Proof should be scoped">
+The best evidence bundle is not "everything the agent touched." It is the smallest set of artifacts that lets a reviewer understand the change, the checks, the risks, and the next decision.
+</Callout>
+
+That is why I like ProofDock as a local review primitive. It makes proof portable without making it magical.
+
+## ToolTrace: the timeline is part of the product
+
+`tooltrace` points at the audit side.
+
+When agents do real work, the final diff is not the whole story. The path matters. Which commands ran? Which checks failed first? What changed after the retry? Was there an approval? What files were touched? Where did the blocker happen?
+
+ToolTrace normalizes events into categories like commands, file changes, checks, approvals, errors, blockers, PR links, and completion proof. It can render a Markdown summary from JSONL and expose a React timeline for applications that need the review surface embedded.
+
+This is not about surveillance theatre. It is about reducing ambiguity.
+
+If a human is going to trust a semi-autonomous workflow, the system should preserve enough context to explain itself after the fact.
+
+## The challenge: proof can become noise
+
+The challenge with all three tools is obvious: proof can get noisy fast.
+
+A timeline with every event is unreadable. A proof bundle with every artifact is bloated. A readiness gate with too many warnings becomes background static.
+
+So the design pressure is not "capture more." It is "capture what changes the review decision."
+
+<CompareTable
+  left={{ title: "Bad proof layer", items: ["Huge logs", "Unranked events", "No risk summary", "Private context leaks", "Reviewer still has to infer the point"] }}
+  right={{ title: "Useful proof layer", items: ["Scoped artifacts", "Grouped timeline", "Clear verification status", "Explicit gaps", "Human decision is obvious"] }}
+/>
+
+That is the line I want to keep walking during the sprint.
+
+Agent infrastructure should not bury humans under more machine output. It should compress the work into a clearer review decision.
+
+## The deeper insight
+
+The sprint started as a way to ship a lot of small OSS tools. It is becoming a map of the missing layers around agents.
+
+Input needs shaping. That is `taskbrief`.
+
+Execution needs isolation. That is `worktreeguard`.
+
+Branches need summaries. That is `branchbrief`.
+
+Handoffs need gates. That is `agent-qc`.
+
+Changes need proof. That is `proofdock`.
+
+Runtime needs a timeline. That is `tooltrace`.
+
+None of these are the glamorous model layer. That is fine. The model layer is already getting plenty of attention.
+
+The leverage is in the boring system around it.
+
+## Where Day 10 lands
+
+Day 10 is the point where I am less interested in asking agents to be more confident and more interested in making them prove the right things.
+
+That is the difference between demo velocity and operational velocity.
+
+Demo velocity is "look how fast it made a PR."
+
+Operational velocity is "look how quickly a human can understand, verify, and approve or reject the work."
+
+The second one is the metric that matters.
+
+If this 60 day sprint works, it will not just leave behind a pile of repositories. It will leave behind a local-first harness for agentic engineering: task in, isolated work out, proof attached, review made easier.
+
+That is the system I want.

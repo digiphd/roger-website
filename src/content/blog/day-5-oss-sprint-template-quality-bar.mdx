@@ -1,0 +1,81 @@
+---
+title: "Day 5: The Template Is the Quality Bar"
+description: "Day 5 used the agentic OSS template to turn repo setup from vibes into repeatable defaults: policy, CI, validation, security docs, and review discipline."
+pubDate: 2026-04-28
+tags: ["oss", "developer-tools", "agents", "engineering"]
+draft: false
+---
+
+{/* SEO intent: OSS project template; supporting phrases: agentic-oss-template, repository policy, CI, security documentation, review templates */}
+A sprint can fail before the first line of product code is written.
+
+It fails when every new repo starts from a different standard. One has a good README. One has no security policy. One has a PR template but no validation script. One has agent instructions copied from the wrong project. One forgets Dependabot. One has tests, but nobody knows the command.
+
+Day 5 was about making that impossible by default.
+
+The tool was [`agentic-oss-template`](https://github.com/rogerchappel/agentic-oss-template), and the lesson was simple: the template is the quality bar.
+
+## Templates are not boilerplate
+
+People treat templates as scaffolding you throw away once the real work starts.
+
+That is backwards.
+
+For an open-source sprint, the template defines the minimum acceptable shape of every project. It decides whether a new repo begins with contribution norms, review expectations, security posture, automation, and agent instructions already in place.
+
+`agentic-oss-template` is not an app framework. Its README is clear about that. It is a repository template for starting open-source projects with maintainer policy, agent-friendly workflow rules, baseline GitHub automation, practical release docs, and security documentation.
+
+That means new projects begin with things that are easy to postpone and painful to retrofit:
+
+- `AGENTS.md` for agent and maintainer instructions
+- contribution and conduct docs
+- a security policy that must be customized before publishing
+- issue and pull request templates
+- Dependabot configuration
+- baseline CI and docs checks
+- release and dependency policy docs
+- template variable replacement guidance
+
+None of that is glamorous. All of it changes the slope of the sprint.
+
+## The quality bar has to be repeatable
+
+If I am creating one repo, I can rely on memory and taste.
+
+If I am creating dozens, memory becomes a liability.
+
+A repeatable quality bar means I do not need to re-decide basic repository hygiene every time. I can spend the judgment where it matters: project scope, verification, user value, and whether the repo deserves to continue.
+
+That is also how you keep agents useful. An agent dropped into a repo with clear instructions, templates, validation scripts, and contribution norms has fewer excuses to drift.
+
+The template becomes the first guardrail.
+
+This connects directly to [legitimate productivity in the age of agents](/blog/legitimate-productivity-in-the-age-of-agents). Productivity is not just doing more things. It is building systems where more output does not create proportionally more cleanup.
+
+## Policy is part of product quality
+
+One thing I like about this template is that it refuses to fake maturity.
+
+The security docs tell maintainers not to invent private contact details or imply paid support, guaranteed fixes, or SLAs they cannot meet. The LLM policy says agents must not bypass review, tests, security controls, licensing checks, or fabricate test results. The customization guide tells you to remove placeholders and stale template language before publishing.
+
+That matters because OSS trust is fragile.
+
+A generated repo with confident but inaccurate policy is worse than a sparse repo. It creates false expectations for contributors and users.
+
+The sprint needs speed, but it cannot trade accuracy for polish.
+
+## The Day 5 insight
+
+The deeper insight from Day 5 was that templates are governance disguised as files.
+
+A good template makes the right behavior cheaper than the wrong behavior. It gives agents and humans the same defaults. It makes PRs easier to review because every repo speaks a familiar language.
+
+That is what I mean by templates, not vibes.
+
+The factory does not scale because every agent improvises beautifully. It scales because every new repository starts with a serious baseline and then earns its deviations.
+
+By the end of Day 5, the sprint had a standard starting line.
+
+That is not as exciting as shipping a shiny CLI.
+
+It is more important.

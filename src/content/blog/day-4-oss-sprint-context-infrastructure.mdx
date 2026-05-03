@@ -1,0 +1,82 @@
+---
+title: "Day 4: Context Is Infrastructure"
+description: "Day 4 centered on repoctx and the missing memory layer agents need: deterministic repository context, commands, risks, and policy before implementation starts."
+pubDate: 2026-04-27
+tags: ["agents", "developer-tools", "oss", "engineering"]
+draft: false
+---
+
+{/* SEO intent: repository context for AI agents; supporting phrases: repoctx, workspace map, verification commands, agent memory layer */}
+Most agent failures look like reasoning failures. A lot of them are context failures.
+
+The agent does not know which package manager a repo uses. It guesses the test command. It misses the `AGENTS.md` policy. It edits a path that should have been off limits. It treats a production-sensitive repo the same way it treats a toy CLI.
+
+Day 4 of the sprint was about [`repoctx`](https://github.com/rogerchappel/repoctx), the context layer that should have existed before any agent touched a multi-repo workspace.
+
+## Agents should not have to guess how a repo works
+
+The `repoctx` PRD says the quiet part out loud: agents should not have to guess how a repo works.
+
+The tool is meant to scan local repositories and produce a machine-readable workspace map. Not a prose summary for a human to skim. A map that tools like [`taskbrief`](https://github.com/rogerchappel/taskbrief), [`branchbrief`](https://github.com/rogerchappel/branchbrief), [CrewCMD](https://github.com/rogerchappel/crewcmd), Codex, OpenClaw, Claude Code, and GitHub Copilot can use.
+
+The map should answer practical questions:
+
+- what repos exist
+- where they live locally
+- what remote they use
+- what type of project each repo is
+- which package manager is present
+- what commands verify, build, or test the repo
+- whether docs and `AGENTS.md` exist
+- which paths are risky or forbidden
+- whether the repo is production-sensitive
+
+That is the kind of knowledge humans carry in their heads after months of working in a codebase.
+
+Agents do not get that continuity for free.
+
+## Memory is not enough
+
+It is tempting to solve this with bigger context windows or better prompting.
+
+I do not think that is the right default.
+
+Bigger context helps, but it is not the same as infrastructure. A model remembering something is not as reliable as a deterministic context file generated from the repo itself. The context file can be inspected, diffed, cached, updated, and passed between tools.
+
+That is a different trust model.
+
+`repoctx` is not trying to run commands across every repo like a bulk automation tool. Its job is description. It makes implicit repo knowledge explicit.
+
+That is why it sits upstream of the rest of the factory:
+
+```text
+repoctx -> taskbrief -> CrewCMD -> agents/worktrees -> review
+```
+
+If the context layer is wrong, every downstream tool inherits that wrongness.
+
+## Context changes the shape of tasking
+
+Once repo context exists, task generation gets safer.
+
+A `taskbrief` output can stop saying "run the tests" and start saying the actual command for the target repo. It can inherit default forbidden paths. It can raise risk when a repo is production-sensitive. It can route docs work differently from release work.
+
+That is where agentic engineering starts to feel less like prompting and more like systems design.
+
+You are not asking the model to be careful in the abstract. You are giving it a concrete map of the workspace and forcing tasks to compile against that map.
+
+This is the same reason I keep saying in [building with AI agents](/blog/building-with-ai-agents) that the loop matters more than the model. Context is part of the loop.
+
+## The Day 4 insight
+
+The deeper insight was that context is not background information. Context is a dependency.
+
+If I would not ask a human contractor to work in a repo without telling them the build command, ownership rules, and risky areas, I should not ask an agent to do it either.
+
+The difference is that humans can usually ask follow-up questions or infer norms slowly. Agents will often proceed with confidence unless the system makes uncertainty visible.
+
+So Day 4 was not glamorous. It was not a launch. It was the missing memory layer becoming a real project.
+
+A factory without context is just a pile of workers and machines.
+
+A factory with context can route work intelligently.

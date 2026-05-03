@@ -1,0 +1,130 @@
+---
+title: "The Agent Handoff Layer Is Where Trust Gets Built"
+description: "AI coding agents do not fail only while writing code. They fail in the handoff: missing proof, vague summaries, dirty branches, and review work shifted back onto the human."
+pubDate: 2026-05-02
+tags: ["ai", "agents", "engineering", "oss"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agent handoff; supporting phrases: deterministic AI agents, AI agent verification, agentic engineering workflow, AI software quality */}
+
+Most people judge an AI coding agent by the moment it writes code.
+
+I think that is the wrong place to look.
+
+The dangerous part is not the autocomplete. It is the handoff.
+
+That quiet moment where the agent says "done", posts a vague summary, maybe opens a PR, and shifts the actual verification burden back onto the human. The code may be fine. The diff may even be small. But if the reviewer has to reconstruct what happened, which checks ran, what changed, what failed, and what still needs judgment, the agent did not finish the job.
+
+It stopped one step early.
+
+## The real product is confidence
+
+When I write about [building with AI agents](/blog/building-with-ai-agents), I keep coming back to the same loop: input, decision, action, verification.
+
+Most agent tools obsess over the first three. They want richer prompts, better tools, bigger context windows, more autonomous execution. Fine. Useful. But none of that matters if the last step is weak.
+
+<Highlight emoji="🔍">
+The value of an agent is not the work it claims it did. It is the confidence it can produce around the work.
+</Highlight>
+
+That confidence has a shape:
+
+- what branch changed
+- what files changed
+- why the change exists
+- what risks were noticed
+- what checks ran
+- what checks did not run
+- what evidence is available
+- what decision still belongs to a human
+
+Without that, you do not have an engineering workflow. You have a faster way to create uncertainty.
+
+## "Done" is too cheap
+
+Humans are already bad at handoffs. Agents amplify it.
+
+A human developer might forget to mention that tests were skipped. An agent can skip the tests, write a confident summary, and make the PR look clean enough that the reviewer has to slow down and investigate from scratch.
+
+That is not malice. It is a workflow design problem.
+
+<CompareTable
+  left={{ title: "Weak agent handoff", items: ["Looks finished", "Explains intent loosely", "Hides verification gaps", "Requires reviewer archaeology", "Trust depends on vibes"] }}
+  right={{ title: "Strong agent handoff", items: ["Shows exact changed files", "Names the verification run", "Admits gaps", "Surfaces risk flags", "Trust depends on evidence"] }}
+/>
+
+The handoff layer has to make "done" more expensive.
+
+Not bureaucratic. Not slow. Just specific.
+
+A good agent should not be allowed to complete a task with a sentence like "implemented the requested changes." That is not a handoff. That is a shrug with punctuation.
+
+## This is why I keep building boring tools
+
+A lot of my current OSS work looks boring if you only view it as individual CLIs.
+
+- `branchbrief` turns a branch into a structured review brief.
+- `taskbrief` turns messy intent into safer task packets.
+- `worktreeguard` keeps agents from colliding in the same checkout.
+- `agent-qc` catches deterministic workflow failures before the agent reports done.
+- `proofdock` packages proof-of-work into reviewable artifacts.
+- `tooltrace` turns raw runtime events into a timeline humans can inspect.
+
+None of those are trying to be the agent.
+
+That is the point.
+
+They are the layer around the agent that makes the work inspectable. They turn "trust me" into "here is the branch, here is the diff, here are the checks, here are the gaps."
+
+This is the part of agentic engineering that feels unsexy until you run multiple agents at once. Then it becomes oxygen.
+
+## Speed without handoff quality creates review debt
+
+There is a trap in agent workflows: the faster the agent writes code, the more review debt it can create.
+
+You feel productive because the queue is moving. PRs appear. Branches multiply. The system looks alive.
+
+Then the human reviewer becomes the bottleneck. Not because they are slow, but because every PR arrives as an unsorted pile of claims.
+
+That is where agent speed turns against you.
+
+<Callout type="warning" title="The bottleneck moves">
+AI agents reduce implementation time before they reduce review time. If you do not build the handoff layer, you just move the bottleneck from writing code to proving what happened.
+</Callout>
+
+This is why I am increasingly suspicious of agent demos that end at "opened a pull request." Opening a PR is not the finish line. A reviewable PR is.
+
+The difference is huge.
+
+A reviewable PR has a narrow scope, a clean branch, an honest summary, deterministic checks, useful artifacts, and a clear human decision. It does not ask the reviewer to be a detective.
+
+## Determinism belongs around the model
+
+The model will always have some variance. That is fine. I am not trying to make language models behave like compilers.
+
+But the workflow around the model can be deterministic.
+
+You can deterministically check whether the branch is dirty. You can deterministically detect a PR body with literal escaped newlines. You can deterministically list changed files. You can deterministically require a verification command. You can deterministically generate a review brief.
+
+That is the leverage.
+
+Stop asking the model to remember every workflow rule. Put the rules in software.
+
+That is how agent systems get calmer. The model handles judgment and language. The surrounding harness handles state, evidence, and gates.
+
+## The founder lesson
+
+The founder/operator version of this is blunt: if I want to run more work through agents, I need to buy back trust, not just time.
+
+A faster agent that creates more uncertainty is not leverage. It is noise with a progress bar.
+
+The next wave of agent tooling will not be won only by better prompts or larger context windows. It will be won by the systems that make agent work reviewable, auditable, reversible, and boring enough to trust.
+
+That is the handoff layer.
+
+And I think it is where a lot of the real product value is hiding.

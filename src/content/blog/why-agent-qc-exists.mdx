@@ -1,0 +1,126 @@
+---
+title: "Why Agent-QC Exists"
+description: "Agent-QC is a small deterministic gate for agentic development workflows, starting with the boring PR-body failure that quietly breaks human review."
+pubDate: 2026-05-02
+tags: ["oss", "ai", "agents", "engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+
+{/* SEO intent: deterministic AI agent quality gates; supporting phrases: AI agent verification, agentic engineering tools, AI coding agents workflow, AI software quality */}
+
+The first gate in `agent-qc` is almost embarrassingly small.
+
+It checks GitHub markdown bodies for a failure mode I have seen too many agents hit: creating a PR with a body like `## Summary\n- thing one\n- thing two`, where the `\n` renders literally instead of becoming real line breaks.
+
+That sounds tiny. It is tiny.
+
+It is also exactly the kind of tiny failure that makes agentic engineering feel flaky.
+
+## The bug is not the newline
+
+The newline bug is just the symptom.
+
+The bigger problem is that agents often report success at the wrong layer. They successfully ran a command. They successfully received a URL. They successfully opened a PR.
+
+But the human-facing artifact is broken.
+
+A reviewer does not care that `gh pr create` returned a URL if the PR body is unreadable. The workflow succeeded mechanically and failed operationally.
+
+<Highlight emoji="🧪">
+Agent-QC exists for the gap between "the command ran" and "the work is actually ready for a human."
+</Highlight>
+
+That gap is where a surprising amount of agent trust gets lost.
+
+## What Agent-QC is today
+
+`agent-qc` is an early V0.1 dogfood build. The current CLI is intentionally narrow and deterministic.
+
+It has a `ready` command that runs local readiness checks before an agent reports done. It can validate a local PR body file. It can inspect an existing GitHub PR body. It can scan a planned shell command before execution and warn when a `gh pr create` or `gh pr edit` command is likely to produce bad markdown because it uses unsafe escaped newlines.
+
+This is not a hosted service. It is not an LLM evaluator. It is not trying to judge whether the code is good.
+
+It is a local gate for workflow hygiene.
+
+<Step number={1} title="Catch the deterministic failure">
+If a failure can be detected without asking a model, it should be detected without asking a model.
+</Step>
+
+<Step number={2} title="Fail with a concrete fix">
+The tool should not just say "bad PR body." It should tell the agent to use a body file or real multiline markdown.
+</Step>
+
+<Step number={3} title="Make handoff stricter over time">
+The roadmap expands from markdown quality into branch state, atomicity, section checks, and CrewCmd metadata.
+</Step>
+
+That is the shape I like for agent tools: start with one painful failure, make it boring, then widen the safety net.
+
+## Why this belongs outside the prompt
+
+You could try to solve this with prompt text:
+
+"When creating a PR, always use proper newlines and never use escaped newline sequences."
+
+That helps until it doesn't.
+
+Agents forget. Context gets trimmed. Different harnesses quote shell strings differently. A rushed task slips through. The failure is deterministic, so relying on model memory is the wrong abstraction.
+
+<Callout type="info" title="Harness beats reminder">
+If the rule matters every time, put it in the harness. Prompts are good for intent. Tools are better for invariants.
+</Callout>
+
+This is a recurring theme in my OSS stack. `taskbrief` shapes input before work starts. `branchbrief` summarizes branch state after work lands. `worktreeguard` protects isolated lanes. `proofdock` packages evidence. `agent-qc` sits in the handoff path and asks: are you really ready to tell the human this is done?
+
+That question should not depend on agent confidence.
+
+## The origin story is review friction
+
+The annoying thing about bad agent handoffs is not that they are catastrophic. It is that they are small enough to become normal.
+
+A malformed PR body. A missing verification note. A branch with unexpected dirt. A summary that says "updated docs" but does not name the files. None of these are dramatic. They just make the human spend an extra two minutes rebuilding trust.
+
+Multiply that by several agents and a few PRs per day, and the cost becomes obvious.
+
+Agent-QC is me refusing to normalize that drag.
+
+I do not want a future where the human review loop becomes a landfill for agent sloppiness. If agents are going to do more work, they need stronger exit criteria.
+
+## The bigger thesis
+
+The next generation of AI development tools will not just be coding agents. It will be the control plane around coding agents.
+
+That control plane needs deterministic pieces:
+
+- command scanners before risky handoff commands
+- branch state checks before completion
+- PR body validators before review
+- proof bundles before approval
+- timelines before audit
+- small, composable gates that fail fast
+
+Agent-QC is one brick in that wall.
+
+It is deliberately unglamorous. That is why I like it.
+
+The best agent infrastructure should make the boring parts boring again. It should catch the same mistake every time, explain the fix, and get out of the way.
+
+## What this says about quality
+
+AI software quality is not just unit tests. It is the shape of the workflow.
+
+Did the agent work in the right branch? Did it leave a clean tree? Did it generate a readable PR? Did it tell the reviewer what ran? Did it admit what did not run?
+
+Those are quality questions.
+
+They are also product questions, because trust is the product when your user is handing work to an agent.
+
+That is why `agent-qc` starts with a newline.
+
+Not because newline handling is the future of AI.
+
+Because tiny deterministic failures are the easiest place to start building a system that agents cannot bluff their way through.

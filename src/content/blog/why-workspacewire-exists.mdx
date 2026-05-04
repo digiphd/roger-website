@@ -1,0 +1,156 @@
+---
+title: "Why WorkspaceWire Exists"
+description: "WorkspaceWire is a local-first Google Workspace operation planner for agents — built around dry runs, least-privilege scopes, and human review before external action."
+pubDate: 2026-05-03
+tags: ["oss", "ai", "agents", "local-first"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: local-first Google Workspace agent tools; supporting phrases: AI agent safety, agentic engineering tools, Gmail automation planning, human-in-the-loop agents */}
+
+There is a version of AI assistant tooling that makes me deeply uncomfortable.
+
+It starts with a useful goal: let agents help with email, calendar, files, and contacts.
+
+Then it jumps straight to the dangerous part: OAuth, live APIs, broad scopes, mutation, and a prompt that says something like "be careful."
+
+That is not a safety model. That is a vibe.
+
+`workspacewire` exists because agents need a rehearsal layer before they touch personal or business workspace data.
+
+Not a fake API clone. Not another dashboard. A planner.
+
+## The problem: workspace actions are high-trust actions
+
+Email is not just text. It is obligation, timing, reputation, and sometimes legal context.
+
+Calendar is not just availability. It is attention, coordination, and social commitment.
+
+Drive is not just files. It is permissions, records, drafts, contracts, plans, and shared memory.
+
+Contacts are not just names. They are relationships.
+
+So when an agent says it can "manage your workspace," the interesting question is not whether the API call can be made.
+
+The interesting question is whether the operation can be reviewed before it becomes real.
+
+<Highlight emoji="🧯">
+The first safe version of workspace automation is not an agent with more permissions. It is an agent that can show the exact plan without touching anything.
+</Highlight>
+
+That is the origin story for `workspacewire`.
+
+## What WorkspaceWire does
+
+`workspacewire` is a local-first Google Workspace operation planner for agents.
+
+It helps prepare Gmail, Calendar, Drive, and Contacts actions without live OAuth, without mutating data, and without storing credentials.
+
+The CLI can plan commands like:
+
+- Gmail search
+- Drive find
+- Contacts lookup
+- scope inspection
+- config scanning
+
+Every plan is a dry run. The output includes the intended request method and path, least-privilege OAuth scopes with risk notes, fixture-backed preview results, and safety flags proving no live request was made.
+
+That last part is not decorative.
+
+A useful agent should be able to say, "Here is what I would do, here is the scope it would require, here is the preview shape, and here is confirmation that I did not actually do it."
+
+## What it refuses to do
+
+The non-goals are the product.
+
+`workspacewire` v1 does not start Google OAuth flows. It does not send email. It does not create or mutate calendar events. It does not upload, delete, or edit Drive data. It does not store credentials.
+
+Mutating operations can be described so an agent can reason about scope risk, but they are blocked by default.
+
+That is exactly the kind of boundary I want in the early agentic stack.
+
+<Callout type="tip" title="A good boundary creates speed later">
+By forcing the first version to plan instead of mutate, WorkspaceWire makes future live adapters easier to review. The shape, scope, and safety expectations exist before credentials enter the system.
+</Callout>
+
+This is the same pattern behind tools like [`agent-qc`](/blog/why-agent-qc-exists) and the broader [agent handoff layer](/blog/the-agent-handoff-layer): deterministic checks first, autonomy later.
+
+## Why local-first matters here
+
+Local-first is not an aesthetic preference for this category.
+
+It is the trust boundary.
+
+If the tool that plans access to email, calendar, files, and contacts also phones home, collects telemetry, stores credentials, or quietly calls live APIs, the review story gets messy fast.
+
+`workspacewire` keeps the core workflow boring:
+
+- fixture-backed previews
+- explicit scope notes
+- no hidden network calls
+- no credential storage
+- no live mutation
+- clear adapter seam for a future reviewed integration
+
+That boringness is the point.
+
+The agent should not be rewarded for making a sensitive operation feel magical. It should be rewarded for making the operation legible.
+
+## The system-level insight
+
+Most agent products talk about tools as if the tool call is the primitive.
+
+I think the plan is the primitive.
+
+Before an agent calls Gmail, it should produce a plan.
+Before it edits a calendar event, it should produce a plan.
+Before it touches Drive permissions, it should produce a plan.
+Before a human grants OAuth scope, they should see why that scope is needed.
+
+<CompareTable
+  left={{ title: "Naive workspace agent", items: ["Broad OAuth first", "Live API calls during exploration", "Prompt-based safety", "Hard-to-review side effects", "Trust depends on the model"] }}
+  right={{ title: "WorkspaceWire-style workflow", items: ["Plan first", "Fixture-backed dry runs", "Least-privilege scope notes", "Blocked mutation by default", "Trust depends on inspectable artifacts"] }}
+/>
+
+This matters because external actions are where agentic engineering stops being a code-generation problem and becomes an operating problem.
+
+A code bug can usually be reverted.
+
+A bad email, exposed file, or accidental calendar mutation has a different blast radius.
+
+## Where it fits in the bigger thesis
+
+Roger's OSS sprint has a recurring theme: build the harness around the model.
+
+`taskbrief` shapes work before execution.
+`worktreeguard` keeps repo changes isolated.
+`branchbrief` explains branch state.
+`prpack` turns handoff context into review material.
+`agent-qc` catches deterministic failure modes before "done."
+
+`workspacewire` brings that same philosophy to personal productivity surfaces.
+
+Do not ask the model to be trustworthy by personality.
+
+Make the workflow trustworthy by construction.
+
+That is a much more durable foundation for assistive agents.
+
+## The founder/operator reason I care
+
+The more useful an assistant becomes, the closer it gets to sensitive surfaces.
+
+That is unavoidable.
+
+If agents stay trapped in toy sandboxes, they will stay impressive but peripheral. If they can help with real work, they will eventually need to reason about inboxes, calendars, documents, contacts, approvals, and follow-ups.
+
+The difference between a useful assistant and a risky one is the harness around those actions.
+
+`workspacewire` is small, but it is pointed at the right seam: show the plan, show the scope, show the preview, block the mutation, then let a human decide what deserves a real adapter.
+
+That is the version of workspace automation I trust enough to keep building toward.

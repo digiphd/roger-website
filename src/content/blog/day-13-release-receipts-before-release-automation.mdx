@@ -1,0 +1,145 @@
+---
+title: "Day 13: Release Receipts Before Release Automation"
+description: "Day 13 of the 60 Day OSS Sprint: ReleaseBox, ProofDock, and LockfileLens pushed the sprint toward release receipts before any agent gets near a publish button."
+pubDate: 2026-05-05
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: 60 Day OSS Sprint release readiness; supporting phrases: AI agent verification, OSS CLI release workflow, agentic engineering tools, local-first developer tools */}
+
+Day 13 landed on a blunt lesson: release automation is not the prize.
+
+Release receipts are.
+
+It is tempting, when agents are moving quickly, to wire the whole path from branch to package publish. Code changes. Tests pass. Tag appears. Package ships. The dashboard glows green.
+
+That is a nice demo.
+
+It is also how you create a very fast mess.
+
+The sprint is pushing me in the opposite direction: make release readiness explicit, local, reviewable, and boring before any agent gets near the publish button.
+
+## The tools in focus
+
+The strongest narrative today sits between three tools.
+
+`releasebox` is the release readiness layer. It gives OSS CLIs and apps a repeatable path from strict CI to package smoke tests, release dry-runs, deterministic release notes, and reviewed tag-based publishing.
+
+`proofdock` is the evidence bundle. It collects explicit artifacts, runs allowlisted checks, and emits portable JSON, Markdown, HTML, and PR-comment outputs for review.
+
+`lockfilelens` is the dependency inspection layer. It exists for the less glamorous but very real problem of understanding what changed in dependency state before treating a branch or release as safe.
+
+Different tools. Same pressure.
+
+<Highlight emoji="📦">
+A release should not be a leap of faith. It should be the final step after the evidence is already assembled.
+</Highlight>
+
+## The release path is where agent speed gets dangerous
+
+An agent opening a bad draft PR is annoying.
+
+An agent publishing a bad package is a different class of problem.
+
+That is why the release boundary deserves stricter tooling than the build boundary. Build failure is feedback. Publish failure is external damage. Even if the package can be fixed, the trust cost is higher.
+
+So Day 13 is not about making publishing more autonomous. It is about making the pre-publish state more inspectable.
+
+Can the package install?
+Can the CLI start?
+Does a realistic smoke path work?
+Are the release notes coherent?
+Did dependency state shift in a way worth reviewing?
+Are the proof artifacts attached?
+
+Those are the questions that matter.
+
+## ReleaseBox: make the last mile executable
+
+ReleaseBox is the center of gravity here.
+
+The README frames the problem clearly: many OSS tools have code, tests, and docs but still fail the real user path. Install the package. Run the CLI. Complete a realistic workflow. Produce clear notes. Prove the published artifact works.
+
+That path should not live in memory.
+
+ReleaseBox turns it into a checkable release readiness flow with project types like `node-cli`, `desktop-app`, `capacitor-app`, `library`, and `docs`. The current npm scripts tell the story too: build, test, smoke, package smoke, `npm pack --dry-run`, and release notes.
+
+This is the kind of boring I trust.
+
+## ProofDock: evidence needs somewhere to live
+
+ProofDock handles the artifact side.
+
+A release decision should not require scrolling through ten terminal sessions and three agent summaries. The evidence should travel as a bundle: explicit files, command outputs, summaries, risks, next steps, and rendered review views.
+
+That matters even more when agents are involved.
+
+Agents are good at producing a plausible final state. Reviewers need the path from claim to evidence.
+
+<Callout type="tip" title="Proof before publish">
+The right release workflow does not ask, "Did the agent say this is ready?" It asks, "Where is the proof bundle, and what does it show?"
+</Callout>
+
+ProofDock is not a release tool by itself. That is the point. It is the receipt layer that release tools can lean on.
+
+## LockfileLens: dependencies are part of the release story
+
+Dependency changes are easy to under-review because they are noisy.
+
+Lockfiles are dense. Diffs are ugly. A small package change can hide a large transitive shift. In an agentic workflow, that problem gets worse because agents may update dependencies as a side effect of fixing something else.
+
+That is why dependency inspection belongs near release readiness.
+
+I do not want dependency review to be a vague feeling of "the lockfile changed but tests passed." I want a clearer answer to what changed and whether it matters for the decision in front of me.
+
+LockfileLens fits that slot in the system: make dependency state less opaque before it becomes a release artifact.
+
+## The challenge: receipts can become ceremony
+
+There is a real failure mode here.
+
+If every repo needs a giant release ritual, the sprint slows to a crawl. If every proof bundle is huge, reviewers ignore it. If every dependency diff becomes a research project, nothing ships.
+
+The trick is to keep the receipt layer small enough to use daily.
+
+<CompareTable
+  left={{ title: "Release ceremony", items: ["Huge checklist", "Unreadable logs", "Manual copy-paste", "Every warning blocks", "No one wants to run it"] }}
+  right={{ title: "Release receipts", items: ["Small declared checks", "Package smoke path", "Dry-run output", "Known gaps separated", "Human decision is faster"] }}
+/>
+
+That is the bar I want for these tools: useful enough that skipping them feels reckless, lightweight enough that running them feels normal.
+
+## The deeper insight
+
+The sprint keeps reminding me that agentic engineering is not mainly about making agents more independent.
+
+It is about building the system of constraints around them so their speed becomes usable.
+
+Day 10 was about turning agent speed into trust. Day 11 was about the review queue becoming the product. Day 12 was about release readiness becoming part of the build.
+
+Day 13 sharpens that into a release principle:
+
+Do not automate the irreversible step first.
+
+Automate the evidence before it.
+
+That is the difference between a workflow that looks autonomous and a workflow that can be trusted.
+
+## Where Day 13 lands
+
+I still want fast releases. I want the whole OSS portfolio to move with less drag. I want agents to prepare more of the work and leave fewer loose ends.
+
+But speed at the release boundary needs receipts.
+
+ReleaseBox should prove the package path. ProofDock should preserve the evidence. LockfileLens should make dependency state legible. The human should get a compressed decision, not a pile of uncertainty.
+
+That is the system I want by the end of this sprint.
+
+Not agents publishing because they can.
+
+Agents preparing releases so well that the human review becomes obvious.

@@ -1,0 +1,125 @@
+---
+title: "Receipts Beat Autonomy in AI Agent Workflows"
+description: "The fastest AI agent workflow is not the one with the most autonomy. It is the one where every handoff has receipts, proof, and a clear review decision."
+pubDate: 2026-05-05
+tags: ["ai", "agents", "engineering", "workflow"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents workflow; supporting phrases: deterministic AI agents, AI agent verification, agentic engineering tools, AI software quality */}
+
+The wrong question is: how much autonomy can I give an agent?
+
+The better question is: how quickly can I verify what it did?
+
+That sounds less exciting, which is why it is probably closer to the truth. Autonomy makes better demos. Receipts make better systems.
+
+I care about agent speed. A lot. I want agents opening branches, drafting tools, fixing tests, writing docs, and pushing reviewable work while I am doing something else. But the more work they do, the more obvious the real bottleneck becomes.
+
+The bottleneck is not generation.
+
+The bottleneck is trust transfer.
+
+## Autonomy creates review debt
+
+When an agent says "done," that word is almost useless by itself.
+
+Done how? Checked with what? Which files changed? Which assumptions did it make? What failed first? What did it skip? Did it run the thing, or did it just write code that looks plausible?
+
+If the answer is buried in chat history, terminal scrollback, or vibes, the agent has not saved enough time. It has moved the work from implementation to investigation.
+
+That is review debt.
+
+<Highlight emoji="🧾">
+The output of an AI agent should not just be a diff. It should be a diff with receipts.
+</Highlight>
+
+A good handoff makes the next human decision obvious: merge, request changes, run one more check, or throw it away.
+
+A bad handoff asks the reviewer to become an archaeologist.
+
+## The receipt layer
+
+This is why I keep building small harness tools around agents instead of chasing a bigger, more magical agent.
+
+I want the boring layer that turns agent work into reviewable work:
+
+- a task brief before execution
+- an isolated branch or worktree during execution
+- deterministic checks before handoff
+- proof artifacts after execution
+- a clean PR body that explains the change
+- a timeline when something goes sideways
+
+None of that is glamorous. All of it matters.
+
+The work around the [agent handoff layer](/blog/the-agent-handoff-layer/) and [deterministic agents](/blog/deterministic-agents-beat-charismatic-agents/) is really the same argument from different angles: do not ask the model to remember the process. Put the process in the system.
+
+## What a receipt actually looks like
+
+A receipt is not a huge log dump.
+
+A receipt is the smallest artifact that lets a reviewer trust or reject the work faster.
+
+<CompareTable
+  left={{ title: "Autonomy theatre", items: ["Agent says done", "PR body is vague", "Checks are implied", "Failures are hidden in chat", "Reviewer re-runs everything from scratch"] }}
+  right={{ title: "Receipt-driven workflow", items: ["Agent states scope", "Files changed are named", "Checks are listed with results", "Known gaps are explicit", "Reviewer starts from evidence"] }}
+/>
+
+The difference is subtle until you run this workflow every day. Then it becomes everything.
+
+One agent with receipts beats five agents with confidence.
+
+## The uncomfortable part
+
+Receipts slow the agent down a little.
+
+That is fine.
+
+A workflow that produces a PR in four minutes and then costs twenty minutes to review is not faster than a workflow that produces a PR in seven minutes and costs three minutes to review.
+
+This is the arithmetic that most agent demos avoid.
+
+The unit of speed is not "time until code exists." The unit of speed is "time until a safe decision can be made."
+
+That is a much harder bar.
+
+<Callout type="warning" title="The trap">
+If your agent workflow optimizes for impressive output instead of review compression, it will feel amazing right up until the human review queue collapses.
+</Callout>
+
+## Determinism is a kindness
+
+The point of deterministic checks is not to make agents less capable. It is to make them less ambiguous.
+
+A model can draft the fix. A script can verify the package still builds. A CLI can reject a broken PR body. A proof bundle can preserve the exact artifacts. A release gate can prove the install path works.
+
+That split matters.
+
+Let the model handle ambiguity where ambiguity is useful. Let deterministic tooling handle the things that should not be vibes.
+
+This is the operating model I keep coming back to:
+
+1. Agents create options.
+2. Harnesses create evidence.
+3. Humans make decisions.
+
+That is not anti-autonomy. It is the path to autonomy that survives contact with production.
+
+## The bigger thesis
+
+I think a lot of AI tooling is over-indexed on the agent and under-indexed on the room the agent works inside.
+
+The room needs walls. It needs labels. It needs a bench for evidence. It needs a checklist by the door. It needs a place where the agent leaves the keys before walking away.
+
+That is the boring infrastructure behind useful autonomy.
+
+Receipts beat autonomy because receipts compound. Every good handoff teaches the workflow what evidence matters. Every deterministic gate removes one more class of failure from model memory. Every proof artifact makes the next review faster.
+
+Autonomy without receipts is a party trick.
+
+Autonomy with receipts is infrastructure.

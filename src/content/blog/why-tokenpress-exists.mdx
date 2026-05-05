@@ -1,0 +1,168 @@
+---
+title: "Why TokenPress Exists"
+description: "TokenPress is a local-first transcript compactor for AI agent logs, built around one blunt idea: keep the evidence, cut the scrollback, and make handoffs cheaper to review."
+pubDate: 2026-05-04
+tags: ["oss", "ai", "agents", "developer-tools", "local-first"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent log compaction; supporting phrases: AI coding agents workflow, local-first developer tools, agentic engineering tools, deterministic AI agents */}
+
+Agent work produces sludge.
+
+Useful sludge, but sludge.
+
+Terminal transcripts. Tool calls. Failed commands. Re-runs. File paths. Error messages. Test output. Approval notes. Half a dozen moments where the important thing is one line buried inside five hundred lines of noise.
+
+If you are running agents seriously, this becomes a product problem fast.
+
+The agent might have done good work. The reviewer might still hate the handoff.
+
+That is where `tokenpress` fits.
+
+<Highlight emoji="🧃">
+TokenPress is the log juicer for tired agents: squeeze noisy transcripts into small, evidence-preserving context blocks without asking an LLM to summarize the mess.
+</Highlight>
+
+It is not glamorous. That is why I like it.
+
+## The pain: context is not the same as scrollback
+
+A raw transcript feels safe because it contains everything.
+
+In practice, everything is often the enemy.
+
+When an agent hands over a wall of terminal output, the human has to answer basic questions manually:
+
+- What command actually failed?
+- Which command eventually passed?
+- Which paths matter?
+- Was there a real error or just warning noise?
+- What decision changed the direction of the work?
+- Is there enough evidence to trust the final claim?
+
+That is not review. That is archaeology.
+
+The more I build with agents, the more convinced I am that the interface around the agent matters as much as the model. I wrote about this from the production side in [Building with AI Agents](/blog/building-with-ai-agents): the loop is the product. TokenPress is one of the small tools that makes the loop less painful.
+
+It compresses the part nobody wants to read twice.
+
+## What TokenPress does
+
+TokenPress is a local-first terminal transcript compactor.
+
+It reads a transcript from a file, directory, or stdin and produces Markdown or JSON that keeps the useful signals:
+
+- commands;
+- errors;
+- relevant paths;
+- decisions;
+- evidence lines;
+- adapter-specific structure for OpenClaw, Codex, or plain logs.
+
+The CLI surface is intentionally small:
+
+```bash
+tokenpress inspect ./fixtures/sample --output ./out
+cat agent.log | tokenpress inspect --adapter openclaw
+node dist/cli.js transcript.log --format json > report.json
+```
+
+A compact report might say: this command ran, this error appeared, this path mattered, and this many evidence lines were kept.
+
+That is the right level of boring.
+
+It does not pretend to understand the whole project. It does not invent a narrative. It does not call an LLM. It presses the transcript into something another human or agent can afford to carry forward.
+
+<Callout type="info" title="No magic summary layer">
+TokenPress is deterministic by design: no telemetry, no hidden network calls, no credential hunting, no AI summary step. The goal is evidence compaction, not prose generation.
+</Callout>
+
+## Why not just summarize with an LLM?
+
+Because summaries are where evidence goes to get blurry.
+
+LLM summaries are useful, but they are not the same thing as preserving the underlying proof. If the summary says "tests failed once and then passed," I still want to know which command failed, which command passed, and whether the output line backs that up.
+
+TokenPress attacks a narrower problem: keep the review-significant lines and discard the swamp.
+
+That makes it a better primitive for agentic engineering than a generic "summarize this log" prompt.
+
+<CompareTable
+  left={{ title: "Generic log summary", items: [
+    "Narrative can drift",
+    "Important paths may disappear",
+    "Failures get softened",
+    "Hard to diff across runs",
+    "Depends on model behavior",
+  ] }}
+  right={{ title: "TokenPress compaction", items: [
+    "Evidence lines are retained",
+    "Commands and errors stay explicit",
+    "Paths remain visible",
+    "JSON output can feed other tools",
+    "Behavior is deterministic and local",
+  ] }}
+/>
+
+This is a recurring theme across the OSS sprint: use models where they add judgment, and use deterministic tools where the job is extraction, structure, or proof.
+
+Do not make the model remember what a parser can keep.
+
+## The origin story: agents need cheaper handoffs
+
+TokenPress exists because agent handoffs are still too expensive.
+
+A good agent can solve a coding task, but the next agent or reviewer often has to reread the whole journey to understand the state. That cost compounds in multi-agent workflows.
+
+One agent investigates. Another implements. Another verifies. A human reviews. A later agent returns to fix the edge case.
+
+If every step hands over raw scrollback, the system collapses under its own context waste.
+
+This is why I keep building small harness tools around the work instead of only chasing bigger agents. The leverage is often in the connective tissue:
+
+- `repoctx` makes repository context explicit;
+- `taskbrief` makes work packets explicit;
+- `proofdock` makes review evidence explicit;
+- `tooltrace` makes activity timelines explicit;
+- `tokenpress` makes transcript evidence portable.
+
+Each tool removes one kind of ambiguity from the workflow.
+
+TokenPress removes the ambiguity of "somewhere in the log."
+
+## The system-level insight
+
+The deeper insight is that token efficiency is not just about model cost.
+
+It is about organizational attention.
+
+Every unnecessary log line in a handoff asks someone — a human, an agent, or both — to spend context budget deciding whether it matters. Do that enough times and the whole workflow slows down, even if the code was written quickly.
+
+This connects to [Smart Token Consumption Is the New 10x Engineer](/blog/smart-token-consumption-is-the-new-10x-engineer). The point is not to be cheap for the sake of cheap. The point is to spend attention on the part of the work where judgment matters.
+
+Reading the same terminal noise again is not judgment.
+
+Preserving the command, error, path, and decision is.
+
+## Where TokenPress belongs
+
+I do not see TokenPress as a standalone destination product.
+
+I see it as a pipe in the factory.
+
+An agent session produces logs. TokenPress presses them. ProofDock can include the compressed evidence. ToolTrace can sit beside it with timeline context. The reviewer sees a smaller, sharper proof surface.
+
+That is the shape I keep coming back to: local-first tools that make AI work easier to inspect without moving private context into another cloud service.
+
+The world probably does not need another dashboard for agent logs.
+
+It does need better plumbing.
+
+TokenPress is plumbing.
+
+Good plumbing is underrated until the floor floods.

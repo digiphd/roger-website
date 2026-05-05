@@ -1,0 +1,195 @@
+---
+title: "Day 12: Release Readiness Is Part of the Build"
+description: "Day 12 of the 60 Day OSS Sprint: ReleaseBox, StackForge, and the dogfood rollout made release readiness a default part of agent-built OSS instead of an afterthought."
+pubDate: 2026-05-04
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "release-engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent release readiness; supporting phrases: agentic engineering tools, OSS founder journey, deterministic AI agents, AI software quality */}
+
+Day 12 was about a boring question with expensive consequences:
+
+Can this repo actually be released?
+
+Not "does the README look good?"
+
+Not "did the agent say the checks passed?"
+
+Not "is there a GitHub Actions file somewhere?"
+
+Actually released. Installed. Smoke-tested. Packed. Given notes a human can review. Tagged only when the release path has proof.
+
+That is the part of OSS work people tend to leave until the end. In an agent-heavy workflow, leaving it until the end is how you manufacture a pile of almost-finished tools.
+
+<Highlight emoji="📦">
+If agents can create repos faster than humans can make them releasable, release readiness has to move into the scaffold, not sit after it.
+</Highlight>
+
+That was the shape of Day 12.
+
+## The tools in focus
+
+The strongest thread today runs through three pieces of the factory.
+
+`releasebox` is the release readiness layer. It gives small OSS projects a repeatable path from local checks to package smoke tests, release dry-runs, deterministic notes, and reviewed tag-based publishing.
+
+`stackforge` is the project factory. It now scaffolds OSS CLI projects with ReleaseBox defaults: release config, reviewed/tag-gated GitHub release workflows, package smoke scripts, and release process docs.
+
+The dogfood rollout is the pressure test. Repos like `proofdock`, `lockfilelens`, `envprobe`, `docneedle`, `modelgate`, `tooltrace`, and others started picking up ReleaseBox workflows and local release gates.
+
+That matters because the sprint is not just about making new repositories exist.
+
+It is about making them survive first contact with users.
+
+## The failure mode: generated, but not shippable
+
+A repo can look healthy and still be hard to release.
+
+It can have tests but no package smoke.
+
+It can build locally but ship a broken binary.
+
+It can have a changelog but no deterministic release notes.
+
+It can have a release workflow that technically exists but publishes too much, too early, with too little human review.
+
+Agentic OSS makes that risk worse because scaffolding gets cheap. Cheap scaffolding is good. Cheap unfinished maintenance is not.
+
+I do not want a sprint that produces sixty museums of intent.
+
+I want tools that have a clear path from idea to reviewable release.
+
+<Callout type="warning" title="The dangerous middle state">
+The riskiest OSS project is not the empty one. It is the one that looks finished enough to trust but has never proven the install, CLI, package, release notes, and release gate as one path.
+</Callout>
+
+Day 12 was about dragging that middle state into the light.
+
+## ReleaseBox: make release proof explicit
+
+`releasebox` is intentionally not a magical publisher.
+
+That is the point.
+
+Its README is clear about the philosophy: automation should be strict where machines are good — build gates, package smoke tests, fixture-backed checks, release dry-runs, artifact generation — while publishing remains review-gated by default.
+
+The command surface is small:
+
+- `releasebox init --type node-cli`
+- `releasebox install-templates`
+- `releasebox check`
+- `releasebox notes`
+
+The design is not trying to replace maintainers. It is trying to remove ambiguity before the maintainer has to make the release decision.
+
+That maps directly onto the broader sprint thesis from [Day 10](/blog/day-10-turning-agent-speed-into-trust): fast agents need proof, not louder confidence.
+
+ReleaseBox is proof for the last mile.
+
+## StackForge: defaults are strategy
+
+The more useful change is that ReleaseBox moved upstream into `stackforge`.
+
+That is where defaults become strategy.
+
+If every new OSS CLI starts with release readiness as a first-class operating file, the sprint changes shape:
+
+- release config is not a follow-up ticket;
+- package smoke is not an optional maturity badge;
+- release docs are not written only after the first broken publish;
+- GitHub release workflows start reviewed and tag-gated;
+- npm and Homebrew publishing stay disabled until intentionally enabled.
+
+That last point matters.
+
+Good automation is not the same thing as autonomous publishing.
+
+The system should make the path obvious without removing the human decision.
+
+<CompareTable
+  left={{ title: "Release as afterthought", items: [
+    "Scaffold first, release later",
+    "Package path is manually rediscovered",
+    "Notes depend on memory",
+    "Publishing risks hide in workflow YAML",
+    "Review happens under pressure",
+  ] }}
+  right={{ title: "Release as default", items: [
+    "Release config ships with the scaffold",
+    "Package smoke is part of local proof",
+    "Notes are generated from repo history",
+    "Publishing is review-gated by design",
+    "Review sees a clear release path",
+  ] }}
+/>
+
+This is the same lesson as [Day 5](/blog/day-5-oss-sprint-template-quality-bar), just applied to the end of the lifecycle.
+
+Templates are governance disguised as files.
+
+Release defaults are governance disguised as shipping.
+
+## The challenge: dogfood exposes the mess
+
+Dogfooding ReleaseBox across the sprint repos is not glamorous work.
+
+It exposes all the little differences that templates hide:
+
+- TypeScript CLIs with different build outputs;
+- JavaScript tools that should not be forced into a TypeScript-shaped gate;
+- docs/resource repos that need notes and validation more than binary smoke;
+- packages where the CLI exists but the packed artifact path needs proof;
+- workflows where release notes are useful, but publish should remain disabled.
+
+That is the good kind of friction.
+
+A release tool that only works on the perfect demo repo is another demo.
+
+A release tool that can survive the messy family of real sprint repos is infrastructure.
+
+The rollout also creates a cleaner review loop. Instead of one giant "make all repos releasable" change, each dogfood PR can stay atomic: metadata, local gate, CI workflow, dry-run workflow, labels, package smoke, fixture, docs.
+
+That atomicity matters for agents. It gives the reviewer a trail instead of a blob.
+
+## The deeper insight
+
+The deeper insight from Day 12 is that release readiness is not the end of the build.
+
+It is part of the build.
+
+For human-only teams, you can sometimes get away with tribal knowledge. Someone remembers how the package should be packed. Someone remembers which tag format the workflow expects. Someone remembers why publishing is disabled.
+
+Agent-heavy teams do not get that luxury.
+
+If the knowledge is not in the repo, it does not reliably exist.
+
+That is why this sprint keeps turning process into files, commands, and gates:
+
+- `taskbrief` turns intent into scoped work packets;
+- `repoctx` turns repo context into inspectable facts;
+- `agent-qc` turns handoff readiness into a command;
+- `proofdock` turns evidence into a bundle;
+- `releasebox` turns releasability into a repeatable check.
+
+The model can help write the code.
+
+The harness has to make the work durable.
+
+## Where Day 12 lands
+
+Day 12 made the factory less romantic and more real.
+
+The sprint is not just asking, "how many tools can I build?"
+
+It is asking, "what operating system makes those tools reviewable, releasable, and maintainable when agents are doing more of the typing?"
+
+That is a better question.
+
+Because the future I want is not a graveyard of impressive prototypes.
+
+It is a shelf of small, boring, useful OSS tools with enough proof around them that a human can keep moving fast without shipping blind.

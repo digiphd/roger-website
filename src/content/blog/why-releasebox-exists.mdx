@@ -1,0 +1,131 @@
+---
+title: "Why ReleaseBox Exists"
+description: "ReleaseBox is a local-first release readiness tool for OSS CLIs and apps. It exists because publishing should stay review-gated until install, smoke, dry-run, and release notes are proven."
+pubDate: 2026-05-05
+tags: ["oss", "developer-tools", "release", "ai"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: local-first release readiness tooling; supporting phrases: OSS CLI release workflow, agentic engineering tools, AI software quality, release dry run automation */}
+
+Most small OSS projects do not fail at writing code.
+
+They fail at the last mile.
+
+The README looks good. The tests pass locally. The package metadata is mostly fine. Then someone tries the real user path: install the thing, run the CLI, complete a useful workflow, and understand what changed in the release.
+
+That is where the cracks show up.
+
+`releasebox` exists for that gap.
+
+It is continuous release readiness tooling for OSS CLIs and apps. Not "auto-publish everything because a bot said green." Not a giant hosted platform. A local-first way to make release proof explicit before a human decides whether to tag and publish.
+
+## The problem is not releases. It is pretending releases are safe.
+
+A lot of release automation starts at the wrong end.
+
+It asks: how do we publish faster?
+
+The better question is: what needs to be true before publishing is boring?
+
+For the kinds of small developer tools I am building, the answer is practical:
+
+- tests pass
+- build passes
+- lint or typecheck passes
+- the CLI starts
+- the packed artifact installs
+- a realistic smoke path works
+- release notes are deterministic enough to review
+- publishing remains gated by a human
+
+That is not a complicated philosophy. It is just rarely encoded clearly enough.
+
+<Highlight emoji="🚦">
+Release automation should make the decision safer, not remove the decision entirely.
+</Highlight>
+
+## What ReleaseBox does
+
+The repo describes the shape pretty cleanly: ReleaseBox gives small OSS projects a repeatable path from strict CI to package smoke tests, release dry-runs, deterministic release notes, and reviewed tag-based publishing.
+
+The current project types are intentionally broad enough to cover the portfolio:
+
+- `node-cli` for npm packages with CLI smoke and packed artifact checks
+- `desktop-app` for packaged desktop release profiles
+- `capacitor-app` for web build plus native compile/package profiles
+- `library` for tests, docs, and changelog without CLI assumptions
+- `docs` for resource and template repos
+
+The useful thing here is not that ReleaseBox knows every possible release process. It is that it forces the release process to become visible.
+
+Create config. Install templates. Run `releasebox check`. Generate notes. Dry-run the package. Make the missing pieces obvious.
+
+That is enough to change the behavior of a repo.
+
+## Why this belongs in the agent harness stack
+
+Agents are good at moving code forward quickly. That makes release discipline more important, not less.
+
+If an agent can make ten repos reviewable in a day, the old manual release checklist becomes a bottleneck. But removing the checklist is not the answer. The answer is turning the checklist into executable proof.
+
+This fits the same pattern as [Agent-QC](/blog/why-agent-qc-exists/) and [TokenPress](/blog/why-tokenpress-exists/): take the thing that normally lives in a founder's head and make it deterministic enough for the workflow to rely on.
+
+<CompareTable
+  left={{ title: "Manual release memory", items: ["Did we run pack?", "Did the CLI boot?", "Are notes updated?", "Which workflow publishes?", "What should Roger review?"] }}
+  right={{ title: "ReleaseBox path", items: ["Config declares project type", "Checks run locally and in CI", "Package smoke is explicit", "Dry-run is visible", "Publishing stays review-gated"] }}
+/>
+
+The goal is not to replace judgment. The goal is to stop wasting judgment on questions machines can answer.
+
+## The dogfood plan is the product
+
+The part I like most in the README is the dogfood plan.
+
+ReleaseBox is not being designed in a vacuum. The first rollout targets are real repos with different shapes:
+
+- `proofdock`, a TypeScript CLI with build, test, smoke, and pack requirements
+- `lockfilelens`, a TypeScript CLI with richer fixture coverage and executable build needs
+- `failureseed`, a small JavaScript CLI that proves the standard is not TypeScript-only
+
+That matters because release tools get abstract very quickly. Abstract release tooling tends to become either too weak to catch real failures or too rigid to survive real repos.
+
+Dogfooding across different repo shapes keeps the tool honest.
+
+<Callout type="tip" title="The standard has to travel">
+A release readiness tool is only useful if it works across the boring variety of actual projects: CLIs, libraries, docs repos, desktop apps, and half-finished tools with sharp edges.
+</Callout>
+
+## AI belongs near the notes, not the publish button
+
+The ReleaseBox release philosophy draws a clean line.
+
+Machines should be strict where machines are good: test gates, build gates, package install smoke tests, deterministic fixtures, release dry-runs, artifact generation.
+
+AI can help summarize PRs since the last release, find test gaps, and explain CI failures.
+
+Publishing remains review-gated by default.
+
+That is exactly the split I want.
+
+I do not want an AI agent deciding that a package should go out because the vibes are good. I want the agent to prepare the release evidence so the human review is faster, sharper, and less error-prone.
+
+## The bigger insight
+
+ReleaseBox is part of a larger pattern I keep finding in the OSS sprint.
+
+The valuable tools are not always the ones that do the glamorous work. They are the tools that make the workflow safe enough to repeat.
+
+A sprint can create repos. Agents can fill in code. Templates can speed up structure. But if release readiness is inconsistent, the whole system gets stuck at the point where users actually touch the artifact.
+
+That is a bad place to improvise.
+
+ReleaseBox exists because release should be a system, not a mood.
+
+The moment a repo is close to useful, the question should not be, "Can I publish this today?"
+
+The question should be, "What does the release evidence say?"

@@ -1,0 +1,137 @@
+---
+title: "Local-First Is the Trust Layer for AI Agent Tools"
+description: "AI coding agents become easier to trust when the tools around them inspect local state first, avoid hidden network calls, and hand humans reviewable evidence."
+pubDate: 2026-05-06
+tags: ["ai", "agents", "developer-tools", "software-engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: local-first AI agent tools; supporting phrases: AI coding agents workflow, deterministic AI agents, AI agent verification, agentic engineering tools */}
+
+The more I build around AI coding agents, the more I care about local-first tools.
+
+Not because local-first is fashionable.
+
+Because agents are already hard enough to trust without adding hidden network calls, opaque hosted state, surprise credentials, or dashboards that know more than the pull request does.
+
+The first trust layer should live where the work lives: in the repo, on the branch, against the files that actually changed.
+
+That is the practical argument for local-first agent tooling.
+
+<Highlight emoji="🧭">
+Before an agent asks a remote system to decide anything, it should be able to inspect the local evidence and explain what it found.
+</Highlight>
+
+That one design rule changes the shape of the whole workflow.
+
+## Remote-first tools create invisible dependencies
+
+Remote systems are not bad. CI is remote. package registries are remote. GitHub is remote. Production is remote.
+
+The problem is making remote state the first place an agent goes for truth.
+
+If every useful check needs a token, a hosted account, an API quota, and network access, the workflow becomes harder to reason about. The agent can still produce a confident summary, but the human now has to trust a bigger chain:
+
+- which external service was called
+- what data left the machine
+- what credentials were available
+- whether the hosted result matches the local diff
+- whether the same result can be reproduced during review
+
+That is a lot of trust to spend before the branch has even earned it.
+
+Local-first tooling reduces that cost. It does not solve every problem, but it gives the reviewer a grounded first pass: here is what changed, here is what the repo says, here is the evidence we can inspect without asking another system to bless it.
+
+## The pattern keeps showing up
+
+A bunch of the small OSS tools in this sprint follow the same instinct.
+
+`branchbrief` summarizes a branch from local git state.
+
+`proofdock` preserves evidence from a run so claims can be reviewed later.
+
+`lockfilelens` inspects package-manager signals and dependency lockfile drift without needing a hosted dependency platform.
+
+`actionloom` reads GitHub Actions workflows locally and flags risky CI patterns before the workflow becomes remote infrastructure.
+
+`releasebox` checks package readiness before release steps get too close to publishing.
+
+Different tools. Same philosophy.
+
+Inspect the local reality first. Produce a receipt. Let the human decide.
+
+<CompareTable
+  left={{ title: "Remote-first agent loop", items: ["Agent needs credentials early", "State lives outside the branch", "Results depend on hosted services", "Review has to trust summaries", "Failures are harder to reproduce"] }}
+  right={{ title: "Local-first agent loop", items: ["Agent inspects the checkout", "Evidence travels with the PR", "Checks can run before tokens exist", "Review starts from concrete artifacts", "Failures are easier to reproduce"] }}
+/>
+
+The local-first version is less magical.
+
+That is the point.
+
+## Local-first does not mean offline forever
+
+This is the part people sometimes flatten.
+
+Local-first does not mean never call a remote API. It does not mean CI is useless. It does not mean security advisories, cloud tests, package registries, deploy previews, or hosted observability should vanish.
+
+It means the first useful layer should not require remote trust.
+
+A dependency explainer can classify lockfile movement locally before a security scanner enriches it. A workflow auditor can flag `permissions: write-all` before GitHub ever runs the file. A release readiness tool can catch missing package metadata before npm becomes involved. A branch summary can explain the diff before a hosted code review assistant comments on it.
+
+That sequencing matters.
+
+Local checks give remote checks better inputs. They also give humans a fallback when remote automation is noisy, flaky, rate-limited, or overconfident.
+
+<Callout type="info" title="The order matters">
+Use local-first tools to establish what the branch contains. Then use remote systems to enrich, verify, or publish — not to create the first version of reality.
+</Callout>
+
+## Agents need boring truth sources
+
+A human developer has a lot of implicit context. They remember why they installed a package, why they changed CI, why a lockfile moved, or why a test is skipped temporarily.
+
+An agent does not get that for free.
+
+It needs artifacts.
+
+Local-first tools create boring truth sources: a Markdown summary, a JSON report, a proof bundle, a readiness checklist. They are boring in the best possible way. They can be attached to a PR. They can be rerun. They can be compared with the diff.
+
+That is how an agent stops being a black box that says "trust me" and becomes a worker handing over evidence.
+
+This connects to [the agent handoff layer](/blog/the-agent-handoff-layer). The handoff is where agent work either becomes leverage or review debt. Local-first receipts are one of the simplest ways to push it toward leverage.
+
+## The product opportunity
+
+I think a lot of useful agent infrastructure will look small at first.
+
+Not giant autonomous platforms. Not one dashboard to rule the engineering org. Small tools that know one part of the handoff very well:
+
+- branch summaries
+- dependency movement
+- workflow safety
+- release readiness
+- proof preservation
+- task scoping
+
+Each one should be able to run locally, explain itself, and avoid mutating the world by default.
+
+That makes the tools easier to adopt in real repos. It also makes them safer for agents to use without turning every run into a security review.
+
+The boring constraint becomes the advantage.
+
+## The takeaway
+
+Local-first is not nostalgia for simpler developer tools.
+
+It is a trust strategy for agentic engineering.
+
+Let the agent inspect the repo before it asks the internet. Let it produce evidence before it asks for permission. Let the human review local truth before remote systems enrich or execute it.
+
+The future agent stack will still use hosted services.
+
+But the trust layer should start on disk.

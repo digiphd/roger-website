@@ -1,0 +1,143 @@
+---
+title: "Why LockfileLens Exists"
+description: "LockfileLens is a local-first dependency lockfile explainer for agent handoffs and PR reviews, built because package drift should not hide inside unreadable diffs."
+pubDate: 2026-05-06
+tags: ["open-source", "ai", "agents", "developer-tools"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: dependency lockfile diff review; supporting phrases: AI coding agents workflow, agentic engineering tools, AI agent verification, local-first developer tools */}
+
+Lockfiles are one of the easiest places for risk to hide in a pull request.
+
+Not because they are mysterious. Because they are boring.
+
+A human sees a giant generated diff, confirms the app still builds, maybe checks that the direct dependency change looks reasonable, and moves on. An agent does roughly the same thing, except it can create the mess faster and summarize it more confidently.
+
+That is the gap `lockfilelens` is aimed at.
+
+It is a local-first CLI for turning package-manager state and dependency resolution changes into concise reviewer notes. It inspects npm, pnpm, Yarn, and Bun signals. It explains dependency diffs. It emits Markdown for humans and JSON for agents.
+
+The whole point is simple: dependency state should be legible at review time.
+
+<Highlight emoji="🔍">
+A lockfile diff should not be treated as noise just because it is generated. It is part of the supply chain story of the change.
+</Highlight>
+
+## The origin story
+
+The 60 Day OSS Sprint has a recurring theme: agents need receipts.
+
+That started with obvious review artifacts: task briefs, branch summaries, proof bundles, readiness checks. But dependency state kept showing up as a quieter version of the same problem.
+
+Agents often touch package files as part of ordinary work. They install a missing dependency. They run a package manager that updates a lockfile. They fix a build by aligning versions. They scaffold a repo and leave behind mixed package-manager signals.
+
+Sometimes that is exactly right.
+
+Sometimes it is accidental drift.
+
+The reviewer needs to know the difference.
+
+LockfileLens exists because "the tests passed" is not enough context for dependency movement. Passing tests are useful, but they do not explain whether a direct dependency was added, a transitive package moved, a downgrade happened, or the repo now has pnpm and npm signals fighting each other.
+
+## What it actually does
+
+LockfileLens has two core jobs.
+
+First, it inspects project dependency hygiene.
+
+It recognizes common lockfiles: `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, and `bun.lockb`. It looks for package-manager drift between `packageManager`, scripts, and lockfiles. It can flag missing lockfiles when dependencies exist, lockfiles older than `package.json`, duplicate ecosystem signals, and duplicate resolved package versions.
+
+Second, it compares lockfiles.
+
+The `diff` command compares two lockfiles from the same ecosystem and classifies package movement as added, removed, upgraded, downgraded, or changed. When a nearby `package.json` exists, the report can distinguish direct from transitive changes.
+
+That output can be rendered as:
+
+- Markdown for PR review notes
+- JSON for agents and automation
+- compact text for terminal use
+
+The Markdown path matters. A tool that only emits machine-readable data is useful for pipelines. A tool that can explain itself in a PR is useful for humans.
+
+## Why local-first matters here
+
+Dependency tooling can get very ambitious very quickly.
+
+Advisory lookups. Hosted dashboards. SBOM platforms. Auto-upgrades. Policy engines. License scanning. Supply-chain risk scoring.
+
+Those can all be useful in the right place.
+
+LockfileLens is intentionally smaller.
+
+Core commands are read-only. They make no network calls. Structured errors redact obvious token, password, secret, and API-key patterns. The tool does not upgrade dependencies, publish packages, merge branches, or pretend to be a full security platform.
+
+<Callout type="tip" title="Small is the feature">
+The first useful layer is not a giant dependency intelligence platform. It is a reviewer-oriented explanation of what changed and what deserves attention.
+</Callout>
+
+That constraint makes it easier to run inside agent workflows. No hidden credentials. No surprise external requests. No hosted dependency on someone else's state.
+
+Just inspect the repo and produce a receipt.
+
+## The agent handoff problem
+
+The important use case is not only a human manually running a command.
+
+It is an agent handing work back.
+
+A good agent handoff should say more than "updated dependencies." It should attach a concise dependency review:
+
+- direct dependency changes match the task intent
+- no package-manager drift detected
+- lockfile is not stale relative to `package.json`
+- reviewer should focus on removals, downgrades, and duplicate resolved versions
+
+That is the kind of summary that compresses review without hiding risk.
+
+It also changes the agent's job. The agent is no longer just producing a diff. It is producing evidence that helps a human decide whether the diff is safe.
+
+That connects to the bigger sprint thesis I wrote about in [receipts beating autonomy](/blog/receipts-over-autonomy). More autonomy is not the missing layer. Better handoffs are.
+
+## What it says about agentic engineering
+
+LockfileLens is not a glamorous repo.
+
+That is why I like it.
+
+The practical agentic engineering stack is going to be full of tools like this: narrow, local, deterministic, and pointed at one annoying handoff problem.
+
+<CompareTable
+  left={{ title: "Traditional review", items: ["Lockfile diff is too large", "Reviewer skims", "Tests become the proxy for dependency safety", "Package-manager drift is easy to miss", "Agent summary says little"] }}
+  right={{ title: "LockfileLens review", items: ["Dependency movement is classified", "Direct vs transitive changes are clearer", "Package-manager drift is flagged", "Markdown summary travels with the PR", "Agent handoff has evidence"] }}
+/>
+
+The goal is not to replace judgment.
+
+The goal is to put judgment in the right place. A reviewer should spend attention on the meaningful changes, not on decoding generated noise from scratch.
+
+## Where LockfileLens fits
+
+In the larger OSS stack, LockfileLens belongs near ReleaseBox, ProofDock, BranchBrief, and Agent-QC.
+
+ReleaseBox asks whether the package path is ready.
+
+ProofDock preserves the evidence.
+
+BranchBrief explains the branch.
+
+Agent-QC catches handoff failures.
+
+LockfileLens explains dependency state.
+
+Together, these tools point at the same operating model: fast agent work, bounded by deterministic checks and human-readable receipts.
+
+That is what makes agent speed useful.
+
+Not confidence.
+
+Context.

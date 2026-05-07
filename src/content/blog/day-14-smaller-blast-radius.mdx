@@ -1,0 +1,144 @@
+---
+title: "Day 14: Make the Blast Radius Smaller"
+description: "Day 14 of the 60 Day OSS Sprint: WorktreeGuard, ActionLoom, and LockfileLens all pushed toward the same rule — agent speed only helps when the failure boundary is small."
+pubDate: 2026-05-06
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents blast radius; supporting phrases: deterministic AI agents, AI agent verification, agentic engineering tools, local-first developer tools */}
+
+Day 14 was not about making agents more powerful.
+
+It was about making their mistakes less expensive.
+
+That sounds less exciting than autonomy. Good. I am increasingly convinced that the practical path to useful AI coding agents is not bigger permissions, bigger prompts, and bigger heroic runs. It is smaller blast radius.
+
+Give the agent a narrow workspace. Make the dangerous edges visible. Turn the review into a decision instead of an investigation.
+
+That is the work.
+
+## The tools in focus
+
+The strongest Day 14 thread sits across three tools.
+
+`worktreeguard` is the isolation instinct: make it harder for agent work to spill into the wrong checkout, wrong branch, or wrong dirty state.
+
+`actionloom` is the workflow safety layer: inspect GitHub Actions files for risky patterns like `permissions: write-all`, `pull_request_target`, and `curl | bash`, then generate conservative CI templates when a repo needs a sane starting point.
+
+`lockfilelens` is the dependency review layer: explain lockfile drift, package-manager confusion, stale lockfiles, duplicate resolved versions, and dependency diffs in a way a human can actually review.
+
+Different repos. Same operating principle.
+
+<Highlight emoji="🧯">
+The fastest agent workflow is not the one with the most freedom. It is the one where a bad run has the smallest recovery cost.
+</Highlight>
+
+That is the line I want to keep pushing.
+
+## Worktree isolation is not optional polish
+
+The recurring instruction for this blog factory is explicit: use isolated git worktrees. Do not edit the main checkout directly.
+
+That rule exists for a reason.
+
+A worktree turns the branch into a physical execution boundary. The agent has a checkout. The diff belongs to one branch. The human can inspect it, throw it away, or merge it without wondering what else got touched.
+
+That sounds basic until you watch agents operate in a long-lived developer checkout.
+
+They can inherit dirty files. They can build on the wrong branch. They can accidentally mix unrelated changes. They can make the final PR look plausible while the actual workspace state is a mess.
+
+The fix is not asking the model to be more careful.
+
+The fix is making the workspace harder to misuse.
+
+That is why worktree discipline keeps showing up in this sprint. It is not ceremony. It is containment.
+
+## ActionLoom: CI is part of the attack surface
+
+The next boundary is CI.
+
+A lot of small OSS repos treat GitHub Actions as plumbing: copy a workflow, tweak the Node version, move on. Agents do the same thing, except faster.
+
+That is risky because CI is executable infrastructure. A bad workflow can over-grant permissions, run untrusted pull request code in the wrong context, or normalize patterns that should never become defaults.
+
+ActionLoom exists for that layer.
+
+Its current scope is deliberately local-first and narrow. It reads workflow files from the checkout. It flags risky patterns. It emits Markdown or JSON. It can generate a conservative Node CI template with read-only default permissions.
+
+No API keys. No hidden network calls. No GitHub token. No mutation unless an output path is explicitly requested.
+
+That matters because workflow safety should be inspectable before it becomes remote infrastructure.
+
+<Callout type="warning" title="CI is not just a test runner">
+For agent-built repositories, CI configuration is part of the security boundary. Treating workflows as harmless YAML is how risky defaults become production defaults.
+</Callout>
+
+The bigger lesson is that agents should not improvise trust boundaries from vibes. CI deserves rules.
+
+## LockfileLens: dependency diffs are where risk hides
+
+The third boundary is dependency state.
+
+Lockfiles are the kind of file reviewers quietly hate. They are huge. They are mechanical. They often change as a side effect of some other task. The easy move is to skim the package manifest, trust the tests, and let the lockfile through.
+
+That is exactly why the agentic workflow needs better dependency receipts.
+
+LockfileLens inspects npm, pnpm, Yarn, and Bun project signals. It can detect package-manager drift, stale or missing lockfiles, duplicate ecosystem signals, and duplicate resolved versions. It can compare lockfiles and classify changes as added, removed, upgraded, downgraded, or changed. When a nearby `package.json` exists, it can mark direct versus transitive movement.
+
+That is not glamorous.
+
+It is useful.
+
+An agent can update a dependency while fixing a build. Another agent can regenerate a lockfile with the wrong package manager. A repo can end up with mixed signals that technically still install on one machine and fail somewhere else.
+
+LockfileLens makes that class of failure visible before it gets buried in a release.
+
+## The challenge: safety tools can slow the loop
+
+There is a trap here.
+
+If every safety layer becomes a lecture, no one runs it. If every warning blocks every branch, the sprint turns into bureaucracy. If every check emits a giant artifact, the review queue gets worse, not better.
+
+So the design bar has to stay practical.
+
+<CompareTable
+  left={{ title: "Big-blast agent workflow", items: ["One long run", "Broad filesystem access", "Remote CI guessed late", "No dependency summary", "Reviewer reconstructs the risk"] }}
+  right={{ title: "Small-blast agent workflow", items: ["Isolated worktree", "Explicit branch boundary", "Workflow safety checked locally", "Dependency diff explained", "Reviewer gets the decision surface"] }}
+/>
+
+The point is not to wrap every action in red tape.
+
+The point is to make the risky parts cheap to inspect.
+
+## The deeper insight
+
+The sprint keeps converging on the same shape.
+
+Input needs briefs. Execution needs isolation. Branches need summaries. PRs need receipts. Releases need proof. Workflows need safety checks. Dependencies need explanation.
+
+None of that makes the model smarter.
+
+It makes the system more forgiving.
+
+That is underrated. The question is not whether an agent can make a mistake. It will. The question is whether the mistake is contained, visible, and easy to reverse.
+
+This connects directly to [receipts beating autonomy](/blog/receipts-over-autonomy) and [the agent handoff layer](/blog/the-agent-handoff-layer). The useful product is not a magical agent that never fails. The useful product is an engineering loop where failure does not contaminate everything around it.
+
+## Where Day 14 lands
+
+Day 14 sharpened the rule for me:
+
+Make the blast radius smaller before you make the agent more autonomous.
+
+That means worktrees before broad workspace edits. Workflow audits before generated CI becomes normal. Lockfile explanation before dependency drift gets waved through. Local-first tools before remote mutation.
+
+This is not anti-speed. It is the only way speed survives contact with real review.
+
+If agents are going to become part of everyday engineering work, they need more than permission. They need boundaries.
+
+The boundary is the product.

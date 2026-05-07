@@ -1,0 +1,181 @@
+---
+title: "Every AI Agent Needs a Privilege Budget"
+description: "AI agent workflows get safer when permissions are treated like a budget: local fixtures first, explicit network access, scoped writes, and proof before irreversible actions."
+pubDate: 2026-05-07
+tags: ["ai", "agents", "engineering", "developer-tools"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent privilege budget; supporting phrases: safe AI coding agents, deterministic AI agents, AI agent verification, local-first developer tools */}
+
+I keep coming back to a simple rule for agents:
+
+Do not give them all the power up front.
+
+That sounds obvious, but most agent workflows still behave like privilege is binary. Either the agent can do the thing or it cannot. Either it has network access or it does not. Either it can write files or it is stuck. Either it can publish or a human has to take over.
+
+I think that framing is too blunt.
+
+The better framing is a privilege budget.
+
+Agents should earn access as the workflow produces evidence.
+
+<Highlight emoji="🔐">
+The safest agent is not the weakest agent. It is the one whose permissions expand only when the proof justifies it.
+</Highlight>
+
+## Why permissions become the real product problem
+
+The hard part of agentic engineering is not getting an agent to perform actions.
+
+That part is getting easier every month.
+
+The hard part is deciding which actions the agent should be allowed to perform at each stage of the work.
+
+Can it read the repo?
+
+Probably.
+
+Can it write code?
+
+Inside an isolated worktree, yes.
+
+Can it hit the network?
+
+Maybe, but not as a default.
+
+Can it open a pull request?
+
+Yes, if the review packet is coherent.
+
+Can it publish a package?
+
+Not without a much stronger release receipt.
+
+That gradient matters. It is the difference between a workflow that uses agents aggressively and a workflow that lets agents spray risk across the system.
+
+## The budget idea
+
+A privilege budget is just a practical way to think about blast radius.
+
+At the start of a task, the agent gets the cheapest permissions that can make progress. If it produces useful evidence, the workflow can unlock the next tier. If it gets stuck, the escalation is explicit. If the task asks for something risky, the budget runs out and a human decides.
+
+This is not about distrusting agents for the sake of it.
+
+It is about matching permission to evidence.
+
+<Step number={1} title="Start with local read access">
+Let the agent inspect the repo, docs, fixtures, package metadata, and existing tests. Reading local project state is usually cheap and necessary.
+</Step>
+
+<Step number={2} title="Write only in an isolated lane">
+Use a branch or worktree boundary. The agent can move quickly, but it should not mutate the main checkout or collide with other work.
+</Step>
+
+<Step number={3} title="Make network access explicit">
+Fetching live data, calling APIs, scraping pages, or installing packages changes the reproducibility story. It should be declared, logged, and justified.
+</Step>
+
+<Step number={4} title="Require proof before external effects">
+PRs, releases, messages, deploys, and publishes all leave the local machine. They deserve a proof bundle, a human-readable summary, and a clear statement of what was not verified.
+</Step>
+
+That is the basic ladder.
+
+Small permissions first. Bigger permissions after evidence.
+
+## Local-first is not nostalgia
+
+A lot of people hear "local-first" and think it means old-school, offline, or anti-cloud.
+
+That is not why I care about it.
+
+I care because local-first workflows are easier to inspect. They can use fixtures. They can write manifests. They can avoid hidden network state. They can be run again by another agent or another human.
+
+That is why so many tools in my OSS sprint are shaped this way: `worktreeguard` for isolated Git lanes, `proofdock` for evidence bundles, `releasebox` for release readiness, `colbertcache` for deterministic retrieval fixtures, `crawlforge` for replayable content ingestion, and `dexwatch` for local market snapshots before live capture.
+
+The pattern is not accidental.
+
+Local-first is the cheapest privilege tier.
+
+It gives the agent room to work without immediately giving it the outside world.
+
+## The dangerous default: success equals permission
+
+Here is the trap.
+
+Agents are good at making progress, so we start rewarding progress with more permissions automatically.
+
+The agent made a good patch, so let it push.
+
+It opened a good PR, so let it merge.
+
+It fixed a release script, so let it publish.
+
+That escalation feels efficient until the first time it is wrong.
+
+The better question is not "did the previous action succeed?"
+
+The better question is "did the workflow produce the evidence required for the next permission tier?"
+
+<CompareTable
+  left={{ title: "Naive permission model", items: ["Agent can do everything the tool can do", "Network calls happen silently", "Writes hit the active checkout", "PR body is treated as proof", "Publish is just another command"] }}
+  right={{ title: "Privilege budget", items: ["Permissions match task stage", "Network is explicit", "Writes stay scoped", "Proof is collected before review", "Irreversible actions need stronger receipts"] }}
+/>
+
+This is where agent tooling should be much more opinionated.
+
+The default should not be maximum capability. The default should be staged capability.
+
+## Review time is the scarce resource
+
+The practical reason for a privilege budget is review time.
+
+Every permission you grant creates review surface.
+
+If the agent only touched a local fixture and generated a Markdown report, the review is small.
+
+If it fetched live data from three APIs, transformed it, wrote files, updated dependencies, opened a PR, and posted to Slack, the review is not small anymore. Even if the output looks fine, the human has to reconstruct more state before trusting it.
+
+That is where teams lose the productivity they thought agents were creating.
+
+The agent was fast. The review got expensive.
+
+A privilege budget keeps that tradeoff visible.
+
+<Callout type="warning" title="Permission is review debt">
+Every extra capability you hand to an agent creates a question someone may need to answer later. Spend that budget deliberately.
+</Callout>
+
+## This is not anti-autonomy
+
+I am not arguing for timid agents.
+
+I want agents that can do real work. I want them opening branches, preparing releases, generating docs, testing changes, drafting content, and keeping the boring parts of the machine moving.
+
+But real autonomy needs rails.
+
+A useful agent system does not pretend risk disappears because the model is better. It gives the model a path where safe actions are easy, risky actions are explicit, and irreversible actions require receipts.
+
+That is how autonomy becomes operational instead of theatrical.
+
+I wrote about this from the proof side in [receipts over autonomy](/blog/receipts-over-autonomy) and from the release side in [Day 13](/blog/day-13-release-receipts-before-release-automation). The privilege budget is the same idea applied one layer earlier: before the action, decide what the workflow has earned.
+
+## The takeaway
+
+Agent permissions should not be a toggle.
+
+They should be a budget.
+
+Start local. Scope writes. Make network access explicit. Require proof before external effects. Treat publishing, deploying, merging, and messaging as higher tiers, not just commands in the same toolbox.
+
+That is how you get agents that are powerful without being reckless.
+
+Not powerless agents.
+
+Budgeted agents.

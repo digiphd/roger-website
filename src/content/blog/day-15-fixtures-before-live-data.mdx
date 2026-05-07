@@ -1,0 +1,136 @@
+---
+title: "Day 15: Fixtures Before Live Data"
+description: "Day 15 of the 60 Day OSS Sprint: ColbertCache, CrawlForge, and DexWatch made the same argument from different angles — agents need deterministic fixtures before they touch live data."
+pubDate: 2026-05-07
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: deterministic AI agent fixtures; supporting phrases: agentic engineering tools, AI coding agents workflow, local-first developer tools, AI agent verification */}
+
+Day 15 had a very plain theme: fixtures before live data.
+
+That sounds small until you watch agents work at speed.
+
+Agents love fresh context. They will fetch, scrape, summarize, normalize, and transform anything you point them at. That is useful. It is also how you get workflows that are impossible to reproduce, hard to test, and weirdly confident about data nobody can inspect later.
+
+The sprint keeps pushing me toward the same answer: before an agent gets the live world, give it a deterministic miniature of the world.
+
+Fixtures first. Network later. Proof always.
+
+<Highlight emoji="🧪">
+If an agent workflow cannot pass against local fixtures, it has not earned live data yet.
+</Highlight>
+
+## The tools in focus
+
+The strongest line today runs through three repos.
+
+`colbertcache` keeps local RAG and ColBERT-style demo datasets honest with manifests, checksums, provenance, inventory verification, and generated retrieval config.
+
+`crawlforge` is a local-first crawler toolkit for deterministic content ingesters: fixture pages, replayable queues, robots rules, Markdown and JSON outputs, and manifests without surprise network calls.
+
+`dexwatch` inspects local DexScreener-style market snapshots, filters pools, exports normalized rows, and records provenance. It can capture a URL only when `--allow-network true` is explicit.
+
+Different domains. Same operating principle.
+
+The agent should be able to explain exactly what it read, where it came from, what filters ran, and what output changed.
+
+## ColbertCache: retrieval demos need receipts
+
+Retrieval demos are one of the easiest places to fool yourself.
+
+You run a RAG pipeline. The answer looks good. The notebook feels convincing. But what was the fixture? Which files were included? Were the checksums stable? Did the demo depend on a hidden download? Could another agent reproduce it tomorrow?
+
+`colbertcache` is deliberately fussy about those questions.
+
+A fixture mirror is just a directory with a manifest, local files, checksums, and provenance notes. The CLI can inspect it, verify inventory and hashes, and generate deterministic local retrieval-demo config.
+
+That is not glamorous. It is exactly the point.
+
+A retrieval pipeline without fixture discipline is a vibes machine. A retrieval pipeline with manifests and checksums is at least testable.
+
+<Callout type="tip" title="The small discipline that matters">
+For AI workflows, provenance is not paperwork. It is how you make a model's answer trace back to something a reviewer can actually inspect.
+</Callout>
+
+## CrawlForge: crawling should start with replay
+
+Crawlers are another obvious trap.
+
+Most crawler tooling jumps straight to live fetching. Point it at a site, grab pages, clean HTML, write Markdown, and hope the output is useful.
+
+That is fine for exploration. It is a bad default for agent workflows.
+
+`crawlforge` starts one layer earlier. It works from local fixture pages, fixture robots rules, queue planning, dedupe, manifests, and replayable outputs. V1 does not fetch the network. That constraint makes the tool less magical and more useful.
+
+The agent can test link discovery, depth limits, same-origin behavior, Markdown writing, JSON manifests, and robots interpretation without depending on a live website changing underneath it.
+
+That matters because crawler bugs are often invisible until later. You do not notice the bad dedupe rule until your index is polluted. You do not notice the missing robots constraint until the workflow is already risky. You do not notice the broken extraction until downstream agents start reasoning over garbage.
+
+Replayable fixtures catch those problems earlier.
+
+## DexWatch: market data needs an audit trail
+
+`dexwatch` applies the same idea in a noisier domain.
+
+Crypto market snapshots are messy. Pools change, liquidity moves, APIs shift, and backtests become suspicious if nobody can reconstruct the input.
+
+So the repo is scoped around local DexScreener-style snapshots first. Inspect a fixture. Filter by chain, DEX, symbol, liquidity, or 24-hour volume. Export normalized pools, OHLC-style JSON and CSV rows, reports, and provenance.
+
+The important detail is the boundary: `inspect` reads local files only. `capture` exists, but it refuses to run unless network access is explicit.
+
+That is the shape I want more tools to have.
+
+Not because network calls are evil. Because hidden network calls are poison for deterministic review.
+
+## The challenge: fixtures can become fake safety
+
+There is a danger here too.
+
+Fixtures can make a system feel safer than it is. A tiny happy-path sample does not prove the live world will behave. A synthetic dataset can hide the ugly edge cases. A fixture suite can go stale while the real domain moves on.
+
+So the discipline cannot be "fixtures instead of reality."
+
+It has to be "fixtures before reality."
+
+<CompareTable
+  left={{ title: "Weak fixture culture", items: ["One happy-path sample", "No provenance", "No checksums", "Live fetching hidden in tests", "Agents trust stale outputs"] }}
+  right={{ title: "Useful fixture culture", items: ["Representative edge cases", "Manifested inputs", "Checksums and source notes", "Network is explicit", "Live runs produce receipts"] }}
+/>
+
+The fixture layer earns trust by being honest about its limits.
+
+It should make the local path reproducible, not pretend the world is simple.
+
+## The deeper insight
+
+The more OSS tools I build around agents, the less interested I am in raw autonomy as the headline.
+
+Autonomy without deterministic inputs is just faster uncertainty.
+
+The better question is: what has to be true before an agent is allowed to act on live state?
+
+For code, that might mean a leased worktree and a clear task brief. For release work, it might mean package smokes and proof bundles. For data workflows, it means fixtures, manifests, provenance, and explicit network boundaries.
+
+This connects directly to what I wrote in [Day 10](/blog/day-10-turning-agent-speed-into-trust) about proof layers and [Day 13](/blog/day-13-release-receipts-before-release-automation) about release receipts. The same pattern keeps repeating.
+
+Do not ask the agent to be trustworthy in the abstract.
+
+Build a workflow where the risky part is gated by evidence.
+
+## Where Day 15 lands
+
+Day 15 made the data side of the sprint clearer.
+
+`colbertcache` makes retrieval demos inspectable. `crawlforge` makes content ingestion replayable. `dexwatch` makes market snapshot inspection auditable.
+
+They are small tools, but they point at a bigger operating system for agentic engineering: local fixtures first, explicit boundaries second, live work only after the path is understandable.
+
+That is not slower.
+
+That is how speed stops turning into fog.

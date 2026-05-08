@@ -1,0 +1,169 @@
+---
+title: "Small Contracts Beat Big Prompts for AI Agents"
+description: "AI agent quality improves when workflows rely less on giant prompts and more on small contracts: inputs, permissions, outputs, checks, and proof that can be reviewed."
+pubDate: 2026-05-08
+tags: ["ai", "agents", "engineering", "developer-tools"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents workflow; supporting phrases: deterministic AI agents, agentic engineering tools, AI software quality, AI agent verification */}
+
+I think a lot of agent workflows are trying to fix an interface problem with longer prompts.
+
+The agent misses context, so the prompt gets bigger.
+
+The agent takes the wrong action, so the prompt gets more rules.
+
+The agent forgets the verification step, so the prompt gets another paragraph.
+
+Eventually the system prompt becomes a junk drawer: policy, architecture, preferences, output format, warnings, examples, secrets-not-to-touch, and a motivational poster about quality.
+
+That can work for a while.
+
+But I do not think big prompts are the durable layer.
+
+Small contracts are.
+
+<Highlight emoji="📐">
+The more important the agent workflow, the less I want trust living only in prose.
+</Highlight>
+
+## What I mean by a contract
+
+I do not mean a legal contract.
+
+I mean a small, explicit boundary around one piece of work.
+
+A useful agent contract answers five questions:
+
+1. What inputs can the agent use?
+2. What permissions does it have?
+3. What output must it produce?
+4. What checks prove the output is acceptable?
+5. What evidence should survive after the run?
+
+That is it.
+
+The contract can be a config file, a manifest, a task brief, a schema, a fixture, a release checklist, a proof bundle, or a PR template. The format matters less than the shape.
+
+The important part is that the workflow does not depend entirely on the model remembering a paragraph from 8,000 tokens ago.
+
+## Why prompts are not enough
+
+Prompts are flexible, which is why we love them.
+
+They are also flexible, which is why they become dangerous.
+
+A prompt can say "do not touch production." A contract can make production credentials unavailable.
+
+A prompt can say "run tests." A contract can declare the required command and capture the result.
+
+A prompt can say "use local fixtures first." A contract can point at the fixture manifest and reject hidden network calls.
+
+A prompt can say "include risks." A contract can require a risks field before the handoff validates.
+
+That difference matters when agents move fast.
+
+<CompareTable
+  left={{ title: "Prompt-heavy workflow", items: ["Rules live in prose", "Inputs are implied", "Permissions are broad", "Outputs vary by run", "Proof depends on agent memory"] }}
+  right={{ title: "Contract-heavy workflow", items: ["Rules live in artifacts", "Inputs are declared", "Permissions are scoped", "Outputs are typed enough to inspect", "Proof survives the run"] }}
+/>
+
+The prompt still matters. It just should not be the only thing holding the workflow together.
+
+## The contract stack I keep reaching for
+
+The OSS sprint has made this clearer because the same pattern keeps showing up in different tools.
+
+`worktreeguard` turns "do not collide with another agent" into a leased worktree lane.
+
+`envprobe` turns "make sure the machine can do the task" into a local capability profile.
+
+`failureseed` turns "this failed" into a replayable failure fixture and handoff.
+
+`proofdock` turns "I checked it" into a portable proof bundle.
+
+`schemaseal` turns "this config should still be valid" into a local schema pin and deterministic report.
+
+None of those tools make the model smarter.
+
+They make the surrounding workflow less ambiguous.
+
+That is the point.
+
+## Five small contracts for better agents
+
+If I were designing a serious AI coding agent workflow from scratch, I would start with these contracts before I worried about a grand autonomous loop.
+
+<Step number={1} title="Input contract">
+Declare the repo, files, docs, fixtures, issue, and context bundle the agent is allowed to treat as source material. Make hidden context a smell.
+</Step>
+
+<Step number={2} title="Permission contract">
+Scope reads, writes, network access, shell commands, PR creation, release actions, and messaging. Permissions should expand only when the workflow earns them.
+</Step>
+
+<Step number={3} title="Output contract">
+Define the files, summary, patch shape, schema, or handoff packet the agent must produce. Do not leave success as "the agent says it is done."
+</Step>
+
+<Step number={4} title="Verification contract">
+Name the smallest meaningful checks and what failures mean. Capture the result in a form another reviewer can inspect.
+</Step>
+
+<Step number={5} title="Evidence contract">
+Persist the proof: logs, screenshots, manifests, risks, next steps, and machine-readable metadata. The next person should not need your terminal scrollback.
+</Step>
+
+That is a lot less glamorous than "fully autonomous engineering team."
+
+It is also much closer to how real work survives contact with production.
+
+## The founder/operator angle
+
+The reason I care about this is not academic.
+
+Review time is the expensive part of agentic engineering.
+
+If a human has to reverse-engineer what the agent did, why it did it, what it skipped, what it touched, and whether it had permission, then the agent did not save as much time as the demo implied.
+
+A contract-heavy workflow makes review cheaper.
+
+That is where the leverage is.
+
+Agents can write code. Plenty of them can write code. The advantage will come from the operating layer around the agents: the harnesses, boundaries, receipts, fixtures, and checks that keep quality from collapsing as throughput rises.
+
+I wrote about this from the proof side in [Day 10](/blog/day-10-turning-agent-speed-into-trust) and from the permission side in [every agent needs a privilege budget](/blog/agent-privilege-budget). Small contracts are the same thesis from the interface layer.
+
+## The risk: contracts can become bureaucracy
+
+There is a bad version of this.
+
+You can absolutely bury agents under forms, schemas, gates, and ceremony until the workflow is slower and no safer.
+
+That is not the goal.
+
+A good contract should make the next step easier. It should reduce guessing. It should shrink the review surface. It should remove ambiguity the agent was likely to mishandle.
+
+If the contract only exists so someone can say "we have governance," delete it.
+
+<Callout type="warning" title="Contracts should buy back attention">
+The test for an agent contract is simple: does it make the work easier to review, reproduce, or safely hand off? If not, it is probably theater.
+</Callout>
+
+## The takeaway
+
+Big prompts are useful, but they are not enough.
+
+The reliable layer for agents will be small contracts around inputs, permissions, outputs, checks, and proof.
+
+That is how you get deterministic behavior without pretending the model itself is deterministic.
+
+Not by asking the agent to remember everything.
+
+By building a workflow where the important parts are explicit before the agent starts, constrained while it runs, and inspectable after it finishes.

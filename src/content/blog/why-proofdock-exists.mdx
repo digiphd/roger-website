@@ -1,0 +1,150 @@
+---
+title: "Why ProofDock Exists"
+description: "ProofDock exists because AI coding agents need portable proof bundles: artifacts, checks, risks, and review notes that make a change inspectable after the agent leaves."
+pubDate: 2026-05-08
+tags: ["open-source", "ai-agents", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent proof bundle; supporting phrases: AI coding agents workflow, AI agent verification, agentic engineering tools, local-first developer tools */}
+
+`proofdock` exists because agent-produced work needs a place to put the proof.
+
+Not just a cheerful summary.
+
+Not just "tests pass."
+
+Not just a PR body that sounds professional.
+
+Actual proof: artifacts, command outputs, screenshots, notes, risks, next steps, and enough structure that another human or agent can inspect the work after the original context is gone.
+
+<Highlight emoji="📦">
+The diff tells you what changed. The proof bundle tells you why anyone should trust it.
+</Highlight>
+
+## The workflow pain
+
+The more agents you run, the more review becomes the bottleneck.
+
+That is the part people underprice.
+
+An agent can produce a patch quickly. It can even produce a good patch quickly. But the reviewer still has to answer the boring operational questions:
+
+- What was actually checked?
+- Which artifacts matter?
+- Were screenshots captured?
+- Did any command fail?
+- What risks are still open?
+- What should the next reviewer or agent do?
+- Is there a machine-readable record of the same handoff?
+
+Most teams answer those questions with chat messages, PR comments, pasted logs, and whatever the agent remembered to say at the end.
+
+That works until it does not.
+
+The handoff gets long. The terminal scrollback disappears. The next agent starts from stale assumptions. The reviewer has to reconstruct the chain of custody by reading prose.
+
+`proofdock` is a small answer to that problem.
+
+## What ProofDock does
+
+The current MVP is intentionally local-first and boring.
+
+It can:
+
+- initialize a starter config with `proofdock init`
+- collect explicit artifacts and allowlisted command outputs with `proofdock collect`
+- render Markdown and HTML from `proof.json`
+- print a handoff summary as Markdown or JSON
+- redact obvious token and private-key patterns before bundle output is written
+
+The output is portable:
+
+- `proofdock/proof.json`
+- `proofdock/summary.md`
+- `proofdock/index.html`
+- `proofdock/pr-comment.md`
+- copied artifacts under `proofdock/artifacts/`
+
+That gives the workflow a review object, not just a memory of a review.
+
+<Callout type="tip" title="Local-first proof is easier to audit">
+ProofDock does not need a hosted service, telemetry, or automatic PR posting to be useful. The value is in making evidence explicit before anything leaves the repo.
+</Callout>
+
+## Why this matters for agents
+
+Agents are good at generating confident explanations.
+
+That is useful. It is also dangerous if the explanation becomes the artifact of record.
+
+A proof bundle changes the review posture. Instead of asking "do I believe this summary?" the reviewer can ask "does this summary match the collected evidence?"
+
+That is a healthier question.
+
+It also helps agent-to-agent handoff. A follow-up agent does not need to infer the previous run from chat history. It can read the proof JSON, inspect the Markdown, open the HTML bundle, and see which artifacts were explicitly collected.
+
+That is the system-level insight behind the repo.
+
+Agent workflows need less improvisational memory and more portable evidence.
+
+## The safety boundary
+
+The repo is deliberately constrained.
+
+It does not upload artifacts. It does not replace CI. It does not post to PRs automatically. It does not pretend to know which checks prove your change is safe.
+
+Instead, it asks the maintainer to define the evidence that matters.
+
+That includes explicit artifact paths, globbed screenshots, allowlisted commands, reviewer risks, and next steps.
+
+<CompareTable
+  left={{ title: "Loose agent handoff", items: ["Summary is the only record", "Logs pasted into chat", "Artifacts scattered", "Risk notes optional", "No stable JSON for tools"] }}
+  right={{ title: "ProofDock handoff", items: ["Proof JSON as source", "Markdown and HTML views", "Explicit artifact list", "Risks and next steps recorded", "PR-comment snippet generated"] }}
+/>
+
+That is the difference between a nice update and a reviewable packet.
+
+## The origin story
+
+`proofdock` came out of a recurring pressure in the OSS sprint.
+
+As soon as agents started moving faster, the review surface got bigger. I did not just need more code. I needed better ways to prove what happened around the code.
+
+That same pressure produced tools like `agent-qc`, `releasebox`, `failureseed`, and `envprobe`. Each one attacks a different part of the trust problem.
+
+`proofdock` is the evidence drawer.
+
+It is the place where a local run can leave behind something inspectable before the work becomes somebody else's problem.
+
+## How it connects to the bigger thesis
+
+I have written before that [receipts beat autonomy](/blog/receipts-over-autonomy) and that [agent speed has to turn into trust](/blog/day-10-turning-agent-speed-into-trust).
+
+`proofdock` is one of the concrete tools behind that thesis.
+
+The goal is not to slow agents down with paperwork. The goal is to make fast work cheaper to review.
+
+That distinction matters.
+
+If a tool makes the agent slower and the reviewer no safer, it is ceremony. If it makes the agent a little more structured and the reviewer much faster, it is infrastructure.
+
+ProofDock is trying to be the second thing.
+
+## The takeaway
+
+AI coding agents do not just need prompts, models, and context windows.
+
+They need proof formats.
+
+They need a way to package the artifacts behind a change so a reviewer can inspect what happened without trusting the model's tone.
+
+That is why `proofdock` exists.
+
+A small local proof bundle is not glamorous.
+
+It is exactly the kind of harness that makes agentic engineering feel less like magic and more like work you can actually ship.

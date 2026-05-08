@@ -1,0 +1,149 @@
+---
+title: "Day 16: Proof Before Publish"
+description: "Day 16 of the 60 Day OSS Sprint: ProofDock, FailureSeed, and EnvProbe made release work feel less like trust and more like evidence a reviewer can actually inspect."
+pubDate: 2026-05-08
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification; supporting phrases: deterministic AI agents, agentic engineering tools, AI coding agents workflow, release readiness */}
+
+Day 16 was about a line I do not want agents crossing casually:
+
+publish.
+
+Not just `npm publish`. Any external effect counts. Opening a PR, posting a summary, capturing live data, drafting release notes, tagging a package, or handing work to another agent all changes the trust story.
+
+Local work can be messy and recoverable. Published work creates review debt.
+
+So today's strongest theme was simple: proof before publish.
+
+<Highlight emoji="🧾">
+An agent should not earn external reach because it sounds confident. It should earn it because the workflow produced evidence.
+</Highlight>
+
+## The tools in focus
+
+The line today ran through three small repos.
+
+`proofdock` assembles local proof-of-work bundles for agent or developer changes. It collects explicit artifacts, runs allowlisted checks, redacts obvious secrets, and emits JSON, Markdown, HTML, and PR-comment outputs.
+
+`failureseed` turns failures into deterministic fixtures and handoff packets. It can seed known-bad scenarios or capture a real failing command into JSON and Markdown without dumping the whole machine.
+
+`envprobe` scans whether a machine can safely build, test, and hand off a project before an orchestrator assigns work. It reports tool versions, project signals, missing expected files, Git state, and environment signal names without printing secret values.
+
+Different surfaces. Same thesis.
+
+Before the agent asks for trust, make it show its work.
+
+## ProofDock: the PR body is not the proof
+
+A common mistake in agent workflows is treating the PR body as the evidence.
+
+The agent says what changed. It lists tests. It claims risks are low. It sounds organized enough that the reviewer relaxes.
+
+That is useful, but it is not proof.
+
+`proofdock` exists for the layer underneath that summary. It takes configured artifacts, command outputs, screenshots, notes, and reviewer risks, then turns them into a portable bundle: `proof.json`, `summary.md`, `index.html`, and `pr-comment.md`.
+
+That distinction matters.
+
+A PR body is a narrative. A proof bundle is the evidence drawer.
+
+The agent can still write the narrative, but the reviewer gets something inspectable behind it.
+
+<Callout type="tip" title="The reviewable unit is bigger than the diff">
+For agent-produced work, the thing to review is not only the patch. It is the patch plus the checks, artifacts, risks, assumptions, and handoff notes that explain why the patch should be trusted.
+</Callout>
+
+## FailureSeed: failures should be reusable
+
+Fast agent work creates a lot of failure.
+
+That is not inherently bad. Failure is where the useful information is. The bad version is when the failure only exists as a transient log in one terminal session.
+
+`failureseed` is aimed at that gap.
+
+It has two jobs:
+
+- generate small deterministic failing fixtures for agent QA
+- capture a real failing command into a reviewable JSON and Markdown handoff bundle
+
+That sounds like a narrow utility until you watch agent teams hand work around.
+
+Agent A hits a test failure. Agent B needs to continue. A human reviewer wants to know whether the failure is real, replayable, redacted, and scoped. Without a capture format, everyone reconstructs the state from memory and chat snippets.
+
+That is too much friction.
+
+A failure should be an artifact.
+
+If it can be replayed, summarized, redacted, and attached to a handoff, the next agent starts from evidence instead of vibes.
+
+## EnvProbe: do not assign work to a mystery machine
+
+The third piece is earlier in the workflow.
+
+Before an agent starts building, the orchestrator should know whether the environment can actually support the task.
+
+Does the repo have the expected files? Is Git available? Which package manager is present? Are required tools installed? Is the worktree dirty? Are requested environment signal names present without leaking their values?
+
+`envprobe` snapshots those facts locally.
+
+The important part is not that it finds every possible machine detail. It deliberately does not. The important part is that it gives the dispatch layer enough capability facts to avoid assigning work blindly.
+
+This is another version of proof before publish, just shifted left.
+
+Before publishing a result, collect evidence. Before assigning the task, collect capability evidence.
+
+## The challenge: evidence can become theater
+
+There is a trap here.
+
+It is possible to generate lots of artifacts and still not make the work safer.
+
+A giant proof folder full of irrelevant logs is not review discipline. A captured failure with no clear replay path is not a handoff. A machine scan that leaks secrets or inventories too much state creates a new problem while pretending to solve an old one.
+
+So the standard cannot be "more evidence."
+
+It has to be better evidence.
+
+<CompareTable
+  left={{ title: "Evidence theater", items: ["Long logs nobody reads", "Unscoped artifacts", "Secret-adjacent output", "Claims copied into PR text", "Checks unrelated to the risk"] }}
+  right={{ title: "Useful proof", items: ["Small review bundle", "Explicit artifacts", "Redacted outputs", "Replayable failures", "Checks tied to the change"] }}
+/>
+
+The proof layer has to respect the reviewer's time.
+
+Otherwise agents only move the bottleneck from implementation to audit.
+
+## The deeper insight
+
+I keep noticing that the useful agent tools are not trying to make the model more magical.
+
+They are trying to make the work more legible.
+
+That is the through-line from [Day 10](/blog/day-10-turning-agent-speed-into-trust) to [Day 13](/blog/day-13-release-receipts-before-release-automation) to [Day 15](/blog/day-15-fixtures-before-live-data). Trust does not come from one giant autonomous leap. It comes from small boundaries, local artifacts, deterministic fixtures, and receipts.
+
+`proofdock`, `failureseed`, and `envprobe` all sit in that operating layer.
+
+They do not replace judgment.
+
+They make judgment cheaper.
+
+That is the part that matters when agents speed up the work. The human review queue does not magically get faster because the code appeared faster. If anything, it gets more expensive unless the agent leaves a trail.
+
+## Where Day 16 lands
+
+Day 16 made the release and handoff side of the sprint sharper.
+
+`envprobe` asks whether the task is safe to assign. `failureseed` turns failure into something another agent can reuse. `proofdock` packages evidence before the work leaves the local lane.
+
+That is the shape I want more agentic engineering tools to take.
+
+Not agents that beg for trust.
+
+Agents that bring receipts before they cross the boundary.

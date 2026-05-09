@@ -1,0 +1,189 @@
+---
+title: "Day 18: Handoffs Are Where Speed Either Compounds or Dies"
+description: "Day 18 of the 60 Day OSS Sprint: HandoffPad, ReplayPack, and IssueCraft made the same point from different angles — agent speed only compounds when the next reviewer gets usable evidence."
+pubDate: 2026-05-09
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent handoff workflow; supporting phrases: AI coding agents workflow, AI agent verification, agentic engineering tools, local-first developer tools */}
+
+Day 18 landed on a very unglamorous part of agentic engineering:
+
+handoffs.
+
+That is where speed either compounds or dies.
+
+An agent can move fast for an hour and still leave the next person with a mess. The diff might be fine. The terminal history might be gone. The failed command might be buried. The reason a shortcut was taken might live only in chat memory.
+
+That is not a handoff.
+
+That is a puzzle.
+
+<Highlight emoji="📦">
+Agent speed becomes operational speed only when the next reviewer gets a compact, truthful bundle of what changed, what was checked, what failed, and what still needs judgment.
+</Highlight>
+
+The tools that made the strongest narrative today were `handoffpad`, `replaypack`, and `issuecraft`.
+
+Different shapes. Same lesson.
+
+## The tools in focus
+
+`handoffpad` is a local-first agent handoff bundle builder. It gathers a task brief, git state, changed files, command results, notes, omissions, and safe next steps into a compact reviewable artifact.
+
+`replaypack` records deterministic CLI transcript packs for proof-oriented local smokes. It captures command output, fixture hashes, exit status, and matchers into JSONL, then verifies or renders that evidence later.
+
+`issuecraft` turns messy local evidence into GitHub issue drafts. It reads logs and TODO comments, writes Markdown issue files, and refuses to post anything by default.
+
+The connection is obvious once you see it.
+
+All three tools turn transient work into durable review material.
+
+## The challenge: the work disappears too quickly
+
+Agent work often happens in places that do not survive well:
+
+- terminal scrollback
+- chat transcripts
+- temporary files
+- one-off command outputs
+- vague completion summaries
+- local assumptions about what happened
+
+That is fine for a demo.
+
+It is terrible for a factory.
+
+If the sprint is going to produce a lot of small OSS tools, the review surface cannot depend on me reconstructing every agent run from memory. The system needs artifacts that survive the session.
+
+This is why handoff design keeps becoming product design.
+
+A repo is not really easier to maintain just because an agent created it. It becomes easier to maintain when the agent leaves behind enough structure for the next pass.
+
+<Callout type="tip" title="A good handoff reduces archaeology">
+The best handoff is not the longest transcript. It is the smallest artifact that lets the next reviewer understand the claim, verify the evidence, and choose the next action.
+</Callout>
+
+That is the bar I want these tools to push toward.
+
+## HandoffPad: say what happened, including what did not
+
+The detail I like most about `handoffpad` is that it treats omissions as first-class.
+
+That sounds minor. It is not.
+
+A lot of agent summaries are written like victory laps. They say what changed and what passed. They are much weaker at saying what was skipped, what was not attempted, what remains risky, or where the next human should look.
+
+A useful handoff needs all of that.
+
+`handoffpad create` can pull from a task source, local git changes, command logs, notes, omissions, and next steps. It redacts common token shapes and replaces the home path with `~`. It can validate and render the result as Markdown.
+
+That shape matters because handoff quality is not just about summarization. It is about responsibility.
+
+If no deploy was attempted, say that.
+
+If lint did not run because the repo has no lint script, say that.
+
+If tests passed but smoke was skipped, say that.
+
+The reviewer can handle uncertainty. What slows review down is hidden uncertainty.
+
+## ReplayPack: proof should be replayable enough to distrust
+
+`replaypack` attacks a different part of the same problem.
+
+README examples and smoke tests often rot because the proof is informal. Someone ran a command once. The output looked right. A snippet made it into docs. Three weeks later the command no longer means the same thing.
+
+ReplayPack records a command transcript with fixture hashes, exit status, streams, and matchers. It can verify the pack later, optionally rerun the command, and render Markdown for docs or handoffs.
+
+I like that because it makes proof more diffable.
+
+Not perfect. Not magic. Just better than “trust me, I ran it.”
+
+For agent workflows, that distinction matters. Agents are very good at producing confident summaries. They are less reliable at preserving the exact evidence a reviewer needs.
+
+A transcript pack gives the workflow a receipt.
+
+## IssueCraft: evidence should become drafts, not surprise posts
+
+`issuecraft` sits on the output side.
+
+It turns logs and TODO comments into Markdown issue drafts with deterministic fingerprints, labels, reproduction steps, expected and actual behavior, evidence citations, and a safety reminder before GitHub.
+
+The key design choice is restraint: it does not post by default.
+
+That is the right boundary.
+
+Agents are useful at collecting messy evidence and drafting a coherent issue. They should not silently turn every local finding into an external write.
+
+The draft stage is where quality happens. The human can merge duplicates, remove private details, sharpen the repro, and decide whether the issue belongs in public at all.
+
+That is a recurring theme in this sprint: local-first generation, explicit external action.
+
+<CompareTable
+  left={{ title: "Bad handoff path", items: ["Agent says done", "Terminal evidence vanishes", "Failures are summarized vaguely", "Issues are posted too early", "Reviewer reconstructs context manually"] }}
+  right={{ title: "Useful handoff path", items: ["Agent leaves a bundle", "Command proof is saved", "Skipped checks are explicit", "Issues start as drafts", "Reviewer gets a decision surface"] }}
+/>
+
+## The deeper insight
+
+The deeper insight from Day 18 is that handoffs are not administrative overhead.
+
+They are throughput infrastructure.
+
+If every agent run ends with a vague paragraph, then every next step starts with uncertainty. The system loses speed at the seams.
+
+If every agent run ends with scoped artifacts, command receipts, explicit omissions, and draftable follow-up work, the next agent or human can move faster without pretending the previous run was perfect.
+
+That is how speed compounds.
+
+Not by eliminating review.
+
+By making review cheaper.
+
+This also connects back to [Day 10's proof-layer theme](/blog/day-10-turning-agent-speed-into-trust/). Proof is not just something you attach at the end for show. It changes the shape of the workflow.
+
+When proof is expected, agents behave differently. They run smaller checks. They preserve outputs. They stop treating completion as a feeling.
+
+That is the kind of pressure I want in the system.
+
+## What I want next
+
+I want these tools to keep becoming more composable.
+
+A future agent handoff should be able to include:
+
+- the task brief that started the work
+- the git diff and changed-file summary
+- the command log with pass/fail/unknown status
+- a ReplayPack for the important smoke path
+- GuardrailMD or doc-safety output where relevant
+- IssueCraft drafts for follow-up bugs
+- explicit omissions and safe next steps
+
+Not a giant archive.
+
+A compact review bundle.
+
+The difference matters. The point is not to preserve everything. The point is to preserve what changes the next decision.
+
+## Where Day 18 lands
+
+Day 18 makes the sprint feel less like a pile of repos and more like a workflow map.
+
+Some tools shape input. Some isolate execution. Some verify output. Some package proof. Some create follow-up work.
+
+`handoffpad`, `replaypack`, and `issuecraft` all live at the seam between one run and the next.
+
+That seam is where agentic systems usually leak trust.
+
+So that is where I want more tooling.
+
+Because the goal is not just to make agents faster at doing work.
+
+The goal is to make their work easier to inherit.

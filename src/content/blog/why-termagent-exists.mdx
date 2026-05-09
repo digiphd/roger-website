@@ -1,0 +1,168 @@
+---
+title: "Why TermAgent Exists"
+description: "TermAgent is a local-first terminal-agent harness for reproducible tasks, command-review checkpoints, transcript export, and proof bundles. The bigger idea is simple: terminal agents need receipts."
+pubDate: 2026-05-09
+tags: ["oss", "ai", "agents", "developer-tools"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: terminal AI agent harness; supporting phrases: AI coding agents workflow, local-first developer tools, AI agent verification, proof bundles */}
+
+Terminal agents are where AI coding help gets real.
+
+They can inspect a repo, run tests, edit files, start servers, capture logs, create commits, and hand work to another reviewer.
+
+That is exactly why I do not want terminal-agent work to disappear into a chat transcript.
+
+`termagent` exists for the layer after the agent says "done": the transcript, the reviewed commands, the workspace checks, and the proof bundle that lets another person understand what actually happened.
+
+<Highlight emoji="🧾">
+If an agent can touch a terminal, it should leave receipts a human can inspect without replaying the whole session from memory.
+</Highlight>
+
+## The problem with terminal confidence
+
+A chat answer can be wrong.
+
+A terminal agent can be wrong while also changing files.
+
+That distinction matters.
+
+The danger is not only that the model misunderstands the task. The danger is that the work becomes hard to audit:
+
+- Which commands ran?
+- Which commands were considered risky?
+- Which risky commands were approved, rejected, or skipped?
+- What did the workspace look like after the run?
+- Which artifacts prove the task is actually complete?
+- What should the next reviewer look at first?
+
+When those answers live only in a scrolling terminal or a chat thread, the review process becomes archaeology.
+
+That does not scale.
+
+## What TermAgent does in V1
+
+`termagent` is intentionally small.
+
+The V1 scope is not "build a magic autonomous coding system." It is a harness for inspecting reproducible terminal-agent task fixtures and turning them into reviewable outputs.
+
+The current shape is:
+
+<Step number={1} title="Inspect a fixture-backed session">
+Point `termagent` at a local session fixture that describes commands, outputs, review state, and expected workspace signals.
+</Step>
+
+<Step number={2} title="Check the risky parts explicitly">
+High-risk commands carry review status in the fixture. The point is to make command review visible as state, not as a vague note in prose.
+</Step>
+
+<Step number={3} title="Export proof for humans and agents">
+The CLI emits `summary.json`, `transcript.md`, and `proof-bundle.md` so the work can be handed to a reviewer or another agent without losing context.
+</Step>
+
+That is a narrow tool, but it sits on an important seam.
+
+The agent does the work. The harness makes the work inspectable.
+
+## Why local-first matters
+
+Terminal-agent tooling should not require hidden infrastructure just to answer basic review questions.
+
+For this kind of harness, local-first is the right default:
+
+- no hidden network calls
+- no credential reads
+- no remote session dependency
+- no magic database required to inspect a run
+- output stays inside the directory you choose
+
+That makes the tool easier to reason about and safer to hand to another agent.
+
+A local proof bundle is boring in the best possible way. It can be copied, diffed, attached to a PR, archived with a task, or fed into another verification workflow.
+
+<Callout type="tip" title="Local-first is a trust primitive">
+For agent workflows, local-first is not nostalgia for old developer tools. It is a way to keep the review boundary visible: fixtures in, artifacts out, no mystery side effects.
+</Callout>
+
+## The command-review gap
+
+A lot of agent systems treat command execution as a binary: the command ran or it did not.
+
+That is not enough.
+
+In real workflows, command review has texture.
+
+Some commands are obviously safe. Some are destructive. Some are safe locally but risky against production. Some are fine if scoped to a temp directory. Some should be proposed but never run by the agent.
+
+The review state matters.
+
+A future reviewer should not have to infer whether `rm`, `git push`, `npm publish`, or a database command was approved. The workflow should preserve that decision explicitly.
+
+That is one of the reasons `termagent` focuses on high-risk command review state early. It is not glamorous, but it is exactly the kind of detail that separates a useful agent harness from a demo.
+
+## Proof bundles beat vibes
+
+The phrase "proof bundle" sounds heavier than the actual idea.
+
+A proof bundle is just the evidence drawer for a unit of work.
+
+It can include:
+
+- the task summary
+- the command transcript
+- review checkpoints
+- workspace checks
+- generated artifacts
+- known risks
+- next-step notes
+
+The important part is that the evidence survives the run.
+
+Without that, every handoff depends on the agent summarizing itself accurately. That is a weak review model.
+
+<CompareTable
+  left={{ title: "Chat-only terminal work", items: ["Summary depends on memory", "Risky commands are buried in logs", "Artifacts are implied", "Next agent reconstructs context", "Reviewer trusts narration"] }}
+  right={{ title: "TermAgent-style handoff", items: ["Summary is backed by files", "Command review state is explicit", "Artifacts are named", "Next agent starts from evidence", "Reviewer inspects receipts"] }}
+/>
+
+## Why this belongs in the OSS tool garden
+
+The broader OSS sprint is not just about creating lots of tiny tools.
+
+It is about finding the missing infrastructure around agentic engineering.
+
+`termagent` fits that pattern because terminal-agent work is one of the most valuable and most dangerous parts of the stack. It is where agents stop being conversational and start becoming operational.
+
+That makes the harness layer important.
+
+I want tools that make agent work:
+
+- easier to reproduce
+- easier to review
+- easier to hand off
+- safer around risky commands
+- more legible after the session ends
+
+`termagent` is one small answer to that.
+
+## The design principle
+
+The design principle is simple:
+
+make the terminal agent prove itself in artifacts, not just prose.
+
+The model can still explain what it did. That explanation is useful. But the explanation should sit on top of exported evidence.
+
+If the evidence is missing, the reviewer should feel that gap immediately.
+
+That is the direction I want more tools to move in: not bigger promises of autonomy, but smaller, sharper systems for proof.
+
+Because once an agent can touch the terminal, confidence is not enough.
+
+Receipts are the product.

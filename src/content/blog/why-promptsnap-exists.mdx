@@ -1,0 +1,185 @@
+---
+title: "Why PromptSnap Exists"
+description: "PromptSnap is a local-first snapshot tester for prompts, skills, and agent instruction packs. It exists because prompt drift should be reviewable before it changes agent behavior."
+pubDate: 2026-05-10
+tags: ["oss", "ai", "agents", "developer-tools"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: prompt snapshot testing; supporting phrases: AI agent verification, deterministic AI agents, agentic engineering tools, AI software quality */}
+
+There is a category of production risk that still gets treated like copy editing.
+
+The prompt changed.
+
+Not the model. Not the code. Not the test suite. Just the prompt, the skill, the system instruction, the runbook, or the agent playbook.
+
+A line moved. A constraint became softer. A tool policy got buried under examples. A prompt grew until the token budget changed the practical shape of the conversation. The diff looked harmless because it was Markdown.
+
+Then the agent behaved differently.
+
+That is why `promptsnap` exists.
+
+It is a local-first golden-file snapshot tester for prompts, skills, and agent instruction packs. It normalizes prompt artifacts, redacts risky values, checks approximate token budgets, and produces review-friendly diffs. It does not call LLM APIs. It does not score the prompt with another model. It just makes instruction drift visible.
+
+That sounds boring.
+
+Good.
+
+<Highlight emoji="🧪">
+Prompt changes are behavior changes. If they can change the agent, they deserve review artifacts.
+</Highlight>
+
+## The pain it solves
+
+Teams are getting more comfortable putting prompts and agent instructions in repos, which is the right direction. But once those files are in source control, a new problem appears: normal code review habits do not always work well for them.
+
+A code diff can show a function changed. A prompt diff can show words changed, but not whether the operational contract moved.
+
+Did the agent lose a safety condition?
+
+Did the output schema instruction change?
+
+Did the prompt start including user-home paths, bearer tokens, or private operational details in a place where snapshots would catch them?
+
+Did a skill balloon past the rough token budget where it was originally tested?
+
+Did a formatting cleanup accidentally change the artifact that another tool expects?
+
+These are not abstract risks. They are the everyday paper cuts of building with agents.
+
+PromptSnap gives that class of work a deterministic checkpoint.
+
+## What PromptSnap does
+
+The current tool is intentionally small. From the repo, the basic flow is:
+
+```sh
+npx promptsnap init
+npx promptsnap update prompts skills
+npx promptsnap check --format markdown
+npx promptsnap diff --format markdown
+```
+
+Snapshots are written to `__snapshots__/` by default and committed alongside intentional prompt changes.
+
+The config controls discovery, normalization, redaction, and budgets. It can include prompt paths, exclude generated folders, normalize line endings and trailing whitespace, redact values that look like tokens, and warn or fail when approximate token budgets drift.
+
+The important part is not the command list. The important part is the posture:
+
+- local-only runtime
+- deterministic output
+- no hidden network calls
+- no model calls
+- no telemetry
+- reviewable snapshot artifacts
+- redaction before snapshot writes
+
+That is the shape I keep reaching for in the OSS sprint. Give agents better rails without turning every rail into another SaaS account.
+
+## Why not just rely on git diff?
+
+Git diff is necessary, but it is not enough.
+
+A raw diff shows the edit. A snapshot can show the normalized artifact the workflow actually cares about.
+
+That difference matters when prompt files are assembled from multiple locations, when whitespace is noisy, when redaction is required, or when the budget itself is part of the contract.
+
+<CompareTable
+  left={{ title: "Raw prompt review", items: ["Reviewer scans prose manually", "Whitespace noise hides intent", "Secrets can slip into examples", "Budget drift is easy to miss", "Prompt changes feel like docs changes"] }}
+  right={{ title: "PromptSnap review", items: ["Normalized artifacts are committed", "Diffs stay focused", "Risky values are redacted", "Budgets are checked", "Prompt changes feel like behavior changes"] }}
+/>
+
+The goal is not to replace human judgment. The goal is to make human judgment cheaper and better aimed.
+
+A reviewer should not have to guess whether a prompt artifact drifted. The tool should say so.
+
+## The bigger agentic engineering thesis
+
+PromptSnap fits into the same family as tools like `branchbrief`, `taskbrief`, `agent-qc`, and `proofdock`.
+
+They all orbit the same idea: agents need deterministic harnesses around the fuzzy parts.
+
+`taskbrief` shapes messy input before work begins.
+
+`branchbrief` turns completed branch state into a reviewable artifact.
+
+`agent-qc` catches handoff failures before an agent declares victory.
+
+`proofdock` packages evidence for review.
+
+PromptSnap handles the instruction layer itself.
+
+That layer matters because prompts are not just words. In an agent system, prompts are permissions, priorities, routing rules, output contracts, safety constraints, and taste encoded as text.
+
+When those change, the system changes.
+
+<Callout type="warning" title="Prompt drift is system drift">
+If an agent's instruction pack changes without a reviewable artifact, you have changed production behavior through prose and hoped nobody notices the wrong part.
+</Callout>
+
+That is not a mature operating model.
+
+## Why local-first matters here
+
+It would be easy to overbuild PromptSnap.
+
+Add a hosted dashboard. Add model grading. Add team analytics. Add magic prompt quality scores. Add a button that tells you whether the prompt is "good."
+
+I do not want that as the foundation.
+
+At the foundation, I want something that works in a repo, on a laptop, in CI, without needing credentials or trusting another model to interpret the contract.
+
+Model evaluation can be useful later. But the first job is simpler: did the artifact change, is the change reviewable, did we redact obvious risky values, and did the prompt stay inside the budget we said mattered?
+
+Those are deterministic questions.
+
+Deterministic questions deserve deterministic tools.
+
+## The origin story
+
+PromptSnap came out of the same frustration that keeps generating most of my open-source tools right now: the agent ecosystem has plenty of demos, but not enough inspection layers.
+
+When you start using agents for real work, the bottleneck is not whether they can produce text. They can. The bottleneck is whether the surrounding workflow lets a human trust what changed.
+
+Prompt changes are especially sneaky because they look harmless. A pull request that changes TypeScript gets a different kind of attention than a pull request that changes instructions. But in an agent-heavy repo, the instruction file may be the thing that changes the most behavior.
+
+So the tool is deliberately modest: snapshot the prompt contract and make drift visible.
+
+That is enough to be useful.
+
+## Where it should go
+
+The interesting future is not a giant prompt platform. It is tighter integration with the rest of the agent workflow.
+
+A good PromptSnap run should be able to sit beside:
+
+- a `taskbrief` queue that explains the intended work
+- a `branchbrief` review summary
+- an `agent-qc` readiness gate
+- a `proofdock` evidence bundle
+- CI checks that fail when instruction snapshots drift unexpectedly
+
+That is how these tools start compounding.
+
+Each one makes a small part of the workflow reviewable. Together, they turn agentic engineering from "trust the chat transcript" into "inspect the artifacts."
+
+That is the direction I care about.
+
+## The point
+
+PromptSnap exists because prompt files are not soft documentation anymore.
+
+They are part of the product surface.
+
+They shape how agents act, what they are allowed to do, what they refuse, how they report, and how much context they burn. If that surface changes, the change should be visible, reviewable, and intentional.
+
+I do not want more mystical prompt management.
+
+I want boring proof that the contract changed.
+
+That is what PromptSnap is for.

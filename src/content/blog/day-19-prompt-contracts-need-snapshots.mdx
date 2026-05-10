@@ -1,0 +1,160 @@
+---
+title: "Day 19: Prompt Contracts Need Snapshots Too"
+description: "Day 19 of the 60 Day OSS Sprint: PromptSnap, ContainerGhost, and Taskbrief all exposed the same operator lesson — agent workflows need reviewable contracts before they need more autonomy."
+pubDate: 2026-05-10
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: prompt snapshot testing for AI agents; supporting phrases: AI coding agents workflow, agentic engineering tools, deterministic AI agents, AI agent verification */}
+
+Day 19 was about a class of bugs that do not look like bugs until a human is already confused.
+
+The prompt changed. The runbook drifted. The devcontainer stopped matching the compose file. The task brief said one thing, the branch did another, and the agent still sounded completely confident.
+
+That is the trap with agent workflows: the interfaces are often prose. Prose is flexible, which is useful when a human is thinking. It is also dangerous when a machine treats that prose as an execution contract.
+
+So today's theme was contracts.
+
+Not giant enterprise governance contracts. Small, local, boring contracts that can be reviewed before they become operational surprises.
+
+The strongest thread ran through three tools: `promptsnap`, `containerghost`, and `taskbrief`.
+
+## The tools in focus
+
+`promptsnap` is golden-file snapshot testing for prompts, skills, and agent instruction packs. It normalizes instruction artifacts, redacts risky values, checks approximate token budgets, and makes prompt drift visible in review.
+
+`containerghost` audits local development environment drift across devcontainers, Docker Compose, Dockerfiles, package scripts, and `.env.example` files. It is not trying to run the environment. It is trying to catch the mismatch before an agent wastes time inside it.
+
+`taskbrief` turns messy brain dumps, voice transcripts, planning notes, and GitHub issues into structured agent task queues. It gives work a shape before an agent starts interpreting it.
+
+Different layers. Same operating principle.
+
+<Highlight emoji="📌">
+If the thing guiding the agent is allowed to drift invisibly, the agent will eventually optimize against the wrong contract.
+</Highlight>
+
+That is the lesson I keep learning in this sprint.
+
+## PromptSnap: prompt changes deserve code-review pressure
+
+Prompt changes are easy to underestimate because they do not look like code.
+
+A sentence moves. A safety instruction becomes softer. A tool-use rule gets buried under more examples. A skill grows until the token budget quietly changes the behavior of everything downstream.
+
+Nobody sees a red squiggle. The app still builds. The agent still replies.
+
+But the contract changed.
+
+`promptsnap` is pointed directly at that gap. It treats prompts, skills, and instruction packs like artifacts that deserve snapshots. You can initialize config, update snapshots, check for missing or changed snapshots, and print review-friendly diffs. It does not call LLM APIs. It does not pretend to evaluate intelligence. It just makes drift explicit.
+
+That is the right level of ambition for this layer.
+
+I do not need a model to tell me whether a prompt changed. I need a deterministic tool to show me the exact normalized artifact, redact obvious secrets, warn about budget pressure, and fail when the snapshot no longer matches.
+
+The point is not to freeze prompts forever. The point is to make intentional prompt changes travel with visible evidence.
+
+## ContainerGhost: broken environments are agent tax
+
+`containerghost` sits on a different part of the workflow, but the pain is similar.
+
+Agents are bad at noticing environmental drift early. They will happily spend tokens debugging a service that never matched the devcontainer, a forwarded port that does not exist in compose, or an `.env.example` that no longer covers the variables the setup expects.
+
+Humans do this too, but agents can do it at impressive speed.
+
+ContainerGhost scans for the boring mismatches:
+
+- a missing `.devcontainer/devcontainer.json`
+- a missing compose file
+- devcontainer services that do not exist in compose
+- forwarded ports that do not match published ports
+- `.env.example` gaps for declared container env keys
+- package/Dockerfile mismatches where a `dev` script should exist
+- obvious secret-looking evidence that should be redacted
+
+That list is not glamorous. Good.
+
+A lot of agentic engineering is making the unglamorous failure modes cheap enough to catch before the model starts improvising.
+
+<Callout type="tip" title="Environment drift is context drift">
+When a repo's local environment lies, every agent prompt built on top of that environment starts with bad context. Fixing the prompt is not enough if the workspace contract is wrong.
+</Callout>
+
+This is also why I like local-first checks. ContainerGhost does not need telemetry, a hosted control plane, or a clever dashboard to be useful. It needs to read local files and produce deterministic evidence.
+
+That is often the move.
+
+## Taskbrief: shape the work before it becomes execution
+
+`taskbrief` is the input side of the same story.
+
+The messy version of an agent workflow is simple: dump a thought into chat and hope the model finds the real task inside it.
+
+Sometimes that works. Often it creates invisible scope expansion.
+
+The user asked for a cleanup. The agent touched three packages. The repo was inferred from context instead of declared. The verification command was guessed. The risk level was never stated. The work was not wrong in a single dramatic way; it was just under-specified in a dozen small ways.
+
+Taskbrief turns that input into structured task queues. The current tool can parse locally, render Markdown/YAML/JSON/CrewCMD-shaped output, classify risk, include verification metadata, and produce orchestration handoff artifacts. LLM parsing exists, but it is explicit opt-in and fail-closed.
+
+That last part matters.
+
+The default path should not be: "send my messy plan to a model and trust whatever comes back." The default path should be deterministic shaping first, with model help only when the operator asks for it and can review the output.
+
+This is one of the recurring sprint patterns: use AI where it helps, but make the workflow survive without magic.
+
+## The challenge: contracts can become ceremony
+
+The risk with contract tools is that they can turn into process theatre.
+
+A prompt snapshot that nobody reviews is noise. A container drift report that lists every mild warning as a crisis is noise. A task brief that takes longer to produce than the task itself is noise.
+
+The design problem is not "add more gates." It is "make the next decision clearer."
+
+<CompareTable
+  left={{ title: "Ceremony", items: ["Huge reports", "Unranked warnings", "Every task needs a manifesto", "Snapshots no one reads", "Agents learn to route around the process"] }}
+  right={{ title: "Useful contracts", items: ["Small diffs", "Clear failures", "Scoped task metadata", "Reviewable snapshots", "Humans can approve faster"] }}
+/>
+
+That distinction is everything.
+
+Agent tools should reduce review burden, not relocate it into another file.
+
+## The deeper insight
+
+The sprint keeps making me less interested in raw autonomy and more interested in operational surfaces.
+
+A model can be impressive and still be operating against the wrong prompt.
+
+A coding agent can be fast and still be running inside a broken local environment.
+
+A workflow can be automated and still begin from a task definition that never made the boundaries explicit.
+
+The missing layer is not always another agent. Sometimes it is a snapshot, a scanner, or a parser.
+
+That sounds small because it is small. But small tools compound when they sit at the right seams.
+
+`taskbrief` shapes the work before execution.
+
+`containerghost` checks whether the environment contract still holds.
+
+`promptsnap` makes instruction drift reviewable.
+
+Together, they make a bigger point: agentic engineering needs more deterministic edges.
+
+## Where Day 19 lands
+
+Day 19 lands on a blunt operator lesson: if the contract is prose, you still need a way to diff it.
+
+The future of AI-assisted software work will not be won by the team with the longest prompt. It will be won by the team that knows which parts of the workflow must be deterministic, reviewable, scoped, and boring.
+
+That is not anti-AI. It is how AI becomes usable in a real system.
+
+More autonomy is easy to ask for.
+
+Better contracts are harder.
+
+That is why they are worth building.

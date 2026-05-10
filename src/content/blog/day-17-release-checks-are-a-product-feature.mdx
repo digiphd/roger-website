@@ -1,0 +1,147 @@
+---
+title: "Day 17: Release Checks Are a Product Feature"
+description: "Day 17 of the 60 Day OSS Sprint: TermAgent, ProtoBridge PHP, and QQBridge pushed the same lesson from different angles: release checks are part of the product, not paperwork after the fact."
+pubDate: 2026-05-09
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI software quality; supporting phrases: AI agent verification, release readiness, deterministic AI agents, agentic engineering tools */}
+
+Day 17 made me more convinced of something that sounds boring until it saves you from shipping nonsense:
+
+release checks are a product feature.
+
+Not a chore. Not a badge. Not the thing you do after the real work.
+
+For small OSS tools, the release surface is part of the user experience. If the package is hard to verify, hard to inspect, or hard to trust, then the tool has not really shipped yet.
+
+<Highlight emoji="✅">
+A release is not just code leaving the repo. It is a claim that another person can install, inspect, and safely evaluate the thing without needing private context from my terminal.
+</Highlight>
+
+## The pattern across the tools
+
+The clearest thread today ran through three tools with very different shapes.
+
+`termagent` is a local-first terminal-agent harness. It inspects session fixtures, flags command-review state, exports transcripts, and creates proof bundles a reviewer can inspect.
+
+`protobridge-php` is a compatibility scout for PHP protobuf generation. It compares fixture `.proto` schemas against deterministic PHP-shape snapshots so generator drift is visible before it lands in an SDK workflow.
+
+`qqbridge` is a local-first OpenClaw QQ adapter test kit. It validates and replays QQ-like channel fixtures without touching real QQ credentials or networks.
+
+Different domains. Same product move.
+
+They all turn risky external complexity into local, reviewable evidence.
+
+## Release readiness changes the design
+
+The easy version of a CLI is a script that works on my machine.
+
+The useful version is a package someone else can evaluate with a short path from install to proof.
+
+That changes the design pressure.
+
+You start asking better questions:
+
+- Is there a fixture that demonstrates the core behavior?
+- Is there a smoke test that proves the binary works after build?
+- Is the package contents list intentional?
+- Can an agent run the same verification without guessing?
+- Does the README explain what the tool does not do?
+
+Those are not decorative questions. They shape the product.
+
+A tool with a clean `release:check` script is easier to trust than a tool with a heroic README and no reproducible verification path.
+
+<Callout type="tip" title="The check is part of the interface">
+For agent-built OSS, the release command is not just maintainer ergonomics. It is an interface for future agents, reviewers, and contributors who need to know whether the project is still safe to touch.
+</Callout>
+
+## TermAgent: terminal work needs receipts
+
+Terminal-agent workflows are powerful because they can act directly in a workspace.
+
+That is also why they need receipts.
+
+`termagent` is intentionally scoped around local fixtures, transcript export, explicit command review state, workspace checks, and proof bundles. The point is not to make the agent more charismatic. The point is to make its work inspectable after the run.
+
+That matters because terminal work is often where the messy truth lives:
+
+- commands that nearly ran but were blocked
+- outputs that only appeared in one shell session
+- files that were expected but missing
+- approvals that should survive as review state, not vibes
+
+If that information disappears when the session ends, the human reviewer inherits mystery instead of evidence.
+
+## ProtoBridge PHP: compatibility needs snapshots
+
+`protobridge-php` is a different kind of release-readiness lesson.
+
+PHP protobuf generation is the sort of thing where small drift can become expensive. A namespace changes. A field shape moves. A runtime version mismatch sneaks through. Suddenly an SDK or generated integration becomes brittle.
+
+The V1 choice is deliberately conservative: local `.proto` fixtures, deterministic descriptors, PHP-shape snapshots, and no hidden `protoc` invocation.
+
+That is not because real generator adapters are unimportant.
+
+It is because reproducibility comes first.
+
+A compatibility scout that can run in CI, in an agent sandbox, or on a contributor's laptop without credentials is more useful than a clever tool that only works in one blessed environment.
+
+## QQBridge: adapter work needs a sandbox
+
+Messaging adapters are full of temptation.
+
+It is easy to jump too quickly from "fixture shape" to "real integration" because the exciting demo is a live message moving through a channel.
+
+`qqbridge` takes the opposite posture. It validates inbound and outbound QQ-like fixtures, replays events as deterministic JSONL, prints schema sketches, and draws a hard line around safety: no credentials, no sending, no scraping, no hidden network.
+
+That boundary is not a limitation. It is the product.
+
+For adapter work, especially when agents are involved, the local harness is where you want most iteration to happen. The real network should be the late-stage integration point, not the default test loop.
+
+<CompareTable
+  left={{ title: "Release as paperwork", items: ["README first, checks later", "Manual smoke testing", "Package contents assumed", "Safety boundaries implied", "Review depends on maintainer memory"] }}
+  right={{ title: "Release as product", items: ["Checks designed into the workflow", "Fixture-backed smoke path", "Package contents verified", "Safety boundaries explicit", "Review depends on artifacts"] }}
+/>
+
+## The bigger sprint lesson
+
+The deeper pattern of the sprint is that small tools become more legitimate when they produce their own evidence.
+
+That does not mean every repo needs a huge framework.
+
+It means every repo needs a boring path from claim to proof.
+
+For most of these tools, the path is simple:
+
+1. install dependencies
+2. run tests
+3. run static checks
+4. build
+5. run smoke tests
+6. dry-run packaging when relevant
+7. leave clear artifacts and docs behind
+
+That is not glamorous.
+
+But neither is most of the work that makes software usable.
+
+The thing I like about this direction is that it compounds. Once a repo has a real release check, future agents have a better contract. Future contributors have a safer starting point. Future me has less archaeology to do.
+
+## What I want more of
+
+I want more OSS tools where the release story is obvious from the outside.
+
+Not perfect. Not enterprise. Just legible.
+
+Can I install it? Can I run the smallest example? Can I see the safety boundary? Can I reproduce the proof? Can I tell what changed if a fixture moves?
+
+That is the level where tiny tools start feeling real.
+
+And for an AI-assisted OSS sprint, that may be the difference between making a lot of repositories and building a system that can keep improving them.

@@ -1,0 +1,204 @@
+---
+title: "Good Agent Tools Fail Closed"
+description: "AI agents do not need more theatrical confidence. They need tools that stop safely when input, evidence, permissions, or verification are missing."
+pubDate: 2026-05-10
+tags: ["ai", "agents", "software-engineering", "founder-notes"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: fail closed AI agents; supporting phrases: deterministic AI agents, AI agent verification, AI software quality, agentic engineering tools */}
+
+The most dangerous agent is not the one that fails loudly.
+
+It is the one that keeps going with a confident story after the contract is already broken.
+
+Missing input? It guesses.
+
+Ambiguous repo? It infers.
+
+No verification command? It invents one.
+
+Tool output missing? It summarizes from vibe.
+
+PR body malformed? It posts anyway.
+
+That is the pattern I care about more than almost any model benchmark: does the system stop when it should stop?
+
+Good agent tools fail closed.
+
+Not dramatically. Not with a 900-line stack trace. They stop at the boundary, explain the missing condition, and leave the human with a clear next decision.
+
+<Highlight emoji="🚧">
+The future of useful agents is not unlimited autonomy. It is autonomy with crisp refusal points.
+</Highlight>
+
+## Fail-open is how demos lie
+
+Fail-open behavior is seductive because it makes demos smoother.
+
+The prompt is vague, but the agent fills the gap.
+
+The test command is missing, but the agent runs something plausible.
+
+The branch has risky changes, but the agent still says "ready for review."
+
+The PR body has escaped newlines, but the GitHub command exits successfully, so the run is counted as done.
+
+From a distance, this looks like progress. Work happened. The transcript is busy. The link exists.
+
+Up close, the human reviewer inherited every uncertainty the system refused to face.
+
+That is not velocity. That is deferred cleanup.
+
+I have written before about the difference between agent speed and trust in the 60 Day OSS Sprint. The more I build these tools, the more convinced I am that fail-closed behavior is one of the missing primitives.
+
+## What fail-closed looks like in practice
+
+Fail-closed does not mean agents never take initiative. It means the tool has explicit conditions where continuing would create worse work.
+
+A task-shaping tool should stop if it cannot identify the repo, risk level, or verification path.
+
+A prompt snapshot tool should fail when instruction artifacts drift unexpectedly.
+
+A PR readiness gate should fail when the review body is malformed.
+
+A proof collector should refuse to scoop files outside the allowed artifact paths.
+
+A release helper should stop when the package metadata, lockfile, or publish checklist is inconsistent.
+
+None of this requires philosophical drama. It is ordinary engineering discipline applied to agent workflows.
+
+<CompareTable
+  left={{ title: "Fail-open agent workflow", items: ["Guesses missing context", "Treats command success as proof", "Posts partial handoffs", "Converts warnings into optimism", "Reviewer becomes detective"] }}
+  right={{ title: "Fail-closed agent workflow", items: ["Stops on missing contracts", "Separates execution from evidence", "Reports explicit blockers", "Requires scoped permissions", "Reviewer gets a decision"] }}
+/>
+
+The point is not to make agents timid. The point is to stop letting them convert uncertainty into confident prose.
+
+## Confidence is not a verification strategy
+
+LLMs are good at sounding complete.
+
+That is useful when you need a draft, a summary, or a first pass. It is dangerous when the surrounding system treats fluent completion as operational proof.
+
+A coding agent saying "all checks passed" should not be trusted because the sentence is well-formed. It should be trusted because the check command, exit code, relevant output, and scope are attached somewhere a human can inspect.
+
+A release agent saying "ready to publish" should not be trusted because it followed the playbook from memory. It should be trusted because the release checklist ran, the package contents were inspected, the diff is small, and the remaining human decision is obvious.
+
+A planning agent saying "task queue generated" should not be trusted because the queue looks tidy. It should be trusted because the parser had enough source context, the risk fields are populated, and the verification commands are not invented.
+
+This is where a lot of AI product thinking is still too soft.
+
+We keep asking whether the model is confident.
+
+I care whether the system is inspectable.
+
+## Founder lesson: remove ambiguity from the handoff
+
+As a founder/operator, the handoff is where time disappears.
+
+Not the execution itself. The handoff.
+
+A person, or another agent, picks up the work and has to reconstruct what happened. Which assumptions were made? Which files changed? Which test actually matters? Which risk is still open? Which instruction changed between yesterday and today?
+
+If that handoff is vague, the next person pays the tax.
+
+This is why so many of my OSS tools are small harness pieces instead of shiny AI apps. The leverage is in shrinking the handoff tax.
+
+`taskbrief` reduces ambiguity before execution.
+
+`branchbrief` reduces ambiguity after a branch exists.
+
+`agent-qc` reduces ambiguity before an agent says done.
+
+`promptsnap` reduces ambiguity when the instruction layer changes.
+
+`proofdock` reduces ambiguity by bundling evidence.
+
+The pattern is obvious now: the tool either clarifies the contract or it is probably not worth building.
+
+<Callout type="tip" title="A good stop is a feature">
+When a tool refuses to continue because the proof, scope, or permission is missing, that is not a UX failure. That is the tool protecting the review loop.
+</Callout>
+
+## The hard part is choosing the stop points
+
+Fail-closed sounds simple until you have to design it.
+
+Stop too early and the workflow feels brittle.
+
+Stop too late and the human inherits a mess.
+
+Turn every warning into a failure and people route around the tool. Treat every failure as advisory and the tool becomes decorative.
+
+The judgment is in choosing which conditions are hard boundaries.
+
+I like a simple test: would continuing make the review artifact less trustworthy?
+
+If yes, stop.
+
+If the repo is unknown, stop.
+
+If the PR body will render badly, stop.
+
+If the proof bundle would include files outside scope, stop.
+
+If an LLM parse returns schema-invalid output, stop.
+
+If a prompt snapshot changed unexpectedly, stop.
+
+If a check is missing but the work can still be reviewed honestly, report it as a gap instead of pretending it passed.
+
+The stop does not need to be hostile. It needs to be precise.
+
+## Why this matters more as agents get faster
+
+Speed amplifies both quality and mess.
+
+A slow manual workflow can hide weak boundaries because humans naturally pause, ask questions, and notice weirdness. A fast agent workflow will happily cross six weak boundaries before the coffee is cold.
+
+That is why deterministic gates matter more, not less, as models improve.
+
+Better models will reduce some errors. They will not remove the need for system-level contracts. In fact, the more capable the agent, the more important the stop points become, because the blast radius grows with capability.
+
+This is also why I am skeptical of agent platforms that sell autonomy first and evidence second.
+
+Autonomy without proof is just a faster way to create review debt.
+
+## The product strategy angle
+
+There is a business lesson here too.
+
+The obvious AI product pitch is: "our agent does more for you."
+
+The more durable pitch may be: "our agent knows when not to proceed."
+
+That sounds less exciting in a headline, but it is closer to what serious users need.
+
+A founder using agents in a real workflow does not want infinite output. They want fewer places where hidden uncertainty becomes their problem later.
+
+A tool that fails closed earns trust because it makes its boundaries visible.
+
+That is a product advantage.
+
+## The point
+
+Good agent tools fail closed because humans should not have to discover broken contracts after the agent has already acted on them.
+
+Stop early when the input is missing.
+
+Stop clearly when the permissions are wrong.
+
+Stop safely when the artifact would be misleading.
+
+Stop honestly when verification did not run.
+
+Then make the next action obvious.
+
+That is not anti-autonomy.
+
+That is how autonomy becomes operational.

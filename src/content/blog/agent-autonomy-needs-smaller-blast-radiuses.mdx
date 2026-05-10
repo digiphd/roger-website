@@ -1,0 +1,185 @@
+---
+title: "Agent Autonomy Needs Smaller Blast Radiuses"
+description: "More autonomous AI agents are only useful when their permissions, context, and output paths are small enough to review and recover from."
+pubDate: 2026-05-09
+tags: ["ai", "agents", "engineering", "security", "founder"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: safe AI agent autonomy; supporting phrases: deterministic AI agents, AI coding agents workflow, AI agent verification, agentic engineering tools */}
+
+The lazy debate is whether agents should be more autonomous.
+
+I think that question is too broad to be useful.
+
+The real question is: **autonomous inside what blast radius?**
+
+Because an agent that can refactor a fixture-backed parser in an isolated branch is a very different thing from an agent that can edit production config, push to main, message customers, and remember whatever it saw along the way.
+
+Same model. Same word: autonomy.
+
+Completely different risk.
+
+<Highlight emoji="🎯">
+Agent autonomy is not a binary setting. It is a set of boundaries around scope, tools, state, approvals, and recovery.
+</Highlight>
+
+That is the part I keep coming back to while building more agentic workflows. The path to useful autonomy is not giving the agent one huge permission bundle and hoping the prompt behaves.
+
+It is making the work smaller, more inspectable, and easier to undo.
+
+## The demo version of autonomy is misleading
+
+The demo version of an autonomous agent usually looks like magic.
+
+Give it a goal. Watch it plan. Watch it use tools. Watch it produce a result.
+
+That is a useful capability test, but it is a terrible operating model if you stop there.
+
+Real work has messier questions:
+
+- Which files was the agent allowed to touch?
+- Which commands could it run without approval?
+- Which context did it load?
+- Which external systems could it write to?
+- What evidence did it leave behind?
+- How quickly can a human reject or roll back the work?
+
+If those answers are fuzzy, autonomy is not leverage. It is debt with a nicer interface.
+
+This is why I care less about agent charisma and more about harnesses. The harness is where the useful autonomy lives.
+
+## Smaller blast radiuses create faster review
+
+A lot of teams think the tradeoff is speed versus control.
+
+I think that is backwards.
+
+Control is what lets you keep speed.
+
+When an agent works in an isolated branch, with a scoped task, deterministic checks, and a narrow write surface, the reviewer can move quickly. They are not auditing the universe. They are reviewing a bounded change.
+
+That is the point of the pattern I keep using across the OSS sprint: task in, worktree out, proof attached, PR reviewed.
+
+The agent gets room to move, but not infinite room.
+
+<Callout type="tip" title="The useful unit is the recoverable unit">
+If an agent action cannot be understood, reverted, or safely repeated, it is probably too large for unattended autonomy.
+</Callout>
+
+That one sentence is a decent rule for most agent workflows.
+
+Not because agents are bad. Because software operations are unforgiving.
+
+## Permission design matters more than prompt wording
+
+Prompts matter. They always will.
+
+But prompts are not a permission system.
+
+A prompt can ask an agent not to overwrite files. A worktree can make the damage local.
+
+A prompt can ask an agent not to leak secrets. A redaction step and scoped context loader can reduce what it ever sees.
+
+A prompt can ask an agent to verify its work. A CI gate can decide whether the claim is true.
+
+This is the layer where founders and engineering leaders should spend more time.
+
+Not because prompt engineering is useless. Because it is not enough.
+
+<CompareTable
+  left={{ title: "Autonomy by prompt", items: ["Ask nicely for safe behavior", "Trust the agent to remember boundaries", "Review after the fact", "One large workspace", "Rollback depends on luck"] }}
+  right={{ title: "Autonomy by system design", items: ["Limit tools and write surfaces", "Make boundaries structural", "Require proof before handoff", "Isolated branches or sandboxes", "Recovery path is designed in"] }}
+/>
+
+The second column is less glamorous. It is also where the real product advantage is.
+
+## Context needs a blast radius too
+
+People usually talk about blast radius in terms of actions.
+
+Can the agent delete the database? Can it push code? Can it send an email?
+
+Fair questions.
+
+But context has blast radius too.
+
+An agent that reads every private note, customer transcript, credential-adjacent config file, and internal roadmap before doing a small task is already over-scoped, even if it never writes anything dangerous.
+
+That matters for two reasons.
+
+First, privacy. The less the agent sees, the less it can accidentally carry into the wrong output.
+
+Second, quality. Too much context makes agents worse in a very specific way: they start treating incidental information as relevant. The work becomes harder to review because the reasoning surface gets wider than the task.
+
+The better pattern is boring: load only the repo facts, docs, task brief, and constraints that change the decision.
+
+That is how you get deterministic behavior out of a probabilistic worker. Not perfect determinism. Better operational determinism.
+
+## External writes should be late, explicit, and boring
+
+The riskiest moment in an agent workflow is usually not drafting.
+
+It is publishing.
+
+Posting the comment. Opening the issue. Editing the config. Sending the message. Pushing the branch. Triggering the deploy.
+
+That is where I want friction.
+
+Not infinite bureaucracy. Just enough structure that the agent has to turn intent into a reviewable artifact before the outside world changes.
+
+For a coding workflow, that might mean:
+
+1. generate the patch locally
+2. run checks locally
+3. produce a summary and proof
+4. push a branch
+5. open a PR with a real body
+6. let a human merge
+
+That sequence is not slow. It is how you keep speed from turning into cleanup.
+
+It also maps to the way I think about [bring-your-own agents at work](/blog/bring-your-own-agents-to-work/). Once agents can touch business systems, the interface between personal leverage and organizational control becomes the product.
+
+## The founder angle
+
+As a founder, I want more automation than most people are comfortable with.
+
+I want agents drafting posts, opening PRs, triaging repos, building tools, and turning vague ideas into reviewable work while I sleep.
+
+But I do not want a giant opaque assistant with a credit card, a GitHub token, and a motivational prompt.
+
+That is not a company. That is a future incident report.
+
+The founder-friendly version is smaller and sharper:
+
+- agents with narrow missions
+- isolated execution contexts
+- visible queues
+- explicit approvals for external actions
+- deterministic checks wherever possible
+- artifacts that survive the chat session
+
+That does not reduce ambition. It makes ambition survivable.
+
+## The actual unlock
+
+The agent future I am interested in is not one super-agent doing everything.
+
+It is a network of constrained agents doing useful work inside well-designed boundaries.
+
+One agent can draft. One can test. One can summarize. One can inspect release readiness. One can turn terminal evidence into a handoff. One can watch for drift.
+
+Each has a small blast radius.
+
+The system as a whole has leverage.
+
+That is the direction I think serious agentic engineering is going. Less theater about autonomy. More boring control surfaces that let autonomy compound safely.
+
+The fastest agent is not the one with the fewest constraints.
+
+It is the one whose work you can trust quickly.

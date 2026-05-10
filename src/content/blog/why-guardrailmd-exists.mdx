@@ -1,0 +1,185 @@
+---
+title: "Why GuardrailMD Exists"
+description: "GuardrailMD is a local-first Markdown safety linter for agent runbooks, built because instructions are now executable enough to deserve review."
+pubDate: 2026-05-09
+tags: ["oss", "ai", "agents", "security", "developer-tools"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: Markdown safety lint for AI agents; supporting phrases: AI agent runbooks, deterministic AI agents, local-first developer tools, agentic engineering tools */}
+
+Markdown used to be documentation.
+
+Now it is instructions.
+
+That sounds like a small shift until you watch an agent read a runbook, trust it, and start acting on it.
+
+A README can be a product surface. A task file can be a launch plan. A troubleshooting guide can become a command source. A pasted runbook can be the difference between a safe dry run and a very expensive `rm -rf` in the wrong place.
+
+That is why I built `guardrailmd`.
+
+It is a local-first Markdown safety linter for agent runbooks. It scans Markdown for risky shell patterns, secret-looking literals, likely external writes, and destructive prose that lacks nearby safety language.
+
+Not because Markdown is dangerous by itself.
+
+Because Markdown has become part of the agent execution path.
+
+<Highlight emoji="🛡️">
+Once agents treat docs as operational input, docs need operational safety checks.
+</Highlight>
+
+That is the core idea.
+
+## The pain it solves
+
+The failure mode is not theoretical.
+
+Agentic engineering workflows are full of Markdown:
+
+- task briefs
+- repo READMEs
+- setup guides
+- release checklists
+- incident runbooks
+- PR templates
+- orchestration docs
+- copied terminal recipes
+
+Humans read those with judgment. Agents often read them with obedience.
+
+If a doc says to run a destructive command, paste a token-shaped value, or post to a webhook, the model might notice the risk. It might not. Either way, relying on vibes is a bad control.
+
+`guardrailmd` exists to catch the obvious stuff deterministically before the agent, reviewer, or CI path treats the document as safe.
+
+The tool can scan files or directories, output human-readable results, JSON, or SARIF, and fail on critical findings. It also supports explicit allowlist comments for intentional patterns.
+
+That matters because the goal is not to ban every scary string.
+
+The goal is to force dangerous instructions to become visible and deliberate.
+
+## The origin story
+
+The broader OSS sprint has kept pulling me toward the same class of problem: agents are getting faster, but the surfaces around them are still too trusting.
+
+I have been building tools for briefs, branches, proof bundles, terminal transcripts, release checks, and handoffs. `guardrailmd` sits in that same harness layer.
+
+It started from a simple irritation: a lot of agent safety advice lives in prose, but agents consume prose as part of the workflow.
+
+So the prose itself needs a gate.
+
+Not a giant enterprise policy engine. Not an AI judge reading every sentence and inventing risk categories. A small deterministic scanner that catches patterns we already know are worth slowing down for.
+
+Examples include:
+
+- `rm -rf` and similar destructive shell patterns
+- `curl | sh` style install commands
+- force pushes
+- `terraform destroy`
+- token-shaped strings such as GitHub, Slack, AWS, and generic API keys
+- external webhook or API write hints
+- destructive instructions with no nearby backup, dry-run, approval, or rollback language
+
+That last category is important.
+
+Sometimes the problem is not the command. It is the absence of safety framing around the command.
+
+## Why local-first matters
+
+A safety linter for runbooks should not require uploading the runbooks.
+
+That sounds obvious, but it is worth saying out loud.
+
+Runbooks often contain internal paths, deployment names, service topology, vendor details, and operational procedures. Even when they do not contain secrets, they can reveal how a system works.
+
+So `guardrailmd` is intentionally local-first. It reads local Markdown and optional local JSON config. It does not execute commands. It does not phone home. It does not mutate external services.
+
+That posture is not a branding line. It is part of the product.
+
+<Callout type="info" title="Safety tools should be boring about privacy">
+If the tool that checks risky instructions needs to send those instructions somewhere else first, the review surface just moved instead of shrinking.
+</Callout>
+
+For agentic engineering tools, this is a pattern I keep choosing: local files in, deterministic artifacts out, no hidden network path unless the user explicitly asks for one.
+
+## Why Markdown deserves a linter
+
+Developers already accept linters for code because code executes.
+
+The interesting shift is that instructions execute now too.
+
+Not literally in the Markdown parser. In the agent workflow around it.
+
+That means Markdown can carry operational risk in a way it did not before. A checklist can become a plan. A command block can become an action. A copied example can become a production habit.
+
+So I think Markdown safety linting will become a normal part of serious agent workflows.
+
+Not every repo needs a heavyweight policy suite. But any repo that hands runbooks to agents should have a cheap way to ask:
+
+- are there destructive commands here?
+- are there token-shaped strings here?
+- are there external write paths here?
+- are dangerous steps framed with rollback or approval?
+- are intentional exceptions documented?
+
+That is enough to catch a lot of avoidable pain.
+
+<CompareTable
+  left={{ title: "Docs as passive text", items: ["Humans skim for intent", "Risk is handled by judgment", "Examples are informal", "Secrets are caught manually", "Bad instructions are discovered late"] }}
+  right={{ title: "Docs as agent input", items: ["Agents may follow steps directly", "Risk needs deterministic checks", "Examples shape execution", "Token-shaped strings are flagged", "Bad instructions are caught before handoff"] }}
+/>
+
+## What it says about the bigger thesis
+
+`guardrailmd` is a small tool, but it points at a bigger pattern.
+
+The next wave of agent infrastructure will not just be better agents. It will be better material around the agents.
+
+Better briefs. Better repo context. Better proof. Better transcripts. Better release checks. Better docs.
+
+Because the model is not the whole system.
+
+If the runbook is unsafe, the agent is operating on bad input. If the task is vague, the implementation is noisy. If the proof is missing, the reviewer has to reconstruct the truth. If the branch is unbounded, the diff becomes archaeology.
+
+That is why so much of my OSS work is about harness tools instead of model tricks.
+
+Harnesses are where vague capability turns into repeatable workflow.
+
+## The tradeoff
+
+The danger with a tool like this is false confidence.
+
+A Markdown linter cannot prove a runbook is safe. It cannot understand every operational context. It cannot know whether a destructive command is appropriate in a disposable fixture directory or catastrophic in production.
+
+So `guardrailmd` should be treated as a gate, not a priest.
+
+It catches known hazards. It creates review friction. It gives CI and agents a deterministic signal. It makes intentional risk explicit through allowlist comments.
+
+That is valuable precisely because it is limited.
+
+I do not want this kind of tool pretending to be smarter than it is. I want it to be reliable, local, inspectable, and boring.
+
+## Where it fits
+
+The ideal place for `guardrailmd` is anywhere Markdown becomes operational:
+
+- before an agent consumes a task brief
+- in CI for runbook-heavy repos
+- during release checks for CLI tools
+- as part of a documentation review workflow
+- inside a larger agent handoff or proof bundle
+
+That last one is where I think it gets especially useful.
+
+Imagine an agent finishing a change and attaching not just tests and build output, but also a doc safety scan. The reviewer does not need to trust that the agent remembered to check the runbook. The artifact is there.
+
+That is the broader direction I keep aiming at: agents that do useful work, then leave behind evidence that makes the work easier to review.
+
+`guardrailmd` is one small piece of that system.
+
+It taps the glass before the agent follows the runbook.
+
+That is enough reason for it to exist.

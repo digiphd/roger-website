@@ -1,0 +1,150 @@
+---
+title: "Day 20: The Risk Is Usually Hiding in Plain Text"
+description: "Day 20 of the 60 Day OSS Sprint: ActionPin, PromptLintel, and Lockstep made the same point from different angles — agent workflows need boring checks around CI, instructions, and package drift."
+pubDate: 2026-05-11
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification; supporting phrases: deterministic AI agents, agentic engineering tools, AI coding agents workflow, AI software quality */}
+
+Day 20 pulled the sprint back toward a boring but expensive truth:
+
+most workflow risk is sitting in plain text.
+
+Not buried in some exotic model failure. Not waiting inside a sci-fi autonomy scenario. Sitting in YAML. Sitting in Markdown. Sitting in `package.json`. Sitting in the files everyone skims because they look like configuration instead of product.
+
+That is exactly why agents need help there.
+
+The three tools that made the strongest thread today were `actionpin`, `promptlintel`, and `lockstep`.
+
+`actionpin` checks GitHub Actions workflows for review-worthy CI risk: unpinned third-party actions, broad permissions, secret-looking literals, privileged PR events, and shell steps that fetch the internet straight into `bash`.
+
+`promptlintel` lint-checks prompt-like files before agents ingest them. It looks for prompt-injection footguns, secret-shaped strings, unsafe external-action wording, and missing provenance or safety boundaries.
+
+`lockstep` scans folders full of JavaScript and TypeScript packages for script and toolchain drift: required scripts, validation commands that point at missing scripts, engine consistency, package-manager expectations, and lockfiles.
+
+Different files. Same problem.
+
+<Highlight emoji="🧾">
+Agentic engineering gets safer when the boring text that controls the workflow becomes reviewable evidence instead of assumed background noise.
+</Highlight>
+
+## The challenge: agents trust the repo too quickly
+
+A coding agent usually treats the repository as context.
+
+That makes sense. The repo is the world the agent has to operate inside. But it also creates a subtle failure mode: the agent inherits broken assumptions from the files around it.
+
+If a workflow has broad permissions, the agent may treat that as normal.
+
+If a prompt file includes unsafe tool-use language, the agent may ingest that instruction as authority.
+
+If half the packages in a workspace use different scripts and validation names, the agent may guess which command proves the work.
+
+That is not a model problem in isolation. It is an environment problem.
+
+A messy repo teaches the agent messy behavior.
+
+The fix is not to write a longer instruction that says, "please be careful with workflows, prompts, and package scripts." That helps until the next context window, the next harness, or the next rushed task.
+
+The better move is to give the workflow small deterministic checks around the surfaces that quietly define agent behavior.
+
+## ActionPin: CI should not be a permission fog
+
+GitHub Actions is one of those systems where the configuration looks harmless until it is not.
+
+A workflow can run on privileged events. It can grant broad token permissions. It can pull third-party actions by mutable tags. It can pipe remote content into a shell. It can carry secret-looking literals that should never have made it into YAML.
+
+Humans miss those details. Agents miss them faster.
+
+`actionpin` is intentionally narrow. It reads workflow paths locally, refuses paths outside the repo root, avoids network calls, and reports stable file, line, snippet, and remediation evidence. It can write Markdown for humans or JSON for bots. It can fail on a chosen severity threshold.
+
+That is the right shape for this layer.
+
+It is not trying to become a full CI security platform. It is trying to make common, review-worthy workflow risk visible before CI becomes the place where the agent learns bad habits.
+
+<Callout type="tip" title="CI config is agent context">
+When agents edit or rely on workflow files, those files are not just automation. They are part of the operating environment. If the workflow contract is risky, the agent is already downstream of that risk.
+</Callout>
+
+## PromptLintel: prompt files are executable enough to lint
+
+Prompt files still get treated like prose in too many workflows.
+
+That is understandable. They are Markdown or text. They read like instructions. They do not compile.
+
+But in an agent system, prompt files are closer to executable configuration than documentation. They define tool boundaries, output contracts, safety language, provenance, and sometimes the difference between "draft this" and "send this."
+
+`promptlintel` exists for that awkward middle layer.
+
+It checks prompt-like files for obvious injection phrases, secret-like strings, unsafe external-action wording, missing provenance, and missing safety boundaries. It does not call an LLM. It does not mutate the scanned files. It produces Markdown or JSON with file, line, column, snippet, severity, rule id, and remediation.
+
+That restraint matters.
+
+I do not want prompt review to start with another model giving a vague opinion on whether a prompt is safe. I want the deterministic failures caught first. Then the human can review the actual instruction changes with less noise.
+
+Prompt files should still be readable by humans. But they also need enough lint pressure that agents are not ingesting footguns just because the file happened to be called `AGENTS.md`.
+
+## Lockstep: package drift turns verification into guessing
+
+`lockstep` hits a different kind of plain-text risk.
+
+In a multi-package workspace, the scripts are the contract future agents depend on. If one package has `test`, another has `check`, another has `verify`, another has no smoke path, and validation commands point at scripts that no longer exist, every agent run starts with unnecessary uncertainty.
+
+The agent can search. It can infer. It can try commands until something works.
+
+That is not engineering throughput. That is tax.
+
+`lockstep` scans manifests and compares them against a policy: required scripts, optional scripts, validation commands, Node engine expectations, package-manager prefixes, lockfile presence, and ignored directories. It does not execute package scripts or install anything. It just maps drift.
+
+That is valuable because it changes the review question from "which command should the agent have run?" to "which declared contract did this package violate?"
+
+Small difference. Big operational effect.
+
+<CompareTable
+  left={{ title: "Plain text as vibes", items: ["Workflow permissions are skimmed", "Prompt safety lives in prose", "Package scripts drift quietly", "Agents guess verification", "Review starts with archaeology"] }}
+  right={{ title: "Plain text as contract", items: ["CI risk is reported locally", "Prompt footguns get linted", "Script drift is mapped", "Agents get clearer gates", "Review starts with evidence"] }}
+/>
+
+## The deeper insight
+
+The Day 20 lesson is not "lint everything until development becomes miserable."
+
+That would be a bad factory.
+
+The lesson is that agent workflows need pressure at the exact places where trust quietly enters the system.
+
+CI workflows decide what remote automation can do.
+
+Prompt files decide what instructions the agent will treat as meaningful.
+
+Package manifests decide what verification commands exist.
+
+Those are small files with large consequences.
+
+If they drift invisibly, the agent can still sound confident. It can still produce a PR. It can still say the build is green, or that it followed the repo's conventions, or that the prompt looked fine.
+
+But the confidence is sitting on weak ground.
+
+This connects directly to the earlier sprint themes around [proof before publish](/blog/day-16-proof-before-publish/) and the Day 19 prompt-contract work. The workflow gets better when the contracts around the agent are explicit enough to inspect.
+
+Not perfect.
+
+Inspectable.
+
+## Where Day 20 lands
+
+Day 20 made the sprint feel more like a harness stack again.
+
+There are tools for shaping input. Tools for isolating work. Tools for collecting proof. Tools for handoff. And now, more tools for checking the plain-text surfaces that define the agent's environment.
+
+That is where a lot of AI software quality is going to come from.
+
+Not from asking the agent to be more careful in a bigger paragraph.
+
+From building small tools that make care less optional.

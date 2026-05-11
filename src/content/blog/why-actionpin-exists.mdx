@@ -1,0 +1,160 @@
+---
+title: "Why ActionPin Exists"
+description: "ActionPin is a local-first GitHub Actions workflow risk checker for the CI mistakes that agents and humans both miss: mutable actions, broad permissions, risky events, and curl-bash patterns."
+pubDate: 2026-05-11
+tags: ["oss", "developer-tools", "security", "ai-agents"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: GitHub Actions workflow security checker; supporting phrases: local-first developer tools, AI agent verification, deterministic AI agents, agentic engineering tools */}
+
+`actionpin` exists because CI risk is too easy to normalize.
+
+A GitHub Actions workflow looks like infrastructure paperwork. A few YAML files. Some `uses:` lines. Maybe a token permission block. Maybe a shell step that was copied from a README three projects ago.
+
+Nothing about that feels dramatic.
+
+Then an agent edits the workflow, opens a PR, and everyone reviews the application diff while the real risk is sitting in `.github/workflows` looking boring.
+
+That is the pain ActionPin is aimed at.
+
+<Highlight emoji="📌">
+CI is not just automation. In an agentic workflow, CI is part of the permission surface the agent is operating around.
+</Highlight>
+
+The current tool is deliberately small: a local-first GitHub Actions workflow checker that scans for common, review-worthy risk patterns and produces deterministic evidence.
+
+It is not a hosted scanner. It is not a full YAML interpreter. It is not trying to prove a workflow is safe.
+
+It is trying to make the obvious dangerous stuff harder to miss.
+
+## The workflow pain
+
+A lot of CI mistakes are boring enough to survive code review.
+
+Third-party actions are referenced by mutable tags instead of full commit SHAs.
+
+Top-level permissions are missing, broad, or set to write more than the workflow needs.
+
+`pull_request_target` shows up in a place where untrusted contribution paths need extra care.
+
+A shell step fetches remote content and pipes it straight into `bash`.
+
+Secret-looking literals sneak into YAML because someone was moving fast and the file did not look like code.
+
+None of these require a brilliant AI system to detect. That is the point.
+
+If a risk can be caught with deterministic local rules, I do not want to spend model attention on it. I want a boring tool to flag it before a human reviewer has to notice it manually.
+
+That is especially true when agents are involved. Agents are good at editing files. They are also good at confidently treating existing project patterns as safe conventions.
+
+If the repo already has a risky workflow, an agent can reproduce that risk at speed.
+
+## What ActionPin checks
+
+The first version of ActionPin focuses on practical GitHub Actions review signals:
+
+- `actions.unpinned` — third-party `uses:` references should be pinned to a full 40-character commit SHA.
+- `permissions.missing` — top-level `permissions:` should be explicit.
+- `permissions.broad` — broad top-level write permissions, `write-all`, and `read-all` deserve review.
+- `secrets.plaintext` — secret-looking literal values should not live in workflow YAML.
+- `events.pull_request_target` — privileged PR workflows need careful attention.
+- `shell.curl-bash` — piping remote content into `bash` or `sh` is a red flag.
+- `shell.insecure-flags` — patterns like `curl -k`, `wget --no-check-certificate`, or `set +e` should not slide by silently.
+
+That list is intentionally not exotic.
+
+I like tools that start with painful, common failures instead of trying to sound comprehensive. A useful V1 is not the one with the biggest taxonomy. It is the one that catches enough real mistakes to earn a permanent spot in the workflow.
+
+<Callout type="tip" title="Small rules beat vague caution">
+"Be careful with CI security" is not a workflow. A local report with file, line, snippet, severity, and remediation is much closer to a review surface.
+</Callout>
+
+## Why local-first matters here
+
+ActionPin only reads the workflow paths you ask it to scan. It refuses paths outside the repo root. It does not call the GitHub API while scanning. It does not need telemetry. It writes only when you pass `--out`.
+
+That design is not accidental.
+
+For agent tooling, I want the first pass to be reproducible inside the checkout. No token. No SaaS dashboard. No hidden state. No "the scanner said so" result that a reviewer cannot inspect.
+
+A local Markdown report can travel with a PR.
+
+A JSON report can feed a bot or another gate.
+
+A failing exit code can stop a risky change before it becomes remote automation.
+
+That is the shape I keep reaching for across these OSS tools: inspect local reality first, produce a receipt, then let humans decide.
+
+<CompareTable
+  left={{ title: "CI reviewed by vibes", items: ["Mutable action tags get skimmed", "Permissions are implied", "Risky events hide in YAML", "Shell snippets look familiar", "Agent summary says nothing changed"] }}
+  right={{ title: "CI reviewed with ActionPin", items: ["Pinned-action risk is named", "Permission posture is explicit", "Privileged events are flagged", "Curl-bash patterns surface", "The PR gets evidence"] }}
+/>
+
+## Why this belongs in the agent stack
+
+ActionPin is not only a security utility. It is an agentic engineering tool.
+
+That distinction matters.
+
+When agents work in repos, they need deterministic checks around the parts of the system where a confident summary is not enough. CI workflows are one of those parts.
+
+An agent can say it updated a release workflow.
+
+A reviewer still needs to know whether that workflow now grants broad permissions, relies on mutable actions, or pulls remote shell content without review.
+
+The model should not be the only thing standing between the repo and that class of mistake.
+
+This is the same argument behind [deterministic agents](/blog/deterministic-agents-beat-charismatic-agents/) and [receipts over autonomy](/blog/receipts-over-autonomy/): the workflow gets stronger when checkable claims replace polished confidence.
+
+ActionPin gives CI changes a little more checkable surface.
+
+## The origin story
+
+A lot of the OSS sprint has been about building harness tools around agent work: task shaping, context collection, branch hygiene, proof bundles, prompt snapshots, release checks, and handoffs.
+
+ActionPin came from the same instinct, but aimed at CI.
+
+As the number of small repos grows, the automation surface grows too. Every package wants tests. Every package wants release readiness. Every package eventually wants workflows. That is good, but it means workflow quality has to scale with the factory.
+
+I do not want each new repo to rely on memory for the basics:
+
+- did we pin third-party actions?
+- did we declare permissions?
+- did we avoid dangerous shell shortcuts?
+- did we keep secrets out of YAML?
+- did we leave an exception trail when something is intentional?
+
+That should be a command.
+
+## What ActionPin does not try to do
+
+The limits are important.
+
+ActionPin does not verify remote action SHAs. It does not resolve action metadata. It does not prove that a shell script is safe. It does not replace security review, secret scanning, branch protection, or careful release design.
+
+Good.
+
+A tool this small should not pretend to be more than it is.
+
+Its job is to catch the common workflow patterns that deserve review and make them easy to act on.
+
+That is enough to be useful.
+
+## The bigger lesson
+
+The bigger lesson is that AI agent safety is not only about the agent.
+
+It is about the files the agent reads, edits, and treats as normal.
+
+A risky workflow is context. A broad permission block is context. A copied install snippet is context. If that context is weak, the agent is starting from weak ground.
+
+ActionPin is one small piece of the harness stack that makes the ground firmer.
+
+Not by making CI magical.
+
+By making it less invisible.

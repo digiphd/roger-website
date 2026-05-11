@@ -1,0 +1,189 @@
+---
+title: "The Best AI Agent Tools Are Harnesses, Not Copilots"
+description: "AI coding agents get more useful when the product is not another chat surface, but the harness around the work: scoped inputs, deterministic checks, proof, and reviewable handoffs."
+pubDate: 2026-05-11
+tags: ["ai", "agents", "developer-tools", "strategy"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent harness; supporting phrases: AI coding agents workflow, deterministic AI agents, agentic engineering tools, AI software quality */}
+
+I am increasingly convinced the best AI agent tools will not look like copilots.
+
+They will look like harnesses.
+
+Less "talk to this smart thing."
+
+More "put the work inside a system that makes the smart thing safer, faster, and easier to verify."
+
+That sounds less glamorous because it is less glamorous. It is also where most of the durable value is hiding.
+
+A copilot helps produce work.
+
+A harness helps work survive contact with reality.
+
+<Highlight emoji="🧰">
+The agent is not the product by itself. The product is the operating system around the agent: inputs, permissions, checks, artifacts, and handoffs.
+</Highlight>
+
+That is the thesis I keep circling in the OSS sprint.
+
+## Copilot thinking optimizes the wrong moment
+
+Most AI product demos are built around the moment of generation.
+
+The user asks. The model answers. The code appears. The chart draws itself. The email writes itself. The PR summary sounds polished.
+
+That moment matters. I am not pretending it does not.
+
+But it is not where the hard operational problem lives.
+
+The hard problem is everything around that moment:
+
+- did the agent start from the right task?
+- did it have the right repo context?
+- did it work in an isolated lane?
+- did it change the right files?
+- did it run the right checks?
+- did it preserve proof?
+- did it admit uncertainty?
+- did it hand off the work in a form a human can review?
+
+If the answer to those questions is fuzzy, the generated work becomes expensive. Maybe the code is good. Maybe it is not. The reviewer still has to reconstruct the process.
+
+That is where copilot-shaped thinking starts to break down.
+
+A chat surface can be delightful and still leave the reviewer with archaeology.
+
+## Harnesses change the unit of value
+
+A harness changes what the workflow is allowed to consider finished.
+
+It does not ask the agent to be impressive. It asks the agent to move through a bounded system.
+
+The input has a shape.
+
+The permissions have a boundary.
+
+The workspace has isolation.
+
+The checks are named.
+
+The output has a contract.
+
+The proof survives the run.
+
+That is not bureaucracy when it is designed well. It is compression. It lets the next human or agent understand what happened without reading the entire transcript or trusting a confident paragraph.
+
+This is why I keep preferring small local tools over one giant agent platform. The local tools are not trying to replace the model. They are trying to create the conditions where the model's work is easier to trust.
+
+`taskbrief` shapes messy intent before execution.
+
+`repoctx` gives deterministic repo context.
+
+`worktreeguard` keeps agents from colliding in the same checkout.
+
+`agent-qc` catches handoff failures before "done" escapes.
+
+`proofdock` packages evidence.
+
+`promptsnap`, `promptlintel`, `actionpin`, and `lockstep` put pressure on the plain-text contracts agents rely on.
+
+None of these are the agent.
+
+That is the point.
+
+<Callout type="info" title="Harnesses make autonomy cheaper to review">
+More autonomy is only useful when the review cost does not grow faster than the work produced. Harnesses are how you keep the review cost under control.
+</Callout>
+
+## The false choice: magic or manual
+
+A lot of AI discourse gets trapped in a false choice.
+
+Either the agent is magical and autonomous, or the human has to manually supervise every step.
+
+I think the better answer is structured autonomy.
+
+Let the model explore, draft, refactor, summarize, and plan. But keep the irreversible parts, the verification claims, and the external writes inside explicit contracts.
+
+That is not anti-agent. It is pro-throughput.
+
+The fastest workflow is not the one where the agent can do anything. It is the one where the agent can do useful things without forcing a human to distrust everything afterwards.
+
+A harness gives the agent rails that turn into reviewer leverage.
+
+<CompareTable
+  left={{ title: "Copilot-shaped workflow", items: ["Generation is the demo", "Done is a summary", "Verification is implied", "Context lives in chat", "Review depends on trust"] }}
+  right={{ title: "Harness-shaped workflow", items: ["The whole run is the product", "Done requires evidence", "Verification is named", "Context lives in artifacts", "Review depends on proof"] }}
+/>
+
+The second version is less sexy in a launch video.
+
+It is much better on day 40 of an OSS sprint.
+
+## Why founders should care
+
+This is not just an engineering purity argument.
+
+It is a product strategy argument.
+
+If every AI feature is a chat box, distribution gets brutal. The user has to believe your model is smarter, your UX is smoother, or your workflow is somehow more magical than the next five products with the same pitch.
+
+Harnesses create a different wedge.
+
+They attach to painful operational seams:
+
+- PR review is slow because agent handoffs are vague.
+- Prompt changes are risky because nobody can diff the real contract.
+- CI workflows are dangerous because YAML risk is easy to miss.
+- Release readiness is inconsistent because every repo proves itself differently.
+- Multi-agent work gets messy because branches, tasks, and proof are not isolated.
+
+Those are concrete problems. They have specific buyers, users, and workflows. They do not require pretending the model is perfect.
+
+A harness product can say: keep your agents, keep your editor, keep your existing repo. We make this one critical seam more deterministic.
+
+That is a stronger wedge than "our assistant is friendlier."
+
+## The quality bar moves from output to system
+
+The uncomfortable part is that harness products are harder to fake.
+
+A chat demo can hide a lot.
+
+A harness has to interact with real files, real branches, real scripts, real failure modes, and real human review. It needs boring details: exit codes, redaction, path boundaries, config files, stable reports, docs, fixtures, package contents, and smoke tests.
+
+That is exactly why I like the category.
+
+It forces the product to live closer to the work.
+
+It also matches where I think AI software quality is going. The model will keep improving. That helps. But better models will not remove the need for boundaries, proof, and review surfaces. If anything, stronger models make those layers more important because the volume of generated work goes up.
+
+More output means more need for trust compression.
+
+This connects to [deterministic agents](/blog/deterministic-agents-beat-charismatic-agents/) and [receipts over autonomy](/blog/receipts-over-autonomy/). The winning systems will not be the ones that ask humans to trust more. They will be the ones that make trust cheaper to earn.
+
+## Where I am placing the bet
+
+My bet is that agent tooling splits into two layers.
+
+The first layer is intelligence: models, coding agents, editors, orchestration, planning, and execution.
+
+The second layer is harness: task contracts, environment checks, permission boundaries, deterministic linting, proof bundles, handoff packets, release gates, and review artifacts.
+
+The first layer gets most of the attention.
+
+The second layer is where a lot of the business value will be built.
+
+Because organizations do not only need agents that can act. They need systems that can explain why the action is safe enough to review, merge, ship, or reject.
+
+That is what harnesses do.
+
+They turn AI work from a performance into an operation.
+
+And operations are where software gets real.

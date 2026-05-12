@@ -1,0 +1,138 @@
+---
+title: "Day 21: Trust the Boring Evidence First"
+description: "Day 21 of the 60 Day OSS Sprint: SchemaSeal, LogLatch, and FlakeRadar all point at the same operating principle — agents need boring evidence before they need bigger claims."
+pubDate: 2026-05-12
+tags: ["oss", "ai", "agents", "60-day-oss-sprint"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification; supporting phrases: deterministic AI agents, AI software quality, agentic engineering tools, flaky tests for AI coding agents */}
+
+Day 21 landed on a theme I keep finding in different costumes:
+
+trust the boring evidence first.
+
+Not the polished agent summary. Not the confident paragraph at the end of a run. Not the vibe that the command probably passed because it passed once on the agent's machine.
+
+The useful evidence is usually dull: a schema report, a log bucket, repeated command results, a redacted artifact, a stable hash.
+
+That is why today's strongest thread runs through `schemaseal`, `loglatch`, and `flakeradar`.
+
+`schemaseal` pins local schema expectations and checks JSON or YAML files against them. `loglatch` turns noisy logs into redacted, grouped triage reports. `flakeradar` runs local commands repeatedly so one lucky pass does not trick an agent into declaring victory.
+
+Different tools. Same pressure.
+
+<Highlight emoji="🧾">
+The agentic workflow gets better when the first proof is boring enough to be repeated.
+</Highlight>
+
+That sounds obvious until you watch how much AI-assisted work depends on one-off claims.
+
+## The challenge: one pass is not proof
+
+Agents are extremely good at treating a successful command as a finish line.
+
+That is often fine. A typecheck passes. A unit test passes. A build passes. Move on.
+
+But plenty of real software failures do not behave that cleanly. Config can drift without breaking every path. Logs can contain the real clue while the top-level command still exits in a way that looks familiar. Tests can pass once because the timing, fixture order, cache, or local state happened to line up.
+
+A human engineer learns to be suspicious of those situations. A coding agent needs the suspicion encoded into the workflow.
+
+This is not about making every task heavy. It is about choosing the right cheap proof for the risk in front of you.
+
+If the risk is config drift, check the schema.
+
+If the risk is hidden failure evidence, cluster the logs.
+
+If the risk is a flaky command, run it more than once.
+
+## SchemaSeal: config needs a receipt
+
+`schemaseal` exists for config-heavy repos where JSON and YAML quietly become operating contracts.
+
+Tool manifests, MCP configs, workflow inputs, generated reports, fixture metadata, package-adjacent files — agents touch all of this. The dangerous part is that these files often look less important than application code, even when they decide how the system behaves.
+
+SchemaSeal keeps the first move local and deterministic. You can pin a schema snapshot, check files against a named pin or direct schema, and write Markdown or JSON reports. It redacts common token-like values by default and reports schema drift by comparing local hashes against the pin.
+
+The limitation is explicit too: the MVP implements a pragmatic subset of JSON Schema, not the whole universe.
+
+Good.
+
+A small tool that honestly checks `type`, `required`, `properties`, `items`, `enum`, and `additionalProperties: false` is more useful than a vague promise to understand every possible schema edge case.
+
+<Callout type="tip" title="Config is not background noise">
+In agent workflows, config files are instructions. If the file defines how tools, fixtures, or handoffs behave, it deserves the same kind of receipt as code.
+</Callout>
+
+## LogLatch: the failure is often in the scrollback
+
+`loglatch` is aimed at a different failure mode: terminal soup.
+
+A run fails, retries, warns, prints a stack trace, redacts nothing, emits ten similar errors, and leaves the human or agent to manually decide what mattered.
+
+That is a bad review surface.
+
+LogLatch scans local logs, redacts obvious secrets, groups repeated warning/error/fatal lines into stable buckets, and renders Markdown or JSON. It keeps source file and line evidence and can exit non-zero on a chosen severity threshold.
+
+Again, the shape matters more than the glamour.
+
+No accounts. No telemetry. No hidden network calls. No pretending a heuristic cluster is semantic omniscience. Just a deterministic triage report that makes the useful failure evidence easier to carry into an issue, PR, CI note, or agent handoff.
+
+That is the kind of tool I want around agents: not a model that tells me what the log probably means, but a boring latch that preserves the failure evidence before the scrollback disappears.
+
+## FlakeRadar: repeated checks are a different claim
+
+`flakeradar` is the most direct version of today's lesson.
+
+It runs a local command repeatedly, redacts obvious secrets, compares exit codes and output hashes, and writes deterministic Markdown or JSON reports. It can classify stable passes, stable failures, intermittent exits, output drift, and mixed flakes.
+
+That is not the same claim as "the test passed."
+
+It is a stronger claim: "the command behaved consistently across this many runs, with this exit pattern and this output fingerprint."
+
+For agentic coding, that distinction matters a lot.
+
+A model can see one green run and move on. A human reviewer then inherits the uncertainty. If the failure is intermittent, the review queue becomes the place where the workflow pays for not checking twice.
+
+FlakeRadar moves that suspicion earlier.
+
+<CompareTable
+  left={{ title: "Weak proof", items: ["One successful command", "Raw scrollback", "Config shape assumed", "Agent summary carries the claim", "Reviewer investigates from scratch"] }}
+  right={{ title: "Boring evidence", items: ["Repeated command behavior", "Grouped log buckets", "Schema report", "Redacted artifacts", "Reviewer sees the decision surface"] }}
+/>
+
+## The deeper insight
+
+The deeper sprint lesson is that AI software quality is not only about smarter generation.
+
+It is about making the evidence around generation cheaper to inspect.
+
+This connects back to [proof before publish](/blog/day-16-proof-before-publish/), [receipts over autonomy](/blog/receipts-over-autonomy/), and yesterday's [harnesses-not-copilots](/blog/agent-harnesses-not-copilots/) argument. The agent can be useful and still need a harness. In fact, the more useful it becomes, the more the harness matters.
+
+When the volume of work goes up, the review system either gets compressed or it collapses into archaeology.
+
+Schema reports compress config uncertainty.
+
+Log triage compresses failure evidence.
+
+Repeated runs compress flake suspicion.
+
+None of that removes human judgment. It makes judgment less wasteful.
+
+## Where Day 21 lands
+
+Day 21 is another reminder that the best agent tools often look small from the outside.
+
+They do not promise full autonomy. They do not claim to replace review. They do not ask the human to trust the model harder.
+
+They make one claim more checkable.
+
+That is enough.
+
+A schema check. A log bucket. A repeated command report. These are not exciting artifacts in a demo. But they are exactly the kind of artifacts that let a human reviewer move faster without lowering the bar.
+
+That is the sprint's center of gravity now: build the boring evidence layer until agent speed has somewhere safe to land.

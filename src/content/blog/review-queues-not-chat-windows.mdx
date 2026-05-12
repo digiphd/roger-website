@@ -1,0 +1,191 @@
+---
+title: "The Next AI Agent Interface Is the Review Queue"
+description: "AI agent products are still overfocused on chat windows. The durable interface is the review queue: tasks, proof, risk, decisions, and clean human handoffs."
+pubDate: 2026-05-12
+tags: ["ai", "agents", "developer-tools", "strategy"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents workflow; supporting phrases: AI agent review queue, agentic engineering tools, AI software quality, deterministic AI agents */}
+
+Most AI agent products still show up as chat.
+
+That makes sense. Chat is easy to understand. It gives the model a place to talk. It gives the user a place to ask. It makes the demo obvious.
+
+But I do not think chat is the durable interface for serious agent work.
+
+The durable interface is the review queue.
+
+Not because chat disappears. Chat will still be useful for intent, clarification, brainstorming, and steering. But once agents are doing real work, the valuable surface shifts away from the conversation and toward the decision system around the work.
+
+What is waiting for review?
+
+What changed?
+
+What proof exists?
+
+What risk is attached?
+
+What needs a human decision?
+
+That is the product.
+
+<Highlight emoji="📋">
+The more agents can do, the less the human wants another chat window and the more they need a trustworthy queue of decisions.
+</Highlight>
+
+This is the interface layer I keep building toward, whether the tool is a local CLI, a PR handoff, a proof bundle, or a team dashboard.
+
+## Chat is good at starting work, not finishing it
+
+Chat is a strong interface for messy beginnings.
+
+You can describe the goal badly. You can paste context. You can think out loud. You can ask the agent to explore options. That flexibility is valuable.
+
+But finishing work has different requirements.
+
+A finished unit of agent work needs boundaries:
+
+- the task that was accepted
+- the files or systems touched
+- the checks that ran
+- the artifacts produced
+- the open risks
+- the decisions required from a human
+
+A chat transcript can contain all of that, but it is a terrible place to review it.
+
+Transcripts are chronological. Review is decisional.
+
+Those are different shapes.
+
+If a human has to scroll through twenty messages and infer the state of the work, the product has failed at the handoff layer.
+
+## The queue is where trust is won or lost
+
+The review queue is not just a backlog.
+
+It is the trust surface.
+
+Every item in that queue should answer a few basic questions quickly:
+
+- Is this ready for review, or still drafty?
+- What changed and why?
+- What evidence supports the agent's claim?
+- What is risky or unverified?
+- What action can the human take now?
+
+That is why I keep coming back to harness tools. `taskbrief` shapes the input. `worktreeguard` keeps execution isolated. `agent-qc` checks handoff quality. `proofdock` packages evidence. `tooltrace` preserves the timeline. `flakeradar`, `schemaseal`, `actionpin`, and `lockstep` make specific claims easier to verify.
+
+None of those tools are the agent.
+
+They are the queue infrastructure around the agent.
+
+That is where I think a lot of AI software quality will come from.
+
+<Callout type="info" title="A queue is an interface, not just storage">
+A useful agent queue does not merely list completed tasks. It compresses context into reviewable decisions.
+</Callout>
+
+## The bad version becomes notification soup
+
+There is a failure mode here.
+
+If the review queue is just a pile of agent notifications, it becomes another inbox. The human gets buried under activity, summaries, warnings, links, and screenshots. The system looks busy, but the work is not easier to accept or reject.
+
+That is not leverage.
+
+That is notification soup with better branding.
+
+The queue has to be opinionated. It should separate draft from ready. It should group related evidence. It should make missing verification obvious. It should rank risk. It should preserve enough context to explain the work without forcing the reviewer to reconstruct the entire run.
+
+The goal is not to show everything.
+
+The goal is to show what changes the decision.
+
+That is a subtle but important product line.
+
+<CompareTable
+  left={{ title: "Chat-shaped agent UI", items: ["Progress lives in conversation", "Done is a message", "Proof is scattered", "Risk is implied", "Reviewer scrolls and infers"] }}
+  right={{ title: "Queue-shaped agent UI", items: ["Progress becomes review items", "Done requires a handoff", "Proof is attached", "Risk is explicit", "Reviewer decides faster"] }}
+/>
+
+## Why this matters for founders
+
+This is not only an engineering workflow point.
+
+It is a founder/product point.
+
+The market is crowded with AI products that mostly say: talk to our agent. The model is smarter. The chat is nicer. The workflow is more magical.
+
+That pitch gets harder every month.
+
+A review-queue product has a sharper wedge. It attaches to the place where teams already feel pain: too much generated work, unclear ownership, weak verification, vague handoffs, and humans who still carry the final responsibility.
+
+The promise is not "our agent can do everything."
+
+The promise is "your agents can produce work that is easier to review, approve, reject, and audit."
+
+That is a much more operational promise. It is also a more believable one.
+
+If I am betting on agentic engineering tools, I want the product to live close to the review decision. That is where budget, trust, and adoption converge.
+
+A tool that helps a team ship faster by lowering review friction has a clearer path than a tool that merely generates more output.
+
+## The unit of work changes
+
+The old unit was a prompt-response pair.
+
+The better unit is a reviewable packet.
+
+A packet can include the task brief, branch link, diff summary, proof bundle, checks, artifacts, logs, risks, and requested human action. It can be rendered in a PR, a dashboard, Slack, an issue, or a local report. The exact surface matters less than the contract.
+
+This connects with [receipts over autonomy](/blog/receipts-over-autonomy/) and [agent harnesses](/blog/agent-harnesses-not-copilots/). More autonomy is only useful when the resulting work arrives in a form that does not make the human do archaeology.
+
+The packet is how autonomy becomes reviewable.
+
+The queue is how packets become an operating system.
+
+That is the shape I want.
+
+## Humans should spend judgment, not attention
+
+The point of agents is not to remove humans from every loop.
+
+The point is to spend human judgment where it matters.
+
+Attention is expensive. Judgment is precious. A bad agent interface consumes both. It asks the human to read the transcript, verify the claims, detect the missing context, rerun commands, and then make the decision.
+
+A good review queue protects attention so judgment can be used well.
+
+It says: here is the work, here is the proof, here is what failed, here is what is missing, here is the recommended next action, and here is the button or command that moves it forward.
+
+That is not replacing the human.
+
+That is respecting the human's job.
+
+## Where I think this goes
+
+I think the best agent platforms will eventually compete less on the chat surface and more on the quality of their queues.
+
+How well do they shape work before execution?
+
+How clearly do they represent state?
+
+How much proof travels with the result?
+
+How quickly can a human decide?
+
+How safely can the system escalate from suggestion to action?
+
+Those are not glamorous demo questions. They are operating questions.
+
+But operations are where AI agents become real.
+
+The chat window gets the conversation started.
+
+The review queue determines whether the work actually ships.

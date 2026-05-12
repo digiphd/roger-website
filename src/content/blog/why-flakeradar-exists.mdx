@@ -1,0 +1,150 @@
+---
+title: "Why FlakeRadar Exists"
+description: "FlakeRadar is a local-first command harness for catching flaky checks before one lucky pass convinces an AI coding agent, CI job, or human reviewer that the work is safe."
+pubDate: 2026-05-12
+tags: ["oss", "developer-tools", "testing", "ai-agents"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: flaky tests for AI coding agents; supporting phrases: AI agent verification, deterministic AI agents, local-first developer tools, AI software quality */}
+
+`flakeradar` exists because one green check is not always proof.
+
+Sometimes it is just one lucky pass.
+
+That is a small sentence with a lot of operational pain behind it. Anyone who has dealt with flaky tests, timing-sensitive scripts, racey fixtures, drifting output, or cached state knows the feeling. The command passes when you are watching the wrong thing and fails when the next person tries to merge.
+
+Now add coding agents to that workflow.
+
+An agent runs `npm test`. It passes once. The agent writes a confident summary. The PR looks tidy. The reviewer assumes the verification claim means more than it actually means.
+
+That gap is exactly where FlakeRadar fits.
+
+<Highlight emoji="📡">
+FlakeRadar is a tiny offline harness for asking a local command the same question more than once.
+</Highlight>
+
+It is deliberately boring: run a command repeatedly, redact obvious secrets, compare exit codes and output hashes, then write Markdown or JSON evidence a human can review.
+
+That is the whole product shape.
+
+And it is useful because the workflow failure is not exotic.
+
+## The pain: agents believe the first pass too quickly
+
+Most agent coding loops are optimized around progress.
+
+Find the issue. Edit the file. Run a check. If it passes, move on. If it fails, fix and retry.
+
+That is sensible most of the time. But flaky checks break the assumption that a pass is stable enough to trust.
+
+A test might depend on ordering. A fixture might reuse state. A build step might emit slightly different output each run. A local command might pass because the machine happened to be in the right condition once.
+
+Humans can be fooled by this too. Agents just scale the mistake.
+
+They create more branches, more PRs, more summaries, and more verification claims. If the verification is weak, the review queue pays for it.
+
+The fix is not to ask the model to "be more careful with flaky tests" in a bigger prompt.
+
+The fix is to give it a command that makes care mechanical.
+
+## What FlakeRadar does
+
+FlakeRadar's core command runs a local command repeatedly:
+
+```bash
+flakeradar run --repeat 5 --out flake-report.md --json flake-report.json -- npm test
+```
+
+It records the behavior across runs and classifies the result into practical buckets:
+
+- `stable-pass` — every run exits zero and output hashes match.
+- `stable-fail` — every run fails consistently.
+- `intermittent-exit` — pass/fail behavior changes across repeats.
+- `output-drift` — the command succeeds, but stdout or stderr changes.
+- `mixed-flake` — both exit behavior and output drift are unstable.
+
+That taxonomy is simple on purpose.
+
+A reviewer does not need a dissertation. They need to know whether the command behaved consistently enough to trust, and if not, what evidence supports that suspicion.
+
+<Callout type="tip" title="Repeated checks change the claim">
+"The test passed once" and "the command behaved consistently across five runs" are not the same verification claim. Agent workflows should stop treating them as equivalent.
+</Callout>
+
+## Why local-first matters
+
+FlakeRadar is built as a local-first CLI. The V1 path has no telemetry and no network calls. It only runs the command you pass after `--`. It only writes reports you explicitly request. Redaction is enabled by default for common token, key, password, and long-token patterns.
+
+That matters because flaky-check evidence is often messy.
+
+It can include logs, file paths, snippets of environment output, package manager noise, CI-like stdout, and sometimes accidental secrets. A tool that makes this evidence easier to share should be conservative by default.
+
+Local-first also keeps the result reproducible. You can run it inside a repo, attach the report to a PR, hand it to an agent, or use it as a CI gate without introducing a hosted dependency into the first proof loop.
+
+The point is not to centralize flaky-test intelligence.
+
+The point is to make local suspicion visible.
+
+## Where it fits in the agent stack
+
+FlakeRadar is part of the same harness layer as tools like `proofdock`, `agent-qc`, `actionpin`, and `lockstep`.
+
+The agent still writes code.
+
+The harness decides what counts as acceptable evidence.
+
+That distinction is important. A model can reason about a flaky test after the fact, but the better workflow is to catch the flake before the model turns a weak signal into a confident handoff.
+
+<CompareTable
+  left={{ title: "Without FlakeRadar", items: ["Agent runs a check once", "Green output becomes the summary", "Flakes show up during review", "Humans rerun commands manually", "Trust depends on vibes"] }}
+  right={{ title: "With FlakeRadar", items: ["Command runs repeatedly", "Exit and output drift are classified", "Markdown/JSON proof travels with the PR", "Humans see the instability early", "Trust depends on evidence"] }}
+/>
+
+This is the same philosophy behind [deterministic agents](/blog/deterministic-agents-beat-charismatic-agents/) and [the best AI agent tools being harnesses](/blog/agent-harnesses-not-copilots/). The useful layer is not another chat box. It is the system around the work that makes the work easier to review.
+
+## The origin story
+
+FlakeRadar came from a very practical annoyance in the OSS factory.
+
+When you have lots of small repos and lots of agent-assisted changes, local validation becomes the heartbeat of the operation. Tests, smoke scripts, package dry-runs, release checks, fixture runs — the whole system depends on those commands meaning what they say.
+
+A flaky command poisons that signal.
+
+It makes agents overconfident. It makes humans cautious for the wrong reasons. It turns review into rerun theater.
+
+So the tool became a small radar dish for local checks: run it again, compare the shape, write the receipt.
+
+No drama.
+
+## What it does not try to do
+
+FlakeRadar does not magically explain the root cause of every flake.
+
+It does not semantically diff all output. It does not replace test design, fixture cleanup, CI diagnostics, or human debugging. Commands that mutate shared state still need care. Output hashing is useful, but it is not a full understanding of the program.
+
+Those limits are fine.
+
+The V1 job is narrower: detect unstable command behavior early and produce a report that makes the instability hard to ignore.
+
+That is enough to earn a place in the workflow.
+
+## The bigger lesson
+
+The bigger lesson is that AI agent verification has to get more specific.
+
+"Tests passed" is often too coarse.
+
+Which tests? How many times? Was the output stable? Did the command ever fail? Did the report redact sensitive values? Is there a machine-readable artifact, or only a sentence in a summary?
+
+As agents produce more software, those questions become less optional.
+
+FlakeRadar answers one narrow slice of them.
+
+It turns a local command from a single moment into a small evidence trail.
+
+That is the kind of tool I want more of: local, deterministic, suspicious in the right place, and useful before the PR reaches a human reviewer.

@@ -1,0 +1,148 @@
+---
+title: "Why ShellGarden Exists"
+description: "ShellGarden is a local-first harness for keeping README commands, docs examples, and agent handoffs executable with fixture-backed transcripts instead of stale copy-paste snippets."
+pubDate: 2026-05-13
+tags: ["oss", "developer-tools", "docs", "ai-agents", "testing"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: executable README examples; supporting phrases: local-first developer tools, AI agent verification, deterministic AI agents, shell command testing */}
+
+`ShellGarden` exists because README commands rot quietly.
+
+Agents copy them loudly.
+
+That combination is worse than it looks. A stale shell example used to be an annoyance. A human would paste it, see the error, squint at the docs, and maybe fix the command. Now a coding agent can ingest the same stale example, treat it as evidence, build a plan around it, and hand back a confident summary that rests on sand.
+
+That is the pain ShellGarden is aimed at.
+
+<Highlight emoji="🪴">
+ShellGarden turns shell examples into small fixture-backed gardens: declared commands, deterministic transcripts, and local reports a reviewer can trust.
+</Highlight>
+
+It is not trying to be a full sandbox or a giant CI platform. It is a small local-first CLI for a very specific job: keep command examples alive.
+
+## The problem: docs are executable now
+
+Developer docs have always contained commands.
+
+Install this. Run that. Create a fixture. Hit an endpoint. Generate a report. Copy this into CI. Try this smoke test.
+
+The difference now is that docs are no longer only read by humans. They are read by agents, embedded in prompts, used as scaffolding context, and treated as operational instructions. A broken command in a README can become a broken agent workflow.
+
+That changes the quality bar.
+
+If a command is important enough to teach a human or agent how the tool works, it is important enough to verify.
+
+The usual alternatives are not great:
+
+- trust the README manually
+- run examples only when somebody remembers
+- hide command drift inside broad integration tests
+- let CI run everything in a heavy environment
+- ask the agent to infer which examples are safe
+
+ShellGarden takes the smaller path.
+
+Declare the example. Give it a tiny fixture directory. Run it locally. Compare the transcript.
+
+## What ShellGarden does
+
+A ShellGarden config declares one or more "gardens." Each garden points at a fixture directory and a list of commands. The CLI can check those commands, update expected transcripts, emit JSON reports, explain the execution plan, and list the inventory.
+
+The workflow looks like this:
+
+```bash
+shellgarden init ./demo
+shellgarden check ./demo --update
+shellgarden check ./demo
+shellgarden report ./demo --format json
+shellgarden explain ./demo
+```
+
+Under the hood, the tool is deliberately conservative. Commands run inside declared fixture directories. Path escapes are rejected. Obviously risky commands such as `sudo`, destructive `rm`, broad permission changes, common network tools, and system writes are blocked. The environment is normalized, and workspace paths are replaced in output so transcripts stay stable.
+
+That is the core product shape: fixture-backed shell command examples with deterministic local transcripts.
+
+<Callout type="info" title="Not every example needs a garden">
+The point is not to turn every sentence in a README into a test. The point is to verify the commands that explain how the tool actually works.
+</Callout>
+
+## Why local-first matters here
+
+Shell examples are often close to private context.
+
+They can include local file paths, package names, fixture contents, environment-shaped output, and commands that should not leave the repo. Shipping that verification to a hosted service would make the first version more complicated and less trustworthy.
+
+ShellGarden keeps the first loop local.
+
+No telemetry. No hidden network calls. No mutation outside the garden path it is asked to inspect. The result is a report or transcript you can commit, review, or hand to an agent.
+
+That fits the broader thesis behind the OSS stack: the most useful agent tools are often not bigger agents. They are deterministic harnesses around the work.
+
+A model can still help write the docs. A model can still suggest commands. But the transcript should come from the machine.
+
+## The origin story
+
+The sprint keeps producing small CLIs, and every small CLI has the same documentation pressure.
+
+You need a quick start. You need examples. You need fixture commands. You need smoke paths that prove the README is not decorative. You need a reviewer to trust that the command shown in the docs still maps to the command implemented in the code.
+
+Doing that manually across dozens of repos is not a strategy.
+
+It becomes another place where agent speed creates review debt. The agent can write five README examples faster than a human can verify that all five still run from a clean fixture.
+
+ShellGarden is the boring counterweight.
+
+It says: if this command is part of the public contract, plant it in a fixture and harvest the transcript.
+
+## Where it fits in the agent stack
+
+ShellGarden sits next to tools like [PromptSnap](/blog/why-promptsnap-exists/), [FlakeRadar](/blog/why-flakeradar-exists/), [ProofDock](/blog/why-proofdock-exists/), and [ReleaseBox](/blog/why-releasebox-exists/).
+
+Each one turns a fuzzy claim into a more reviewable artifact.
+
+PromptSnap asks whether instructions changed. FlakeRadar asks whether a command is stable across repeats. ProofDock packages evidence. ReleaseBox asks whether a release is ready before publishing.
+
+ShellGarden asks a smaller but very common question:
+
+Does the command in the docs still do what the docs say?
+
+<CompareTable
+  left={{ title: "Stale docs workflow", items: ["README examples are copied by hand", "Commands drift from implementation", "Agents inherit broken instructions", "Reviewers rerun examples manually", "Docs quality depends on memory"] }}
+  right={{ title: "ShellGarden workflow", items: ["Examples live in fixture directories", "Transcripts are checked deterministically", "Unsafe commands are blocked early", "JSON/Markdown evidence can travel", "Docs quality has a local harness"] }}
+/>
+
+That is a narrow wedge, but it is a useful one.
+
+## The safety boundary is explicit
+
+ShellGarden is not a perfect sandbox, and pretending otherwise would be dangerous.
+
+The README is clear about that. It runs commands inside declared fixture directories and blocks obvious risky patterns, but you still review garden commands before accepting contributions. That honesty matters.
+
+Agent tooling gets worse when tools overclaim safety.
+
+The better pattern is to make the boundary visible: here is what runs, here is where it runs, here is what gets blocked, here is the transcript, here is the report, here is what still needs human judgment.
+
+That is the same reason I keep writing about [fail-closed agent tools](/blog/fail-closed-agent-tools/) and [receipts over autonomy](/blog/receipts-over-autonomy/). Good tools do not make risk disappear. They make risk easier to see before it becomes somebody else's outage.
+
+## The bigger lesson
+
+The bigger lesson is that docs are becoming part of the runtime surface for agentic engineering.
+
+A README is not just marketing. It is training data for humans and agents. A quick start is not just onboarding. It is an executable promise. A shell snippet is not just a convenience. It is a contract that can either compress understanding or inject drift into the workflow.
+
+ShellGarden exists because that contract deserves a harness.
+
+Not a huge one.
+
+A small garden is enough: fixtures, commands, transcripts, reports, and a local check that makes broken examples harder to ignore.
+
+That is exactly the kind of OSS tool I want more of. Specific. Deterministic. Local-first. Honest about its limits. Useful before the review queue gets noisy.
+
+If agents are going to read our docs as instructions, we should stop treating those instructions like decoration.

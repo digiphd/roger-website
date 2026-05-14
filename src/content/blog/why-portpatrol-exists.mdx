@@ -1,0 +1,131 @@
+---
+title: "Why PortPatrol Exists"
+description: "PortPatrol exists because AI coding agents need a deterministic map of local dev ports before they start servers, run smokes, or accidentally build on top of a mystery process."
+pubDate: 2026-05-14
+tags: ["open-source", "ai-agents", "developer-tools", "local-first"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: local-first developer tools; supporting phrases: AI coding agents workflow, deterministic AI agents, agentic engineering tools, AI software quality */}
+
+`portpatrol` exists because local development ports are one of those tiny pieces of engineering reality that agents are very good at ignoring until they trip over them.
+
+A repo says the app runs on `3000`. A doc mentions `5173`. A Docker Compose file exposes `5432`. An `.env.example` points at `8080`. Something is already listening locally. The agent starts a server anyway, sees a green-ish message, runs a smoke test against the wrong thing, and writes a confident handoff.
+
+That is not an intelligence failure.
+
+It is a missing map.
+
+<Highlight emoji="🚦">
+PortPatrol is a small local port map for the moment before an agent turns a mystery server into a false proof.
+</Highlight>
+
+That moment matters more than it looks.
+
+## The pain: localhost is shared state
+
+Agent workflows talk a lot about repositories, branches, prompts, and tests.
+
+They talk less about the machine underneath the run.
+
+But local development is full of shared state. Ports are a perfect example. They are small, global-ish, easy to forget, and weirdly capable of invalidating a check.
+
+If an agent is working in an isolated git worktree but not in an isolated runtime, it can still collide with whatever is already running on the workstation.
+
+That produces bad questions:
+
+- Did the smoke test hit the app from this branch or another branch?
+- Was the port declared in config or guessed from a framework default?
+- Is the live listener expected, stale, or dangerous?
+- Did the agent choose a fallback port and forget to document it?
+- Are two services declaring the same port before anything starts?
+
+The human reviewer should not have to discover this by reading terminal scrollback.
+
+## What PortPatrol does
+
+The MVP is deliberately practical.
+
+`portpatrol` scans a project for port declarations in places agents actually encounter:
+
+- package scripts
+- `.env*` files
+- Docker Compose files
+- docs
+- config files
+- localhost URLs
+
+It can also inspect live TCP listeners when you opt in with `--live`, then emit deterministic Markdown or JSON for handoffs and CI.
+
+The checks are not trying to be mystical. They look for things like duplicate declarations, ports already listening, privileged ports below `1024`, wildcard binds such as `0.0.0.0`, and localhost URLs scattered through docs and config.
+
+It can also suggest safe alternatives from a range without mutating the project.
+
+<Callout type="tip" title="Point and bark, do not bite">
+PortPatrol is read-only by default. It maps the risk. It does not kill processes, rewrite config, or pretend it knows which service deserves the port.
+</Callout>
+
+That safety posture is important. In agent workflows, a tool that automatically "fixes" the local machine can create a bigger mess than the conflict it found.
+
+## Why agents need this more than humans do
+
+A human developer often has background knowledge of their own workstation.
+
+They know the old app is still running. They remember that Postgres is on `5432`. They know that this repo uses Vite on `5173` unless the integration harness overrides it. They might even notice when the browser is showing the wrong title.
+
+An agent does not get that ambient memory unless the workflow gives it an artifact.
+
+That is the system-level point.
+
+Agents need fewer vibes and more maps.
+
+A port report gives the agent and the reviewer the same local fact base. It turns "I started the app" into a more inspectable claim: these ports were declared, these conflicts existed, these live listeners were observed, and these alternatives were available.
+
+That is much better than hoping the model noticed the warning in the scrollback.
+
+## The origin story
+
+`portpatrol` came from the same pressure behind a lot of the OSS sprint tools: agent speed exposes boring infrastructure gaps.
+
+Once you have multiple agents, multiple worktrees, multiple local tools, and multiple quick smoke checks, the workstation becomes part of the system. The main checkout is not the only thing that needs a guardrail.
+
+`worktreeguard` helps keep edits out of the wrong tree. `mcpmap` inventories local tool access. `ciquilt` makes workflow risk easier to see. `rundossier` packages evidence from a run.
+
+PortPatrol fills another little gap: before the agent starts proving things through localhost, make localhost legible.
+
+<CompareTable
+  left={{ title: "No port map", items: ["Agent guesses framework defaults", "Mystery listener becomes false confidence", "Conflicts appear during smoke tests", "Reviewer reconstructs the environment", "Fallback ports vanish from the handoff"] }}
+  right={{ title: "PortPatrol handoff", items: ["Declared ports are listed", "Live listeners are opt-in evidence", "Conflicts are explicit", "Safe alternatives are suggested", "Markdown or JSON travels with the review"] }}
+/>
+
+## The bigger thesis
+
+The broader lesson is not really about ports.
+
+It is about deterministic preflight.
+
+Before an agent edits, it should understand the repo. Before it runs, it should understand the local assumptions. Before it asks for trust, it should collect proof.
+
+That is why a small tool like PortPatrol fits the larger agentic engineering thesis. It does not replace the model. It gives the model a sharper operating surface.
+
+I have written before that [agent harnesses beat copilots](/blog/agent-harnesses-not-copilots/) and that [receipts beat autonomy](/blog/receipts-over-autonomy/). PortPatrol is another receipt in that stack.
+
+A port conflict is not glamorous. Neither is a deterministic Markdown report.
+
+But if that report stops one agent from testing against the wrong server, it has already paid for itself.
+
+## The takeaway
+
+AI coding agents do not just need better prompts.
+
+They need better situational awareness.
+
+PortPatrol exists because localhost is part of the workflow, and shared local state can quietly turn fast work into fake proof.
+
+Map the ports before the smoke test. Show the conflicts before the handoff. Let the human decide instead of excavate.
+
+That is the kind of boring tool that makes agents safer to run at speed.

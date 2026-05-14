@@ -1,0 +1,155 @@
+---
+title: "Preflight Is Where Agent Quality Actually Starts"
+description: "AI coding agents get more reliable when the workflow checks ports, configs, permissions, dependencies, and evidence before the model starts improvising. Preflight is not ceremony; it is how speed becomes reviewable."
+pubDate: 2026-05-14
+tags: ["ai", "agents", "engineering", "quality"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents workflow; supporting phrases: deterministic AI agents, AI software quality, agentic engineering tools, AI agent verification */}
+
+Most teams put the quality bar at the end of the agent run.
+
+That is understandable. The patch exists, so now you lint it. The tests exist, so now you run them. The PR exists, so now somebody reviews it.
+
+But the more agent work I do, the more convinced I am that a lot of quality is won or lost before the model writes anything meaningful.
+
+The missing layer is preflight.
+
+Not enterprise ceremony. Not a heavyweight planning phase. Just a small, deterministic check of the ground the agent is about to stand on.
+
+<Highlight emoji="🛫">
+A good preflight does not make agents slower. It stops them from sprinting confidently into avoidable ambiguity.
+</Highlight>
+
+That distinction matters if you are trying to run agents as an engineering system instead of a clever autocomplete demo.
+
+## Agents inherit the room
+
+A coding agent does not begin from a clean philosophical state.
+
+It inherits the repo, the branch, the dev server someone forgot about, the stale `.env.example`, the unpinned GitHub Action, the undocumented port conflict, the test that flakes every third run, and the local config file that quietly changed last week.
+
+Then we ask it to be fast.
+
+Sometimes it is. Sometimes it is fast in the way a junior engineer is fast when they do not know which part of the room is load-bearing.
+
+The agent can be smart and still start from bad situational awareness.
+
+That is why I keep building small tools around the run itself: `repoctx`, `taskbrief`, `worktreeguard`, `mcpmap`, `ciquilt`, `portpatrol`, `schemaseal`, `flakeradar`, `rundossier`, and the rest of the harness stack.
+
+Individually, they look almost too small.
+
+Together, they make the room visible.
+
+## Preflight changes the first move
+
+The normal agent flow often looks like this:
+
+1. receive vague task
+2. inspect whatever files seem relevant
+3. edit
+4. run checks
+5. summarize
+6. hope the summary matches reality
+
+A preflight-first flow changes the first move:
+
+1. scope the task
+2. map the repo
+3. isolate the worktree
+4. inspect risky local assumptions
+5. then edit
+6. collect proof
+7. hand off evidence
+
+That is not bureaucracy. That is compression.
+
+The agent gets fewer mysteries. The reviewer gets fewer surprises. The system gets fewer claims that depend on memory, tone, or terminal scrollback.
+
+<Callout type="tip" title="Preflight is cheap context with consequences">
+The best preflight checks are small enough to run often and concrete enough to affect the plan. If the result cannot change what the agent does next, it is probably theatre.
+</Callout>
+
+This is the same reason pilots do boring checklists before doing the interesting part. The checklist is not the flight. It is what makes the flight less stupid.
+
+## The boring failures are expensive
+
+The failures that waste review time are rarely cinematic.
+
+They are boring:
+
+- the agent starts a second dev server on a port already in use
+- the test suite passes once and flakes on rerun
+- a workflow has broad permissions nobody noticed
+- an MCP config points at a stale local command
+- JSON config drift breaks a path outside the task
+- the PR body says "verified" without naming the actual proof
+- the next agent cannot tell what the previous one checked
+
+None of these require a smarter frontier model to avoid.
+
+They require the workflow to ask better deterministic questions earlier.
+
+That is why I think the next layer of agent quality will look less like one giant agent brain and more like a belt of boring local instruments.
+
+The model handles judgment, synthesis, and code generation. The harness handles repeatability, evidence, and blast radius.
+
+## Preflight is where speed compounds
+
+People often treat preflight as drag because they compare it against the fantasy version of agent speed.
+
+In the fantasy version, the agent reads the task, changes the code, runs the right checks, and lands a clean PR.
+
+In the real version, the human often pays later. They reconstruct why a check was skipped. They ask which server was running. They discover the agent tested against the wrong fixture. They reread a polished handoff that does not include the one artifact they needed.
+
+Preflight moves some of that cost forward, where it is cheaper.
+
+<CompareTable
+  left={{ title: "Agent-first", items: ["Start from chat intent", "Discover risks while editing", "Checks happen after the patch", "Reviewer reconstructs context", "Speed depends on trust"] }}
+  right={{ title: "Preflight-first", items: ["Start from scoped context", "Expose risks before edits", "Checks shape the plan", "Reviewer sees evidence", "Speed depends on receipts"] }}
+/>
+
+That is the compounding effect.
+
+The first run gets cleaner. The review gets faster. The next agent starts with better artifacts. The team stops arguing about whether the model sounded convincing and starts inspecting whether the system produced enough evidence.
+
+## The founder/operator angle
+
+This matters strategically because agent adoption is going to create a lot of fake velocity.
+
+Teams will produce more diffs. More PRs. More summaries. More demos. More apparent motion.
+
+The scarce thing will be trusted throughput.
+
+Can the organization absorb the work without drowning reviewers? Can it keep security boundaries legible? Can it understand what the agent did after the original context is gone? Can it stop a low-quality run before it becomes a high-confidence PR?
+
+That is not a model leaderboard problem.
+
+It is an operations problem.
+
+And operations problems are where small, boring tools can become leverage.
+
+This connects directly to why I keep writing about [deterministic agents](/blog/deterministic-agents-beat-charismatic-agents/), [review queues instead of chat windows](/blog/review-queues-not-chat-windows/), and [proof before publish](/blog/day-16-proof-before-publish/). The pattern is the same: do not make the human trust a vibe when the system can produce a receipt.
+
+## The useful default
+
+My default now is simple:
+
+Before giving an agent more autonomy, give it a better runway.
+
+A scoped brief. A repo map. A clean worktree. A port map. A config check. A CI risk scan. A flake check when the risk calls for it. A proof bundle at the end.
+
+Not all of that for every task. That would be silly.
+
+But enough preflight that the agent is not guessing about the floor beneath it.
+
+The future of AI software quality is not only bigger context windows or more capable models.
+
+It is better preparation.
+
+Preflight is where agent quality actually starts because it turns the first move from improvisation into engineering.

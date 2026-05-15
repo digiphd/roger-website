@@ -1,0 +1,152 @@
+---
+title: "Day 22: Release Evidence Without Leaking the Run"
+description: "Day 22 of the 60 Day OSS Sprint: ShipCue, SmokeTape, and ArgVault all pushed on the same constraint — release evidence has to be useful without exposing secrets or pretending advice is authority."
+pubDate: 2026-05-15
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "release-engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification; supporting phrases: agentic engineering tools, local-first developer tools, AI coding agents workflow, release readiness for AI agents */}
+
+Day 22 had a very specific shape:
+
+make the release path easier to inspect without making the release path more dangerous.
+
+That sounds like a small distinction. It is not.
+
+A lot of agentic engineering work eventually runs into the same wall. The agent can make changes quickly. It can run checks. It can write a confident summary. But the moment a human asks, "should this actually ship?", the workflow needs more than a vibe and less than a publish button.
+
+Today's strongest thread runs through `shipcue`, `smoketape`, and `argvault`.
+
+`shipcue` ranks release readiness from local repo snapshots and writes static dashboards, release briefs, and agent handoff prompts. `smoketape` turns CLI smoke checks into deterministic YAML tapes and proof reports. `argvault` records redacted CLI run cassettes so a repro can travel without dragging secrets, home paths, or raw terminal soup along with it.
+
+Different layers. Same operating rule.
+
+<Highlight emoji="🧯">
+The right artifact should make review easier without quietly increasing the blast radius.
+</Highlight>
+
+That is the part I keep coming back to.
+
+## The challenge: evidence can become exposure
+
+Agent workflows need receipts. I have said that a lot during this sprint.
+
+But receipts are not automatically safe.
+
+A raw terminal log can contain tokens. A local path can leak machine structure. A pasted environment dump can expose more than the reviewer needs. A release recommendation can look like authority if the artifact does not clearly say what it is and is not allowed to do.
+
+This is why the evidence layer has to be designed, not just captured.
+
+The cheap version of proof is: dump everything and let the human sort it out.
+
+The useful version is: collect the smallest reviewable artifact that supports the decision, redact the dangerous parts, keep it local by default, and make the tool's authority boundary explicit.
+
+That was the Day 22 pressure.
+
+## ShipCue: release readiness is a queue, not a feeling
+
+`shipcue` came from a very real maintainer problem: too many repos, too much state, and too little patience for manually deciding what deserves release attention next.
+
+A freshness dashboard can tell you something has not shipped recently. That is useful, but it is not the same as release readiness.
+
+ShipCue tries to answer the next question:
+
+what should I look at next, and why?
+
+Its MVP scans normalized local repo snapshots, applies release policy defaults, and recommends states like `initial-release`, `release-patch`, `release-minor`, `hold-fresh`, `hold-ci`, or `manual-review`. It looks at things like releases, unreleased commits, merged PRs, CI signal, blocker issues, package files, and policy.
+
+The safety model is the important part. ShipCue does not publish. It does not create tags. It does not merge. It does not write to GitHub. The current scanner path is fixture/local JSON in the MVP, with the GitHub scanner planned as read-only.
+
+<Callout type="tip" title="A release radar is not a release robot">
+The best release queue tells a maintainer where attention should go. It should not quietly become the thing that decides to ship on its own.
+</Callout>
+
+That boundary matters because release tools sit close to irreversible action. The closer a tool gets to publish, the more boring and explicit its permissions need to become.
+
+## SmokeTape: a smoke test should leave a usable receipt
+
+`smoketape` sits one step lower in the stack.
+
+It is for the moment where a CLI needs more than a unit test and less than a custom shell ritual nobody wants to maintain.
+
+You write a readable YAML tape. SmokeTape replays it in a local temp sandbox. The tape can assert exit codes, stdout and stderr expectations, files that should exist, and values that must not appear. It can produce Markdown and JSON reports for PRs and agent handoffs.
+
+That is exactly the kind of artifact agents need.
+
+Not because YAML is magic. Because a smoke check that can be replayed, reviewed, and attached to a handoff is a different claim from "I ran the command and it seemed fine."
+
+The safety posture is also deliberately practical:
+
+- temp sandbox by default
+- fixture paths constrained under the tape directory
+- host cwd access only with an explicit flag
+- network disabled by default through environment shaping unless allowed
+- configured and token-looking values redacted from reports
+
+Again, not a fantasy sandbox. A local proof tool with honest boundaries.
+
+That honesty is a feature.
+
+## ArgVault: repros need cassettes, not confessions
+
+`argvault` solves a related but slightly different problem.
+
+When a command fails, the useful repro is rarely just the command string.
+
+A good handoff may need argv, cwd, selected env vars, stdin and output samples, exit code, duration, notes, and fixture hashes. A bad handoff includes all of that plus secrets, private paths, huge scrollback, and a vague request for the reviewer to figure it out.
+
+ArgVault records a local cassette: deterministic JSON plus a readable Markdown report. Env capture is allowlist-only. Common token shapes, private keys, key-value secrets, long base64-ish blobs, and home paths are redacted. Fixture contents are not embedded; hashes and sizes are recorded instead.
+
+That is a very specific kind of restraint.
+
+It does not pretend to be a formal DLP engine. It says the honest thing: open the JSON and Markdown before sharing them. The tool is a seatbelt, not a lawyer.
+
+I like that framing because it matches the real risk. Agent handoffs should be easier to share, but sharing should never become automatic just because the artifact looks clean.
+
+<CompareTable
+  left={{ title: "Weak release evidence", items: ["Raw terminal logs", "One-off smoke commands", "Unclear release recommendation", "Secrets depend on luck", "Reviewer reconstructs the run"] }}
+  right={{ title: "Reviewable release evidence", items: ["Read-only release radar", "Replayable smoke tape", "Redacted run cassette", "Explicit safety boundary", "Reviewer sees the decision surface"] }}
+/>
+
+## The deeper insight
+
+The deeper Day 22 lesson is that agentic engineering needs two things at the same time:
+
+more evidence and less exposure.
+
+Those goals can fight each other if the tooling is sloppy.
+
+If you collect too little, the reviewer inherits uncertainty. If you collect too much, the review artifact becomes a privacy and security liability. If you give the tool too much authority, a readiness report starts looking like a deployment system before it has earned that role.
+
+The better path is smaller and more deliberate.
+
+ShipCue makes the release queue legible without publishing.
+
+SmokeTape makes CLI proof repeatable without turning a smoke script into folklore.
+
+ArgVault makes command repros portable without dumping the machine into the handoff.
+
+That is the shape of the harness stack I want: local-first, explicit, reviewable, and reluctant to cross the line into irreversible action.
+
+## Where Day 22 lands
+
+Day 22 is another argument against autonomy theatre.
+
+The point is not to build an agent that can say "ship it" with a nicer voice.
+
+The point is to build a workflow where "ship it" has a better evidence trail, a clearer boundary, and fewer accidental leaks.
+
+This connects directly to [proof before publish](/blog/day-16-proof-before-publish/), [release checks are a product feature](/blog/day-17-release-checks-are-a-product-feature/), and [receipts over autonomy](/blog/receipts-over-autonomy/). The useful release system is not the one that removes the human. It is the one that stops wasting the human's attention on archaeology.
+
+Release evidence should be boring enough to inspect, scoped enough to trust, and safe enough to carry into review.
+
+That is the Day 22 lesson.
+
+Not more confidence.
+
+Better receipts, with sharper edges around what they are allowed to reveal.

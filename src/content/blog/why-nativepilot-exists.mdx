@@ -1,0 +1,138 @@
+---
+title: "Why NativePilot Exists"
+description: "NativePilot exists because AI mobile app starters need more than screens and dependencies — they need explicit provider seams, secret boundaries, and checks that coding agents can understand."
+pubDate: 2026-05-15
+tags: ["open-source", "ai-agents", "react-native", "developer-tools", "local-first"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI React Native boilerplate; supporting phrases: AI coding agents workflow, agentic engineering tools, React Native AI starter, local-first developer tools */}
+
+`nativepilot` exists because AI mobile app starters are usually optimized for the wrong first impression.
+
+They show a nice screen. They wire a few libraries. They give you a folder structure that looks finished in a screenshot.
+
+Then the real work begins: Where do the provider keys live? Which code can run on-device? Which AI calls need a server boundary? What should the coding agent touch first? How does a reviewer know the generated app still has sane guidance after three rounds of edits?
+
+That is the part I care about.
+
+NativePilot is an Expo-first React Native starter generator for AI-native apps. It creates a mobile shell with provider-agnostic AI hooks, explicit secret boundaries, assistant guidance files, and local proof checks.
+
+<Highlight emoji="📱">
+The first commit of an AI mobile app should be agent-readable, not just demo-friendly.
+</Highlight>
+
+That is the real product bet.
+
+## The pain: mobile AI starters hide the dangerous parts
+
+Mobile apps are a weird place to be casual about AI infrastructure.
+
+A backend service can hide provider secrets behind environment variables and server-side boundaries. A mobile bundle is different. If you ship a secret into the app, you should assume it is public. If the architecture does not make that clear, an agent can very confidently build on top of a bad assumption.
+
+That is the first NativePilot pressure: make the boundary obvious before anyone starts adding features.
+
+The second pressure is agent readability.
+
+AI coding agents work better when the project tells them how it wants to be changed. A boilerplate that only gives the human a nice demo screen is incomplete. The generated app needs route constants, theme tokens, provider contracts, assistant guidance, and checks that can catch unsafe drift.
+
+Otherwise the starter becomes folklore immediately.
+
+## What NativePilot generates
+
+NativePilot is not trying to be a giant app template.
+
+The MVP creates a small Expo React Native shell with the pieces an AI-native prototype actually needs:
+
+- Expo Router app structure
+- provider-agnostic `src/ai` contract
+- `useAIChat` and `useAICompletion` hooks with streaming state
+- OpenAI-compatible, Anthropic, Gemini, and local/proxy configuration lanes
+- theme tokens, route constants, and minimal localization
+- `AGENTS.md`, `CLAUDE.md`, Cursor rules, and Copilot instructions
+- security docs that say plainly that mobile bundles are public
+
+The CLI can also run `nativepilot doctor` against a generated app. That check looks at structure, aliases, guidance freshness, and unsafe key patterns, with a CI-friendly `--fail-on unsafe-key,stale-guidance` mode.
+
+That last part is what makes it fit the bigger OSS sprint thesis.
+
+The generator is useful. The validator is what keeps it from becoming a pile of stale scaffolding.
+
+<Callout type="warning" title="A starter without a doctor rots quickly">
+The dangerous state is not an empty app. The dangerous state is a starter that looked safe on day one and quietly lost its boundaries after the agent started editing.
+</Callout>
+
+## Why agents need this kind of starter
+
+A human mobile engineer can infer a lot from convention.
+
+They know where secrets should not go. They know when a provider call belongs behind a server. They know that a demo API key in `.env.example` is not permission to hard-code production credentials into a screen component.
+
+An agent needs those rules turned into project surface area.
+
+That means the app should include explicit docs, contracts, and checks from the start. Not because documentation is decorative. Because documentation is part of the runtime context for the agent.
+
+NativePilot tries to make the generated app legible in the places agents actually look:
+
+- guidance files for model-specific working rules
+- small AI provider seams instead of scattered SDK calls
+- route and theme constants instead of magic strings everywhere
+- security notes close to the generated code
+- a doctor command that can fail when the boundary gets stale or unsafe
+
+That is a different posture from "here is a pretty boilerplate."
+
+It is closer to "here is a small operating environment for an AI-assisted mobile build."
+
+## The origin story
+
+NativePilot came from the same pattern behind a lot of these tools: agent speed makes old starter-template assumptions feel thin.
+
+When I am building with agents, the question is not only "can this project run?"
+
+The better question is:
+
+can another agent safely continue this project tomorrow without rediscovering the rules?
+
+That question changes what a starter should contain. It makes assistant guidance a first-class file. It makes local checks part of the generated app, not an optional afterthought. It makes provider boundaries more important than whatever demo screen looks good in a launch tweet.
+
+The idea was inspired by demand around AI-ready React Native boilerplates, including `kuraydev/react-native-typescript-boilerplate` as noted in NativePilot's planning docs, but NativePilot takes a different route: generator plus validator plus agent handoff workflow rather than a static app template.
+
+That distinction matters.
+
+A static template is a snapshot.
+
+A generator with a doctor is a workflow.
+
+<CompareTable
+  left={{ title: "Screenshot-first starter", items: ["Demo screen carries the pitch", "Provider calls spread quickly", "Secret boundary is implied", "Agent guidance is missing", "Review depends on convention"] }}
+  right={{ title: "Agent-readable starter", items: ["AI contract is explicit", "Provider lanes are separated", "Mobile secret risk is documented", "Guidance files ship on day one", "Doctor checks catch drift"] }}
+/>
+
+## The bigger thesis
+
+NativePilot is not really about React Native.
+
+It is about the shape of agent-ready software.
+
+The more I build with coding agents, the less I trust projects that only optimize for the human's first five minutes. The first five minutes matter, but the next fifty edits matter more. That is where unclear boundaries become bugs, where docs drift away from code, and where the agent starts inventing architecture because the repo did not provide enough of one.
+
+This is why I keep writing about [agent harnesses, not copilots](/blog/agent-harnesses-not-copilots/) and [small contracts beating big prompts](/blog/small-contracts-beat-big-prompts/). NativePilot is that idea applied to mobile app creation.
+
+The contract is not just TypeScript types. It is the generated project shape, the AI provider seam, the secret model, the guidance files, and the doctor command that keeps the whole thing honest.
+
+## The takeaway
+
+AI-native mobile apps do not need another glossy starter that hides the hard parts.
+
+They need a launch lane that says the quiet parts early:
+
+mobile bundles are public, provider seams matter, agents need instructions, and generated projects need checks before they become real products.
+
+NativePilot exists to put those rules in the first commit.
+
+Not as a giant framework. Not as magic. Just a small, local-first generator that makes the safe path easier for both the human and the agent.

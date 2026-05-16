@@ -1,0 +1,167 @@
+---
+title: "Why RunbookLint Exists"
+description: "RunbookLint is a local-first Markdown linter for operational runbooks, built because release, incident, support, and agent handoff docs are executable enough to deserve checks."
+pubDate: 2026-05-16
+tags: ["oss", "developer-tools", "devops", "ai-agents", "local-first"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: Markdown runbook linter; supporting phrases: local-first developer tools, AI agent verification, operational runbooks, agentic engineering tools */}
+
+`RunbookLint` exists because runbooks are starting to behave like code.
+
+Not metaphorically. Operational docs now tell humans and agents how to release, recover, migrate, debug, escalate, and hand work off. They contain commands. They name environments. They carry placeholders. They imply authority.
+
+And a surprising number of them are still treated like loose notes.
+
+That is fine until the document becomes the thing somebody follows at 2am, or the context an agent uses to plan the next command.
+
+<Highlight emoji="📋">
+RunbookLint turns Markdown procedures into reviewable operational artifacts: required sections, risky commands, placeholders, ownership, scope, and vague language all get checked locally before trust gets handed downstream.
+</Highlight>
+
+The tool is deliberately small. It parses Markdown. It reports likely issues. It never executes commands. It never calls hosted APIs.
+
+That is the right shape for the problem.
+
+## The workflow pain
+
+Every small software team eventually collects runbooks.
+
+Release checklist. Incident response note. Support handoff. Migration instructions. Agent task procedure. Deployment rollback. The first version is usually written by somebody who understands the system, while they still remember the sharp edges.
+
+Then time passes.
+
+A command changes. A placeholder stays undefined. The rollback section is missing because the happy path felt obvious. The owner field points at nobody. The phrase "just restart the service" hides which environment, which process, and which validation step matters.
+
+Humans can sometimes paper over that with context.
+
+Agents are worse here.
+
+An agent will often treat the runbook as a contract even when the document is only a sketch. It will read a risky command in a shell fence and assume it is part of the intended workflow. It will see `{{TARGET_ENV}}` and guess. It will follow vague instructions with confidence because the doc had the right heading.
+
+That is not an agent problem only. That is a documentation quality problem made more expensive by agents.
+
+## What RunbookLint checks
+
+RunbookLint is a local-first TypeScript CLI for Markdown runbooks. The current CLI has two main jobs:
+
+```bash
+runbooklint init --preset oss-release
+runbooklint check docs --format json --fail-on warning
+```
+
+The checks are practical rather than magical:
+
+- required sections such as purpose, scope, prerequisites, procedure, validation, and rollback
+- owner or handoff contacts
+- environment scope
+- risky shell patterns such as `rm -rf`, `sudo`, `curl | bash`, force pushes, production-impacting commands, and broad permission changes
+- TODO/TBD/FIXME placeholders
+- undefined `{{VARIABLE}}` and `${VARIABLE}` placeholders
+- vague phrases configured by policy
+
+Reports can be Markdown or deterministic JSON. Policies live in `.runbooklint.json`, and presets cover OSS release, incident, and agent handoff runbooks.
+
+That is enough to make a review conversation sharper.
+
+Not "is this runbook perfect?"
+
+More like: "what is missing before somebody should follow this?"
+
+<Callout type="info" title="This is a linter, not an operator">
+RunbookLint does not execute runbook commands, mutate infrastructure, expand shell variables, or contact external services. Findings are review prompts, not a replacement for human judgment.
+</Callout>
+
+## The origin story
+
+The 60 Day OSS Sprint keeps reinforcing one pattern: once agents enter the workflow, formerly soft artifacts become operational surfaces.
+
+A README becomes executable context.
+
+A prompt becomes behavior.
+
+A PR body becomes a review contract.
+
+A release note becomes a publishing boundary.
+
+A runbook is even closer to the edge. It is not just describing software. It is often telling somebody what to do when confidence is low and consequences are real.
+
+That makes runbooks a bad place for vibes.
+
+RunbookLint came from the same pressure behind tools like [GuardrailMD](/blog/why-guardrailmd-exists/), [ShellGarden](/blog/why-shellgarden-exists/), [ProofDock](/blog/why-proofdock-exists/), and [ReleaseBox](/blog/why-releasebox-exists/): make the instruction layer more inspectable before it becomes action.
+
+The point is not to make every doc bureaucratic.
+
+The point is to stop pretending operational docs are harmless just because they are written in Markdown.
+
+## Why local-first matters
+
+Runbooks often contain sensitive context.
+
+Internal service names. Incident details. Deployment commands. Environment names. Escalation paths. Sometimes even the shape of production, which is not something I want casually shipped to a hosted linting service just to check a heading.
+
+RunbookLint stays local by design.
+
+No accounts. No telemetry. No hosted parser. No network dependency. It reads Markdown and policy files from the workspace and writes a report.
+
+That local-first posture also makes it friendlier to agents. A coding agent can run the check before opening a PR. CI can fail on warnings or errors. A reviewer can inspect JSON without trusting a SaaS dashboard.
+
+This is the recurring thesis behind the OSS stack: the first version of an agent safety tool should usually be boring, inspectable, and close to the repo.
+
+## The bigger agentic engineering lesson
+
+Runbooks are part of the agent harness now.
+
+If an agent is going to use a document as guidance, the document needs some of the qualities we already expect from code-adjacent artifacts:
+
+- stable structure
+- explicit scope
+- defined inputs
+- visible risk
+- validation steps
+- rollback paths
+- reviewable output
+
+That does not mean every Markdown file needs a formal schema. It means operational Markdown deserves a quality gate when it is going to shape real work.
+
+<CompareTable
+  left={{ title: "Loose runbook", items: ["Missing rollback", "Undefined placeholders", "Risky commands hidden in fences", "No clear owner", "Agent guesses the missing context"] }}
+  right={{ title: "Checked runbook", items: ["Required sections enforced", "Variables must be defined", "Dangerous patterns are flagged", "Owner and environment are explicit", "Reviewer sees the gaps early"] }}
+/>
+
+That is the kind of leverage I like: not a grand platform, just a small constraint that removes an avoidable class of mistakes.
+
+## The honest boundary
+
+RunbookLint is conservative and pattern-based.
+
+That means it can produce false positives. It can miss risky intent hidden behind harmless-looking language. It cannot understand every CommonMark edge case. It does not know your production topology. It is not a substitute for operational experience.
+
+Good.
+
+Tools near operations should be honest about what they are.
+
+The failure mode I do not want is a doc tool that starts sounding like an incident commander. RunbookLint should make the runbook easier to review, not pretend the review is unnecessary.
+
+That boundary is the product.
+
+## Where it fits
+
+RunbookLint fits into the same layer as [fail-closed agent tools](/blog/fail-closed-agent-tools/) and [small contracts beat big prompts](/blog/small-contracts-beat-big-prompts/).
+
+It takes a fuzzy instruction surface and gives it a smaller contract:
+
+this document should say what it is for, where it applies, who owns it, what must happen before and after the procedure, what rollback exists, and which commands deserve extra scrutiny.
+
+That is not glamorous. It is useful.
+
+The agentic engineering stack does not only need smarter agents. It needs fewer ambiguous artifacts around them.
+
+RunbookLint exists for one of those artifacts.
+
+Because if a Markdown file is going to tell a human or an agent how to operate a system, the least we can do is check whether the procedure has enough shape to be followed safely.

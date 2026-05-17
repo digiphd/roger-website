@@ -1,0 +1,155 @@
+---
+title: "Why GitCleanroom Exists"
+description: "GitCleanroom exists because AI coding agents need disposable, inspectable git workrooms before risky edits become dirty checkouts, branch collisions, or cleanup chores."
+pubDate: 2026-05-17
+tags: ["open-source", "ai-agents", "developer-tools", "git"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: git worktree agent workflow; supporting phrases: AI coding agents workflow, local-first developer tools, deterministic AI agents, agentic engineering tools */}
+
+GitCleanroom exists because agent edits should start in a room built to be thrown away.
+
+That sounds obvious until you watch a few agents work inside the same checkout.
+
+One task leaves the repo dirty. Another task starts from the wrong branch. A generated file hangs around after a failed run. A cleanup command is too destructive to trust. The agent says it is done, but the human is left figuring out which changes belong to which task.
+
+The problem is not that git worktree exists. The problem is that raw worktrees are still too easy to use casually when an agent is moving fast.
+
+<Highlight emoji="🧼">
+Agent work needs disposable space with receipts. Not just a second folder. A cleanroom with preflight checks, a branch boundary, and a cleanup plan.
+</Highlight>
+
+That is the niche GitCleanroom is trying to fill.
+
+## The workflow pain
+
+Agents are useful because they can move quickly through a task.
+
+That speed becomes awkward around git state.
+
+Humans often keep a main checkout in some half-real condition: a local branch, uncommitted notes, dependency changes, generated files, an interrupted experiment, maybe a stash they forgot about. That is already risky for humans. It is worse for agents, because the agent may treat the current state as intentional context.
+
+Now add parallel work.
+
+One agent writes docs. Another fixes tests. Another is exploring a risky refactor. If they all share the same checkout, the system has already lost before the quality conversation starts.
+
+You need isolation before intelligence.
+
+Git worktrees are the right primitive, but they need guardrails.
+
+## What GitCleanroom does
+
+GitCleanroom wraps a small part of the git worktree workflow with the boring checks that make it safer for agent use.
+
+The core flow is:
+
+    gitcleanroom open --repo . --task docs-pass --base main
+    gitcleanroom status .cleanrooms/docs-pass
+    gitcleanroom close .cleanrooms/docs-pass --dry-run
+    gitcleanroom doctor
+
+Opening a cleanroom creates a disposable worktree under an ignored scratch root, with a task-shaped branch and a receipt file at .gitcleanroom.json.
+
+That receipt records the base ref, branch, path, creation command, and cleanup plan. The CLI output is JSON so an agent or shell script can consume it without scraping prose.
+
+The tool refuses to open a cleanroom when the source checkout is dirty, the base ref cannot be resolved, the target branch already exists, the worktree path already exists, the task name is unsafe, or the cleanroom root is not ignored by git.
+
+None of that is glamorous.
+
+That is why it belongs in a tool.
+
+## Why a receipt matters
+
+The receipt is the important part.
+
+A worktree path by itself is just a folder. A receipt tells the next human or agent why the folder exists, which branch it belongs to, where it came from, and how cleanup should happen.
+
+That turns an isolated workspace into a reviewable workspace.
+
+It also makes non-destructive cleanup easier. gitcleanroom close --dry-run can explain what would be removed before anything happens. That posture matters when the tool is being used around agent work, where "just delete the scratch folder" is a bad default.
+
+<Callout type="tip" title="Disposable should not mean careless">
+The safest temporary workspace is one that records why it exists and how it can be cleaned up. Throwaway work still needs provenance.
+</Callout>
+
+## The agent angle
+
+AI coding agents do not only need better prompts.
+
+They need better rooms.
+
+The room determines what the agent can accidentally touch, what state it inherits, and how cleanly the result can be reviewed. A carefully written prompt can ask the agent to avoid unrelated files. A cleanroom can make unrelated state less available in the first place.
+
+That is a better boundary.
+
+GitCleanroom is intentionally local-first. It does not call a hosted service. It does not force push. It does not publish. It sits beside git and makes one workflow more deterministic:
+
+- start from a known base
+- create a task-specific branch
+- write a receipt
+- expose status as structured output
+- plan cleanup before removing anything
+
+That is the kind of harness layer I keep coming back to across the OSS sprint.
+
+The model can still make choices. The environment should make the unsafe choices harder.
+
+## Cleanrooms beat vibes
+
+There is a subtle trust shift here.
+
+Without an isolated workroom, the reviewer has to ask whether the agent mixed task changes with existing local state. With a cleanroom, the branch starts with a more legible origin. The diff is still the diff, but the surrounding git state is easier to reason about.
+
+That matters for humans and for follow-up agents.
+
+A second agent can inspect the receipt and status output instead of guessing why the folder exists. A human can close the room with a dry-run plan instead of scanning scratch directories by hand. A review queue can link to a cleanroom as a bounded work packet rather than a mysterious checkout.
+
+<CompareTable
+  left={{ title: "Shared checkout agent work", items: ["Dirty state leaks into task", "Branches collide", "Cleanup is manual", "Generated files linger", "Reviewer reconstructs origin"] }}
+  right={{ title: "GitCleanroom workflow", items: ["Known base ref", "Task branch boundary", "Receipt file", "Dry-run cleanup plan", "JSON status for tools"] }}
+/>
+
+## Why this is bigger than git
+
+The deeper idea is not specific to worktrees.
+
+Agentic engineering needs environments that are scoped, inspectable, and reversible by default. GitCleanroom is one small version of that principle for code changes.
+
+The same pattern shows up in [the agent handoff layer](/blog/the-agent-handoff-layer/), [local-first agent tools](/blog/local-first-agent-tools/), and [receipts over autonomy](/blog/receipts-over-autonomy/). The agent can move faster when the surrounding system gives the human better state, cleaner boundaries, and proof that the run did not smear across everything nearby.
+
+That is where a lot of agent reliability will come from.
+
+Not from asking the model to be careful one more time.
+
+From designing the workspace so care is the path of least resistance.
+
+## The current shape
+
+The current GitCleanroom MVP is deliberately narrow.
+
+It opens cleanrooms. It reports status. It plans cleanup. It has a doctor command. It uses git worktrees underneath rather than inventing a new state model. It expects the scratch root to be gitignored before use, because accidental tracking of disposable workspaces is exactly the kind of footgun the tool is meant to prevent.
+
+That narrowness is the point.
+
+Small tools are easier to trust when they sit near dangerous operations.
+
+GitCleanroom should not become a project manager, an agent runner, or a CI platform. It should make one risky boundary boring: giving an agent a clean place to work.
+
+## The takeaway
+
+The next generation of coding agents will not only be judged by how much code they can write.
+
+They will be judged by how cleanly their work can be isolated, reviewed, accepted, rejected, and cleaned up.
+
+GitCleanroom exists for that unglamorous middle layer.
+
+It is a small local wrapper around git worktrees, but the operating principle is bigger:
+
+do not invite an agent into a messy room and then blame it for tripping over the furniture.
+
+Give it a cleanroom. Keep the receipt. Review the result.

@@ -1,0 +1,197 @@
+---
+title: "Why ArtifactMap Exists"
+description: "ArtifactMap is a local-first CLI for inventorying generated files, build outputs, caches, packages, and report artifacts so agent-built repos can explain what belongs in review."
+pubDate: 2026-05-18
+tags: ["open-source", "developer-tools", "agents", "local-first", "engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: generated artifact inventory for AI agents; supporting phrases: agentic engineering tools, repository hygiene, local-first developer tools, AI agent verification */}
+
+Every fast engineering workflow eventually runs into the same boring question:
+
+What is this file, and should it be here?
+
+That question sounds small until you put agents into the loop.
+
+Agents generate code. They run builds. They create reports. They leave caches behind. They sometimes produce package archives, coverage folders, stale snapshots, compiled output, and source-looking files in places that should probably be treated as generated.
+
+Then a human reviews the change and has to decide what belongs in the commit.
+
+That is where speed starts leaking.
+
+[ArtifactMap](https://github.com/rogerchappel/artifactmap) exists because generated files need a map.
+
+## The problem is not just clutter
+
+Repository clutter is annoying, but annoyance is not the real problem.
+
+The real problem is ambiguity.
+
+When a repo contains generated files, reports, caches, packages, and build outputs, the reviewer needs to know which ones are intentional. If that distinction lives only in someone's head, the agent has to guess. If the agent guesses wrong, the review gets slower and the commit history gets noisier.
+
+ArtifactMap turns that ambiguity into a local inventory.
+
+It scans a workspace and labels files as source-like, generated-commit, generated-ignore, cache, report, package, or unknown. It can surface suspicious states like tracked ignored files, untracked package archives, stale reports, large files, and source-looking files inside generated folders.
+
+That is not a glamorous category.
+
+It is exactly the kind of category agent-heavy workflows need.
+
+<Highlight>
+Agent speed creates artifact pressure. If the repo cannot explain its generated files, every review inherits a cleanup tax.
+</Highlight>
+
+## Why this belongs in the agent harness
+
+ArtifactMap is not trying to be a build graph oracle.
+
+That restraint matters.
+
+The MVP uses deterministic path and policy evidence. It respects a simple local policy, emits Markdown or JSON, and can fail when suspicious findings are present. It does not delete files, mutate git state, upload artifacts, or infer private data from remote services.
+
+That makes it fit the kind of [agent harness](/blog/agent-harnesses-not-copilots/) I keep building around the sprint.
+
+The agent can still produce work quickly. ArtifactMap just gives the workflow a way to ask:
+
+- did this run create files that should not be committed?
+- did a generated folder get source-looking content?
+- did a package archive appear unexpectedly?
+- did a report go stale?
+- did the repo keep a build artifact intentionally?
+- should CI fail before this lands?
+
+Those questions are simple. They are also the difference between a reviewable change and a mystery diff.
+
+<Callout type="info" title="Artifact hygiene is review hygiene">
+The point is not to make a repo pristine for aesthetic reasons. The point is to make every non-source artifact explainable before it reaches a reviewer.
+</Callout>
+
+## The origin story
+
+The sprint kept producing small local tools with the same shape: deterministic input, conservative output, no network dependency, and a report a reviewer can read.
+
+ArtifactMap came from the artifact side of that same pressure.
+
+The more repos an agentic workflow touches, the more often generated files become a hidden coordination problem. One repo commits built files. Another ignores them. One report should be preserved for review. Another is stale noise. A package archive might be a release asset, or it might be accidental trash from a dry run.
+
+Humans can usually reason through that with enough context.
+
+Agents need the context made explicit.
+
+So ArtifactMap gives the repo a policy file and a scan report. A typical policy can say that dist, build, lib, and source maps are generated artifacts that may be committed, while coverage and framework caches should stay ignored. The scan then turns that policy into evidence.
+
+That is the real product instinct here: make the repo explain itself.
+
+## What ArtifactMap does
+
+The README describes the tool plainly:
+
+ArtifactMap inventories generated files, build outputs, caches, packages, and report artifacts so a repository can explain what should be committed, ignored, or cleaned.
+
+The core workflow is intentionally small:
+
+- artifactmap init creates a reviewable policy.
+- artifactmap scan writes a Markdown artifact inventory.
+- artifactmap scan with JSON output and fail-on suspicious gives CI and agents a deterministic gate.
+
+The output is meant for both people and automation.
+
+Markdown helps a reviewer see the shape of the repo. JSON helps an agent or CI job make a stable decision. That split is important because agent tools should not force humans to read machine output, and they should not force machines to parse prose.
+
+<CompareTable
+  left={{ title: "Without ArtifactMap", items: ["Generated files are judged manually", "Ignored files can be tracked by accident", "Reports become stale quietly", "Package archives appear without context", "Reviewers reconstruct intent"] }}
+  right={{ title: "With ArtifactMap", items: ["Artifact classes are explicit", "Suspicious findings are surfaced", "Stale reports can be detected", "Packages are visible in the inventory", "Reviewers get a local report"] }}
+/>
+
+## Why local-first matters here
+
+ArtifactMap is local-first by design.
+
+That is not just a privacy preference. It is a workflow preference.
+
+Artifact hygiene is repo-local. The tool needs to read paths, respect ignore rules, understand policy, and emit evidence inside the same workspace where the work happened. Sending that through a hosted service would add friction and risk without improving the core decision.
+
+The local-first model also makes it better for agents.
+
+An agent can run the same scan a maintainer runs. CI can run the same command. A reviewer can inspect the same Markdown report. Nobody has to reconcile three different sources of truth.
+
+That is a recurring theme across the OSS stack: local tools make agent work easier to trust because they leave evidence next to the change.
+
+It is the same reason I care about [receipts over autonomy](/blog/receipts-over-autonomy/) and [preflight checks](/blog/preflight-is-where-agent-quality-starts/). The valuable layer is not only that the agent acted. It is that the workflow preserved enough proof to judge the action.
+
+## The bigger system insight
+
+Generated artifacts are one of those details that feel too low-level for strategy until they start breaking throughput.
+
+If every PR needs a human to ask "should this file be here?", the agent workflow has not really scaled. It has just moved work from implementation into review.
+
+ArtifactMap is a small answer to that problem.
+
+It does not replace judgment. It narrows the surface area where judgment is needed.
+
+Instead of inspecting every generated-looking path from scratch, the reviewer gets classes, findings, and policy evidence. Instead of guessing whether a stale report matters, the workflow can name it. Instead of relying on one person's memory of what the repo usually commits, the repo can carry its own artifact policy.
+
+That is what I mean when I say agentic engineering needs harness tools.
+
+The model can write the code. The harness has to make the code reviewable.
+
+ArtifactMap owns one thin slice of that harness: the files that appear around the code.
+
+## What I like about the design
+
+I like that ArtifactMap has a narrow safety model.
+
+It only reads local files and writes reports or config files when asked. It does not clean the repo automatically. It does not mutate git state. It does not pretend to know the full build graph. It does not need telemetry to be useful.
+
+That is the right level of ambition for this kind of tool.
+
+In agent workflows, deletion should be treated as a separate, higher-risk action. Inventory is the safer primitive. First explain the state. Then let a human, CI policy, or a more constrained follow-up tool decide what to do.
+
+This is also why the fail-on suspicious path matters. The tool can be useful without becoming autonomous. It can say, "this repo has a suspicious artifact state," and stop the pipeline before that ambiguity gets merged.
+
+That is how small tools earn trust.
+
+## Where it fits in the stack
+
+ArtifactMap sits beside other local-first verification tools, not above them.
+
+It complements tools that answer adjacent questions:
+
+- command safety: which scripts are reasonable to run?
+- environment contracts: which variables are required, and is the example honest?
+- review packaging: what should be handed to a reviewer?
+- release readiness: what evidence exists before publishing?
+- artifact inventory: what generated files exist, and what should happen to them?
+
+Each tool is intentionally narrower than a platform.
+
+Together, they make an agent workflow feel less like a lucky transcript and more like an operating system.
+
+That is the bigger founder/operator lesson for me. The market will keep getting flooded with broad agent promises. The tools that survive will often be the ones that make one recurring failure mode painfully explicit.
+
+ArtifactMap makes generated-file ambiguity explicit.
+
+That is enough.
+
+## The bet
+
+My bet is that artifact inventory becomes part of the normal agent review loop.
+
+Before a human reviews a PR, the workflow should know whether the run left behind generated files, stale reports, unexpected archives, or source-like code in generated directories.
+
+Before CI blesses a change, the repo should be able to fail on suspicious artifact states.
+
+Before an agent claims done, it should be able to point at the artifact report.
+
+None of this is flashy. It is also exactly the kind of layer that lets faster building become safer building.
+
+That is why ArtifactMap exists.
+
+Not to make repos look clean.
+
+To make repo state explainable.

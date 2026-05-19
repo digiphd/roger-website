@@ -1,0 +1,183 @@
+---
+title: "Review Latency Is the Real Agent Bottleneck"
+description: "AI coding agents are getting faster, but the next operational advantage comes from reducing review latency with smaller changes, stronger proof, and cleaner handoffs."
+pubDate: 2026-05-19
+tags: ["ai", "agents", "engineering", "strategy", "founder-notes"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents workflow; supporting phrases: AI agent verification, agentic engineering tools, AI software quality, deterministic AI agents */}
+
+The agent bottleneck is moving.
+
+It used to be execution. Could the model write the code? Could it follow a repo convention? Could it make the test pass? Could it avoid getting lost halfway through a task?
+
+That is still real work. But the sharper bottleneck now is what happens after the agent says it is done.
+
+Review latency.
+
+How long does it take a human to decide whether the work is trustworthy enough to merge, reject, or redirect?
+
+That is the number I care about more every week.
+
+<Highlight emoji="⏱️">
+Agent speed only compounds when review gets cheaper. Otherwise the system just moves the bottleneck from writing code to understanding code.
+</Highlight>
+
+## Fast output is not the same as fast shipping
+
+It is easy to mistake a generated branch for progress.
+
+The agent opened a PR. The diff is non-trivial. The summary sounds reasonable. The checks maybe passed. There is a neat title and a confident final note.
+
+That is not shipping.
+
+Shipping starts when the reviewer can answer the hard questions without archaeology:
+
+- what was the task boundary?
+- what changed?
+- why did it change?
+- what was actually verified?
+- what is still risky?
+- what should happen next if the reviewer says no?
+
+If those answers require reading the entire transcript, reconstructing shell history, diffing generated files by hand, and guessing which tests mattered, the agent has not made the work cheap. It has made the work abundant.
+
+Abundance is not enough.
+
+## Review latency is an operating metric
+
+I think a lot of agent teams are measuring the wrong thing.
+
+They measure tasks attempted, lines changed, branches opened, or wall-clock time from prompt to PR. Those are useful signals, but they can hide the real cost.
+
+The better question is:
+
+how quickly can a competent reviewer reach a decision?
+
+Not a rubber stamp. A real decision.
+
+That includes approval, rejection, or a precise follow-up task. A rejected PR with a crisp reason is healthier than a merged PR nobody actually understood.
+
+This is where the founder/operator angle matters. A system that creates more work than it can review is not leverage. It is inventory. And inventory has carrying cost.
+
+Unread branches get stale. Context decays. Dependencies move. The original reason for the change gets fuzzy. The next agent starts from a half-trusted pile of work.
+
+That is not an AI strategy. That is a backlog with better prose.
+
+## The review loop needs product design
+
+Most people still treat review as an afterthought in agent workflows.
+
+The prompt gets attention. The model gets attention. The IDE integration gets attention. The final handoff gets whatever summary the agent happens to produce.
+
+That is backwards.
+
+The review loop is the product surface that decides whether agent work becomes useful.
+
+A good agent workflow should shape review from the beginning:
+
+- the task should be scoped before execution
+- the branch should be isolated
+- the diff should be small enough to reason about
+- the checks should be explicit
+- the proof should be portable
+- the final note should separate facts from judgment
+
+This is why I keep building small harness tools instead of trying to build one giant agent.
+
+Taskbrief makes the input clearer. WorktreeGuard and GitCleanroom keep execution isolated. Agent-QC and ProofDock put pressure on the handoff. BranchBrief turns the branch into something easier to inspect.
+
+Different tools. Same metric.
+
+Reduce review latency.
+
+<Callout type="tip" title="The reviewer is part of the runtime">
+If a human has to approve the result, the system is not done when the agent stops typing. It is done when the reviewer can make a good decision quickly.
+</Callout>
+
+## Smaller changes are still underrated
+
+Agents make it tempting to ask for bigger chunks of work.
+
+Why ask for one file when the model can touch twelve? Why ask for a narrow fix when it can refactor the surrounding module too? Why stop at a patch when it can write docs, tests, and cleanup in the same pass?
+
+Sometimes that is fine.
+
+Often it is a tax.
+
+The larger the change, the more the reviewer has to hold in memory. The more files touched, the more likely unrelated risk sneaks in. The more narrative packed into one PR, the harder it is to tell whether the agent solved the actual problem or just produced a plausible bundle of activity.
+
+Small changes are not an old-fashioned human limitation.
+
+They are an agent scaling strategy.
+
+Small branches make it easier to verify, easier to reject, easier to re-run, easier to hand to another agent, and easier to merge without fear. The model can move fast inside the task. The system should keep the review object narrow.
+
+<CompareTable
+  left={{ title: "Output-optimized agent work", items: ["Large branch", "Broad scope", "Summary-heavy proof", "Reviewer reconstructs intent", "Decision delayed"] }}
+  right={{ title: "Review-optimized agent work", items: ["Small branch", "Scoped task", "Explicit checks", "Evidence attached", "Decision gets cheaper"] }}
+/>
+
+## Proof beats explanation
+
+A polished explanation can help a reviewer.
+
+It cannot replace proof.
+
+This is one of the lessons that keeps repeating through the OSS sprint. The model can explain why it thinks a change is safe. The reviewer still needs artifacts that do not depend on the model's confidence.
+
+Command outputs. Exit codes. Screenshots. Generated manifests. Redacted logs. Fixture reports. Package contents. Build output. A list of checks that were not run.
+
+The negative evidence matters too.
+
+If the agent did not run the build, say that. If the test suite is missing, say that. If the verification only covered one package, say that. A handoff that admits limits is more useful than a summary that performs certainty.
+
+That is why [good agent tools fail closed](/blog/fail-closed-agent-tools/) and why [deterministic agents beat charismatic agents](/blog/deterministic-agents-beat-charismatic-agents/).
+
+The reviewer should not have to decide whether the agent sounds trustworthy.
+
+They should inspect the work.
+
+## This is where quality and speed stop fighting
+
+People still talk about speed and quality like they are opposites.
+
+In agentic engineering, the relationship is more interesting.
+
+Bad quality slows everything down because every branch becomes a mystery. Good quality speeds review because the work arrives with enough structure to trust or reject quickly.
+
+That is the unlock.
+
+Quality is not a ceremony you add after the agent works. Quality is what makes the agent's work cheaper to consume.
+
+The fastest team will not be the one that lets agents spray code into the repo with the fewest constraints. It will be the team that makes every agent-produced change easy to inspect, easy to prove, and easy to throw away.
+
+That is less glamorous than autonomy demos.
+
+It is also much closer to production.
+
+## The blunt founder lesson
+
+If I am running agents every day, I do not need more branches that make me feel productive.
+
+I need more decisions.
+
+Merge this. Reject that. Split this task. Run this missing check. Keep this tool. Kill that idea.
+
+Review latency is the distance between agent output and those decisions.
+
+Shrink that distance and the whole system gets faster.
+
+Ignore it and the system fills up with impressive work nobody wants to touch.
+
+That is the bottleneck I am designing around now.
+
+Not just can the agent do the work.
+
+Can the next human understand it fast enough to keep moving?
+

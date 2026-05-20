@@ -1,0 +1,170 @@
+---
+title: "Docs Are Agent Inputs, Not Afterthoughts"
+description: "AI coding agents treat documentation as execution context. That makes stale README examples, missing scripts, and broken local links a real software quality problem."
+pubDate: 2026-05-21
+tags: ["ai-agents", "developer-tools", "documentation", "software-quality"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent documentation quality; supporting phrases: AI coding agents workflow, AI software quality, agentic engineering tools, deterministic AI agents */}
+
+Documentation used to be the thing you cleaned up after the real work.
+
+That was always a little lazy, but it was survivable. A human could read around stale install instructions. A maintainer could notice that a command was wrong. A teammate could ask in Slack, "is this still how we run the smoke test?"
+
+Agents change the cost of that laziness.
+
+For an AI coding agent, docs are not just explanation. They are input.
+
+The README is execution context. The package scripts are a contract. The quickstart is a path the agent may actually follow. The local links tell it where to look next. The docs are not sitting outside the system describing the software.
+
+They are part of the control surface.
+
+<Highlight emoji="🧭">
+If agents use your docs to decide what to do, stale docs are not a content problem. They are an automation bug.
+</Highlight>
+
+## The old excuse does not hold
+
+Most engineering teams have a familiar relationship with documentation drift.
+
+Everyone knows it happens. Nobody likes it. It gets cleaned up before a launch, after a confused user opens an issue, or when a new teammate trips over the wrong setup command.
+
+That model assumes documentation is mostly read by humans with enough judgment to detect weirdness.
+
+Agents do not read like that.
+
+They can be surprisingly good at following the shape of a repo. They can inspect files, infer conventions, and adapt. But they are also extremely sensitive to confident stale instructions. If the README says `npm run check` exists, a coding agent will often treat that as a meaningful verification path. If the docs point at `docs/release.md`, it may spend time looking for a file that no longer exists. If an example command quietly changed two refactors ago, the agent may build its plan on the old world.
+
+That is not the model being dumb.
+
+That is the repository lying.
+
+## Documentation becomes infrastructure
+
+This is one of the stranger side effects of agentic engineering: boring metadata starts to matter more.
+
+The docs are not merely for marketing, onboarding, or community polish. They are machine-readable hints that help agents understand what is safe, what is supported, and what should be verified.
+
+A good repo now needs docs that can survive contact with automation:
+
+- install commands that still work
+- scripts that exist in `package.json`
+- local links that resolve
+- examples that are marked clearly when they are safe to run
+- file references that point at real files
+- release instructions that do not require tribal memory
+
+That list is not glamorous. It is also where a lot of agent quality comes from.
+
+I keep coming back to the same principle: deterministic agents are rarely made deterministic by the model alone. They become more deterministic when the environment around them has fewer ambiguous or false signals.
+
+Docs are one of those signals.
+
+<Callout type="info" title="The agent reads the repo you give it">
+If the repository says one thing in prose and another thing in code, the agent has to guess which surface is authoritative. That guess becomes part of your quality system whether you wanted it or not.
+</Callout>
+
+## The review cost compounds
+
+Stale docs do not only waste the agent's time.
+
+They waste review time.
+
+An agent that follows a stale quickstart can produce a patch that looks reasonable but is anchored to the wrong workflow. A reviewer then has to untangle the diff, the agent summary, the failed command, and the repository's own misleading instructions.
+
+That is a nasty kind of friction because it hides inside "small" work.
+
+The PR might be a README tweak, a CI script adjustment, a package metadata update, or a local CLI fix. None of those look strategic in isolation. But when the docs are wrong, every agent-generated change around them becomes harder to trust.
+
+This is why [review queues beat chat windows](/blog/review-queues-not-chat-windows/) and why [receipts beat autonomy](/blog/receipts-over-autonomy/). The human should be spending judgment on the change, not attention on reconstructing which instructions were stale before the agent started.
+
+Bad docs turn every PR into archaeology.
+
+Good docs compress the review.
+
+## The right standard is not perfection
+
+There is a trap here.
+
+Once you say docs matter for agents, it is easy to turn that into a giant documentation governance project. That is the wrong move.
+
+The point is not to make every repo encyclopedic.
+
+The point is to make the execution path honest.
+
+For developer tools, that means the README should answer the questions an agent and maintainer both need answered before touching the repo:
+
+- What is this tool?
+- How do I install or run it locally?
+- What commands verify it?
+- Which commands are examples, and which are safe smoke paths?
+- Where are the important docs?
+- What is explicitly out of scope?
+
+That is enough for a lot of repos.
+
+The quality bar is not "write more." It is "stop publishing instructions that rot quietly."
+
+<CompareTable
+  left={{ title: "Docs as afterthought", items: ["README updated at the end", "Examples are aspirational", "Verification lives in memory", "Links rot silently", "Agent guesses the real path"] }}
+  right={{ title: "Docs as agent input", items: ["README matches the repo", "Examples have clear intent", "Verification commands are explicit", "Local references are checked", "Agent starts from a firmer contract"] }}
+/>
+
+## This is a founder problem too
+
+I do not think this is only an engineering hygiene point.
+
+It is a product and founder point.
+
+If you are building agentic developer tools, your repository is part of the product surface. A user may ask an agent to evaluate it, install it, compare it, contribute to it, or wire it into another workflow. That agent will read your docs before the human ever forms a strong opinion.
+
+If the docs are stale, the product feels stale.
+
+If the quickstart fails, the product feels abandoned.
+
+If the verification story is vague, the product feels risky.
+
+That first impression increasingly happens through an agent-mediated workflow. The human may only see the summary: "setup failed," "script missing," "docs inconsistent," "unclear release path."
+
+That is brutal. It is also fair.
+
+The repo is no longer just a code artifact. It is a machine-consumable sales, support, onboarding, and contribution surface.
+
+## Why I keep building harnesses for this
+
+This is the same reason I keep building small local-first tools around agent work.
+
+Not because each tool is a billion-dollar company by itself.
+
+Because the system needs harnesses.
+
+`taskbrief` shapes messy intent before agents run. `branchbrief` and proof bundles help review what came out. Release and verification tools make packaging less vibes-driven. Documentation freshness belongs in that same family.
+
+The agent should not have to discover at minute forty that the README was wrong at minute one.
+
+The maintainer should not have to review a patch whose source of confusion was a stale command the repo itself advertised.
+
+The harness should catch the obvious drift early.
+
+That is not bureaucracy. That is leverage.
+
+## The takeaway
+
+Agents make documentation more operational.
+
+That is the shift.
+
+A stale README used to be embarrassing. Now it can misroute work. A broken local link used to be annoying. Now it can waste an autonomous run. A missing script used to slow down a human. Now it can contaminate a verification claim.
+
+So the practical standard changes:
+
+Do not treat docs as a polish layer.
+
+Treat them as agent inputs.
+
+Keep the execution path honest, local, and checkable. The better the repo tells the truth about itself, the less the agent has to improvise and the less the reviewer has to clean up afterward.

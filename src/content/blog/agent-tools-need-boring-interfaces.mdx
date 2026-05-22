@@ -1,0 +1,238 @@
+---
+title: "Agent Tools Need Boring Interfaces"
+description: "The next useful AI agent tools will not win by being more magical. They will win by turning messy agent work into boring contracts, checks, reports, and review surfaces."
+pubDate: 2026-05-18
+tags: ["ai", "agents", "developer-tools", "strategy", "engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: deterministic AI agent tools; supporting phrases: AI coding agents workflow, agentic engineering tools, AI software quality, local-first developer tools */}
+
+The more I build with agents, the less interested I am in magical interfaces.
+
+I do not need another chat box that promises to understand everything. I need tools that make the work smaller, sharper, and easier to reject.
+
+That sounds boring because it is boring.
+
+It is also where the leverage is.
+
+The failure mode in AI agent work is rarely that the model cannot produce anything. The failure mode is that it produces something plausible inside a workflow that has no hard edges. The task was vague. The repo context was guessed. The command choice was improvised. The output looked finished, but the evidence was scattered across a transcript nobody wants to read.
+
+That is not an intelligence problem by itself.
+
+It is an interface problem.
+
+<Highlight>
+The best agent interfaces will not feel like personality. They will feel like contracts: small inputs, explicit permissions, deterministic checks, and reviewable outputs.
+</Highlight>
+
+## Chat is good at intent, bad at boundaries
+
+Chat is a useful starting point. I use it constantly. It is still one of the fastest ways to turn messy intent into a first pass.
+
+But chat is not a great boundary.
+
+It is too easy to smuggle ambiguity into a paragraph and call it a brief. It is too easy for the agent to respond with confidence instead of a durable artifact. It is too easy for the human to accept "done" because the summary sounds reasonable.
+
+The problem gets worse as the agent becomes more capable.
+
+A weak agent fails loudly. A strong agent can create a large, coherent, plausible change that is still pointed at the wrong thing.
+
+That is why I keep coming back to boring interfaces. Not boring as in badly designed. Boring as in deliberately constrained.
+
+- A task brief should say what is in scope and what is not.
+- A command wrapper should say which commands are allowed in this repo.
+- A scan report should say what changed, what was skipped, and what failed.
+- A review bundle should show the patch without leaking secrets.
+- A release check should produce evidence, not vibes.
+
+Those interfaces do not try to make the agent more charismatic. They make the work more legible.
+
+## The useful surface is after generation
+
+Most AI demos optimize for the moment of generation.
+
+The model writes the code. The model drafts the blog post. The model creates the plan. The model summarizes the diff.
+
+That moment matters, but it is not the full job.
+
+The actual operator question comes after generation:
+
+- Can I review this quickly?
+- Can I reproduce the claim?
+- Can I see what the agent skipped?
+- Can I trust the commands it ran?
+- Can I merge this without inheriting hidden cleanup work?
+- Can another agent continue from here without guessing?
+
+The interface for those questions is not a chat transcript.
+
+It is a set of files, checks, and reports.
+
+This is why I think [review queues](/blog/review-queues-not-chat-windows/) are a better mental model than chat windows for serious agent work. The unit of value is not the message. The unit of value is the reviewable change.
+
+<Callout type="info" title="The boring layer compounds">
+Every time a tool turns agent output into a stable artifact, the next human or agent gets a cheaper handoff. That is how speed compounds without turning into review debt.
+</Callout>
+
+## Good interfaces make refusal cheap
+
+One of the most underrated properties of an agent tool is whether it makes rejection cheap.
+
+That sounds negative. It is not.
+
+If a tool makes rejection cheap, it means the tool has made the work clear enough to judge. The reviewer can say no to the exact thing that failed instead of distrusting the entire run.
+
+Bad agent interfaces make rejection emotional:
+
+"I do not trust this."
+
+Good agent interfaces make rejection operational:
+
+"The package includes generated files that should be ignored."
+
+"The command was not on the allowlist."
+
+"The bundle skipped a path that needs manual review."
+
+"The prompt contract changed without a snapshot."
+
+"The branch touched files outside the task scope."
+
+That difference matters because agentic workflows only scale when review stays specific. If every failure becomes a general trust collapse, the human becomes the bottleneck again.
+
+This is also why I like fail-closed tooling. I wrote about this in [Good Agent Tools Fail Closed](/blog/fail-closed-agent-tools/), and it keeps proving itself. A tool that refuses with a stable reason is more useful than a tool that succeeds while hiding uncertainty.
+
+## Boring does not mean low ambition
+
+There is a trap here for founders.
+
+Because the interface is boring, it can look like the product is small.
+
+I think that is backwards.
+
+The boring interface is often the wedge into a bigger workflow. A command map looks small until you realize every agent needs to know which commands are safe. An artifact inventory looks small until you realize every release needs to know what should be committed, ignored, packaged, or cleaned. A prompt snapshot looks small until you realize your actual product behavior lives in plain text.
+
+Small tools are not automatically small businesses.
+
+Small tools can be durable when they sit on painful recurring workflow seams.
+
+That is the shape I keep looking for in the OSS sprint:
+
+- local-first by default
+- deterministic enough for CI
+- explicit about limits
+- useful to a human reviewer
+- useful to an agent orchestrator
+- narrow enough to trust
+
+This is not the same as building a giant agent platform. It is closer to building the harness around agent work, which is why [agent harnesses](/blog/agent-harnesses-not-copilots/) still feels like the right category.
+
+<CompareTable
+  left={{ title: "Magic interface", items: ["Broad prompt as input", "Confidence as output", "Hidden assumptions", "Transcript as evidence", "Hard to reject precisely"] }}
+  right={{ title: "Boring interface", items: ["Documented inputs", "Reports as output", "Explicit policy", "Artifacts as evidence", "Easy to reject precisely"] }}
+/>
+
+## The agent should not own the definition of done
+
+The phrase "definition of done" becomes much more important when agents are doing the work.
+
+If the agent gets to define done, done becomes a summary.
+
+If the system defines done, done becomes a gate.
+
+That gate does not need to be heavy. In fact, the best gates are usually small:
+
+- the changed files are listed
+- the relevant tests ran
+- the risky command was refused
+- the generated artifact is accounted for
+- the secret-looking path was excluded
+- the review note names uncertainty
+
+None of that requires a grand theory of AGI. It requires product taste and operating discipline.
+
+The agent can still be creative inside the lane. It can explore approaches, draft code, write documentation, and suggest next steps. But the lane itself should not be improvised mid-run.
+
+That is the difference between autonomy and drift.
+
+## Why this matters for AI software quality
+
+The industry keeps talking about model quality as if it is the only quality variable.
+
+Model quality matters. Better models help.
+
+But software quality in agentic systems is also shaped by everything wrapped around the model:
+
+- task shape
+- repo context
+- command policy
+- environment checks
+- artifact hygiene
+- redaction
+- review packaging
+- release evidence
+
+That is where a lot of teams are under-investing. They are buying intelligence and leaving the operating surface vague.
+
+The result is familiar: agents that feel powerful in demos and expensive in production.
+
+I would rather have a slightly less impressive agent inside a boring, inspectable workflow than a brilliant agent with no receipts. The former can be improved. The latter turns every run into a trust exercise.
+
+This connects directly to [deterministic agents](/blog/deterministic-agents-beat-charismatic-agents/). The agent can be probabilistic. The workflow around it should become more deterministic over time.
+
+## The product opportunity
+
+The product opportunity is not "make agents sound more human."
+
+The product opportunity is to make agent work operationally acceptable.
+
+That means interfaces that look almost disappointingly practical:
+
+- config files
+- manifests
+- Markdown reports
+- JSON output
+- exit codes
+- allowlists
+- snapshots
+- patch bundles
+- CI gates
+
+These are not glamorous surfaces. They are surfaces that teams already understand.
+
+That matters. A founder does not have to convince a buyer to adopt a new worldview before they see the value. The buyer already knows reviews are slow, releases are risky, prompts drift, commands are scary, and generated files make repos messy.
+
+The right agent tool says: keep your workflow, keep your repo, keep your agents. We make this one part less ambiguous.
+
+That is a much stronger promise than "our AI is smarter."
+
+## Where I am betting
+
+I am betting that the durable agent tooling layer looks less like one giant assistant and more like a kit of small, boring, composable interfaces.
+
+Each one takes a messy part of agent work and makes it inspectable.
+
+One tool for task shape.
+
+One for repo context.
+
+One for command safety.
+
+One for artifacts.
+
+One for review packaging.
+
+One for release proof.
+
+The connective tissue is the bigger thesis: agents get useful when the work around them becomes deterministic enough to trust.
+
+That is the part I want to build.
+
+Not because boring is aesthetically noble.
+
+Because boring is what survives the second, third, and hundredth run.

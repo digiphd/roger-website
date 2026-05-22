@@ -1,0 +1,188 @@
+---
+title: "Why DocFresh Exists"
+description: "DocFresh exists because stale README commands and broken local docs are no longer harmless polish issues. They are bad inputs for agents, releases, and reviewers."
+pubDate: 2026-05-21
+tags: ["open-source", "developer-tools", "documentation", "ai-agents"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: documentation freshness checker; supporting phrases: AI coding agents workflow, AI software quality, local-first developer tools, agentic engineering tools */}
+
+`docfresh` exists because stale docs have become executable risk.
+
+That sounds more dramatic than "README checker," but it is the actual reason the tool is interesting.
+
+In an agentic engineering workflow, documentation is not just something a human reads after the fact. It is often the map an agent uses before it touches the code. The README, local links, package scripts, examples, and smoke commands tell the agent what the repo believes about itself.
+
+When those surfaces drift, the agent starts from bad context.
+
+That is the pain `docfresh` is built around.
+
+<Highlight emoji="🧪">
+DocFresh is a small local-first check for a simple question: do the docs still describe the repo that exists?
+</Highlight>
+
+## The workflow pain
+
+I keep building local developer tools where the README matters more than it looks.
+
+The README is the first handoff to a maintainer, a contributor, a package consumer, and increasingly an AI coding agent. If it says the build command is `npm run check`, that command should exist. If it links to `docs/PRD.md`, that file should resolve. If it shows a smoke path, the repo should make it clear whether that command is safe to run.
+
+The failure mode is usually small and irritating:
+
+- a local markdown link points at a file that moved
+- a backticked file reference no longer exists
+- a documented npm script was renamed
+- package metadata is missing from the README
+- an example command looks runnable but has not been checked in months
+
+Individually, those issues feel minor.
+
+Inside agent workflows, they compound.
+
+An agent can spend real time following stale instructions. A reviewer can inherit a verification claim based on a command the repo no longer supports. A release can go out with docs that make the package feel less trustworthy on first install.
+
+That is a bad trade.
+
+## What DocFresh does
+
+The current `docfresh` MVP is deliberately narrow.
+
+It scans markdown files and checks the parts that tend to rot in developer-tool repos:
+
+- local markdown links
+- backticked file references
+- documented package commands
+- README install and usage coverage for package repositories
+- explicitly marked smoke examples
+
+It outputs terminal-friendly text or JSON, exits nonzero when documentation drift is found, and can run opted-in smoke commands only when a fenced block is explicitly marked with `docfresh: smoke`.
+
+That last detail matters.
+
+DocFresh does not run arbitrary commands because a README happened to contain a shell block. It requires intent. The maintainer marks the command as a smoke example, then the tool can verify it.
+
+<Callout type="tip" title="Explicit smoke beats surprising automation">
+A documentation checker should not become a command runner with good branding. DocFresh keeps smoke execution opt-in so the review surface stays predictable.
+</Callout>
+
+## Why local-first matters
+
+The tool is local-first because the problem is local.
+
+You do not need a hosted crawler to know whether `docs/setup.md` exists. You do not need telemetry to know whether `npm run smoke` is listed in the README but missing from `package.json`. You do not need an AI model to tell you that a backticked file path points nowhere.
+
+Those are deterministic checks.
+
+They should be cheap, fast, and reviewable.
+
+That is the shape I like for this category of tool:
+
+- read the local checkout
+- produce a specific report
+- avoid network calls
+- avoid surprise mutations
+- make CI and agent handoffs easier to trust
+
+DocFresh is not trying to be a general writing assistant. It is not grading tone. It is not rewriting docs. It is not pretending to understand the whole product.
+
+It is checking whether the repo's documented execution surface still matches the files and scripts underneath it.
+
+That is enough.
+
+## The origin story
+
+The origin is a recurring annoyance from the OSS sprint.
+
+When you produce a lot of small tools quickly, the code is not the only thing that can drift. The docs can drift from the package metadata. The examples can drift from the CLI. The release checklist can drift from the scripts. The README can say the right-sounding thing while being wrong in ways that only show up when somebody actually tries to use it.
+
+That problem gets sharper with agents.
+
+Agents read the README with a kind of unfair obedience. They will follow the repo's own instructions and then get blamed when those instructions were stale.
+
+I do not want that failure mode hidden in the workflow.
+
+DocFresh is a small answer: check the cheap truths before an agent or maintainer spends expensive attention.
+
+## What it is not
+
+The boundary is important.
+
+DocFresh is not:
+
+- a grammar checker
+- a hosted link checker
+- a replacement for human docs review
+- a release automation system
+- a tool that executes every shell block it can find
+
+It is closer to a docs freshness gate.
+
+That gate belongs before release, before package publishing, and before handing a repo to an agent for more work.
+
+<CompareTable
+  left={{ title: "Manual docs trust", items: ["README looks plausible", "Commands copied by memory", "Broken links found by users", "Examples rarely smoked", "Agents inherit stale context"] }}
+  right={{ title: "DocFresh check", items: ["Local links verified", "Package scripts compared", "File references checked", "Smoke examples explicit", "Drift appears before review"] }}
+/>
+
+## Why this matters for agentic engineering
+
+I have written before that [preflight is where agent quality starts](/blog/preflight-is-where-agent-quality-starts/) and that [small contracts beat big prompts](/blog/small-contracts-beat-big-prompts/).
+
+DocFresh sits squarely in that idea.
+
+Instead of telling the agent, "be careful and make sure the docs are right," the repo can expose a concrete check. The agent can run it. CI can run it. A maintainer can run it before a release. The result is not a vibe. It is a report.
+
+That report will not prove the docs are beautiful.
+
+It will prove some useful basics:
+
+- the linked local docs exist
+- the referenced files are present
+- the documented package scripts are real
+- the opted-in smoke examples still run
+
+Those are small contracts, but they remove a lot of ambiguity.
+
+And ambiguity is where agent workflows get expensive.
+
+## The bigger thesis
+
+DocFresh is part of the same pattern as `proofdock`, `releasebox`, `agent-qc`, `lockstep`, and `envsentinel`.
+
+The common thread is not "make more CLIs."
+
+The common thread is making the work inspectable before it turns into review burden.
+
+Each tool looks at a different surface:
+
+- proof artifacts
+- release readiness
+- agent handoff quality
+- package script drift
+- environment variable contracts
+- documentation freshness
+
+That is the harness layer I care about.
+
+Agents do not become reliable because we ask them nicely. They become more reliable when the repo gives them sharper contracts and cheaper ways to verify claims.
+
+DocFresh gives one of those contracts to the docs.
+
+## The takeaway
+
+Documentation drift is not glamorous.
+
+That is exactly why it needs a tool.
+
+The boring failures are the ones that survive because nobody wants to spend attention on them. A stale command here, a moved file there, a broken local link somewhere else. Then an agent follows the wrong path and the human reviewer pays the bill.
+
+`docfresh` exists to catch that class of drift while it is still cheap.
+
+Not by making docs more elaborate.
+
+By making the important parts checkable.

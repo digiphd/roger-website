@@ -1,0 +1,194 @@
+---
+title: "Why MCPSeal Exists"
+description: "MCPSeal exists because MCP server configs are permission documents, and agent workflows need a local-first way to review risky commands, env exposure, filesystem access, and tool descriptions before connection."
+pubDate: 2026-05-19
+tags: ["open-source", "ai-agents", "developer-tools", "security", "mcp"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: MCP security linter; supporting phrases: AI agent security, local-first developer tools, agentic engineering tools, deterministic AI agents */}
+
+MCPSeal exists because MCP configs are not just config.
+
+They are launch plans for tools an agent can use.
+
+A single server entry can point at a shell command, expose environment variables, mount broad filesystem paths, describe powerful tools vaguely, or quietly turn a local assistant into something with more reach than the human meant to grant.
+
+That does not make MCP bad. It makes MCP serious.
+
+<Highlight emoji="🔒">
+Before an agent connects to tools, somebody should be able to review what those tools imply. Locally. Deterministically. Without uploading the config anywhere.
+</Highlight>
+
+That is the niche MCPSeal is built for.
+
+## The workflow pain
+
+MCP has become one of the most important pieces of the agent stack because it gives models a standard way to reach tools.
+
+That is exactly why the config layer deserves more attention.
+
+When a developer adds an MCP server, they are often thinking about capability:
+
+- can the agent read this data?
+- can it call this API?
+- can it inspect this repo?
+- can it automate this workflow?
+
+The risk questions are quieter:
+
+- what command actually starts the server?
+- does it invoke a shell, package runner, or network-heavy tool?
+- which environment variables are exposed?
+- does a path grant broad filesystem access?
+- are tool descriptions clear enough for a human reviewer?
+- can CI fail when a config crosses a known boundary?
+
+Those questions should not require vibes, screenshots, or manual scanning.
+
+They need a small deterministic preflight.
+
+## What MCPSeal does
+
+MCPSeal is a local-first MCP config linter.
+
+The MVP checks server definitions for a few classes of risk:
+
+- risky commands, including shells, interpreters, package runners, network command tokens, and destructive command tokens
+- secret-looking environment keys or values
+- broad filesystem paths, mounts, and Docker socket references
+- weak or suspicious tool descriptions
+- config shape problems such as invalid JSON or missing command fields
+
+It can produce Markdown for human review or JSON for automation.
+
+The two core commands are deliberately simple:
+
+- mcpseal scan ./mcp.json --out mcpseal-report.md
+- mcpseal check ./mcp.json --fail-on secret-env,broad-fs,risky-command
+
+Scan gives the reviewer a report. Check gives CI or an agent harness a hard gate when the maintainer chooses explicit categories to fail on.
+
+That distinction matters.
+
+Not every finding should automatically block work. But the maintainer should be able to decide which categories are warnings and which categories are stop signs.
+
+<Callout type="tip" title="A linter is not a sandbox">
+MCPSeal does not prove a server is safe. It gives the review loop a deterministic way to spot risky patterns before an agent treats the server as normal capability.
+</Callout>
+
+## Redaction is part of the product
+
+One of the easiest mistakes in security tooling is building a scanner that leaks the thing it found.
+
+MCPSeal redacts secret-looking values by default.
+
+That is not a decorative feature. It is part of the safety model.
+
+If a config has OPENAI_API_KEY, AWS_SECRET_ACCESS_KEY, a token-looking value, or private-key-shaped text, the report should make the risk visible without turning the report into a new secret.
+
+The tool includes no-redact mode for local debugging, but the default has to be conservative.
+
+That is the same pattern I want across agent tooling:
+
+make evidence easier to share, but do not make private data easier to spill.
+
+## Why local-first matters here
+
+MCPSeal makes no hidden network calls in scan or check.
+
+That is not just an implementation preference. It is a trust boundary.
+
+The input is usually the exact thing you do not want to send to a random service: local server commands, environment variable names, filesystem paths, maybe organization-specific tool names.
+
+A hosted analyzer could be useful in some enterprise contexts, but the default developer workflow should not require uploading the permission map of an agent workspace.
+
+Local-first also makes the output easier to use in CI and review packets. Markdown can be attached to a PR. JSON can be diffed. Timestamps are deterministic so fixture-backed tests stay stable.
+
+The boring details are the value.
+
+## The bigger agentic engineering thesis
+
+MCPSeal is one more piece of the same harness stack I keep circling.
+
+Agents are getting better at using tools. That means the tool boundary becomes more important, not less.
+
+The old prompt-only framing is too weak for this layer. You cannot just tell the model to be careful with tools and call it a security model.
+
+The system around the model has to answer practical questions:
+
+- what tools exist?
+- what permissions do they imply?
+- what evidence can a reviewer inspect?
+- which risks should block automation?
+- what stays local?
+
+That is why MCPSeal connects to posts like [good agent tools fail closed](/blog/fail-closed-agent-tools/), [local-first agent tools](/blog/local-first-agent-tools/), and [receipts over autonomy](/blog/receipts-over-autonomy/).
+
+The pattern is consistent: give the human and the automation a reviewable contract before capability expands.
+
+<CompareTable
+  left={{ title: "Casual MCP setup", items: ["Config reviewed by eye", "Env exposure easy to miss", "Broad paths look normal", "Tool descriptions drift", "Agent connects before risk is shaped"] }}
+  right={{ title: "MCPSeal workflow", items: ["Markdown or JSON report", "Redaction by default", "Explicit fail-on gates", "Deterministic findings", "Review happens before connection"] }}
+/>
+
+## The origin story
+
+MCPSeal came out of a simple pressure in the OSS sprint: the more agent workflows depend on external tools, the more the config files become operationally important.
+
+An MCP server can look harmless because it is just a JSON entry.
+
+But the entry can represent a running process with file access, environment access, and tool descriptions that shape how an agent behaves. That is not a footnote. That is infrastructure.
+
+I did not want a grand platform for that first step.
+
+I wanted a small CLI that can be run before review, before CI, before an agent connects, and before a config gets copied into somebody else's workflow.
+
+Small enough to understand.
+
+Strict enough to be useful.
+
+Local enough to trust.
+
+## The limits are intentional
+
+MCPSeal is not a malware detector.
+
+It does not execute servers. It does not sandbox processes. It does not prove command intent. It does not replace code review, pinned dependencies, OS permissions, or common sense.
+
+That is the correct scope.
+
+The job is to catch review prompts early:
+
+why is this server launching through a shell?
+
+why does this config expose a token-looking env var?
+
+why does this path grant broad home-directory access?
+
+why is the tool description too vague for a reviewer to understand the capability?
+
+Those questions are enough to improve the workflow.
+
+Not every tool has to solve the whole problem to be worth building.
+
+## The takeaway
+
+MCP makes agents more useful because it gives them tools.
+
+MCPSeal exists because tool access should come with review pressure.
+
+The agentic engineering stack needs more of this kind of small, boring infrastructure: local-first checks, redacted reports, explicit gates, and deterministic evidence that fits into a pull request or CI run.
+
+The future of agents is not just better reasoning.
+
+It is better permission surfaces.
+
+MCP configs are one of those surfaces.
+
+Seal them before they become invisible.
+

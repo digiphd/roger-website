@@ -1,0 +1,167 @@
+---
+title: "Day 24: Build for First Failure, Not First Success"
+description: "Day 24 of the 60 Day OSS Sprint: failureseed, testgold, and testmatrix built the same case from different directions — agent workflows need deterministic failure capture, honest golden comparisons, and repeated verification before anyone trusts a green checkmark."
+pubDate: 2026-05-23
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "testing", "developer-tools"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import Step from "../../components/mdx/Step.astro";
+
+{/* SEO intent: deterministic AI agent failure capture; supporting phrases: agentic engineering tools, AI agent verification, local-first developer tools, test fixture management */}
+
+Day 24 had a blunt premise:
+
+the first thing you should build for any agent workflow is not the thing that makes it succeed. It is the thing that captures failure when it does not.
+
+That sounds pessimistic. It is not. It is the opposite of pessimism.
+
+Optimism says the agent will get it right and you can worry about the failure path later. Experience says the agent will get it wrong, the failure will be chaotic, and the next person will spend an hour reconstructing what went wrong from half-pasted terminal output and a chat transcript that lost context.
+
+`failureseed`, `testgold`, and `testmatrix` came from the same direction: make failure deterministic enough to act on before anyone attaches confidence to a result.
+
+<Highlight emoji="🧪">
+A green checkmark on a non-deterministic run is not proof. It is a weather report.
+</Highlight>
+
+That is the Day 24 lesson.
+
+## The challenge: failure is where trust actually gets built
+
+Agent workflows move fast. When things succeed, it feels great. The summary sounds confident. The diff looks clean. The commit messages are well-written. Trust builds.
+
+When things fail, that confidence evaporates instantly.
+
+Most teams handle the first success as a milestone and treat every failure as a temporary annoyance to get past. The opposite posture is more useful: treat every failure as a design artifact, and treat success as the easy case that does not tell you anything about the boundaries.
+
+That is where Day 24's tools land.
+
+## FailureSeed: the moment something breaks should not be lost
+
+`failureseed` starts from a simple annoyance captured across dozens of repos.
+
+An agent runs a command. It fails. The human asks "what happened?" and the answer requires checking out a branch, guessing what the agent ran, pasting output into a terminal, and hoping the environment has not changed since the morning.
+
+That is a terrible workflow. And if it is bad for humans, it is worse for agents that do the same thing five times across five branches before anyone notices.
+
+FailureSeed gives the exact moment of failure a shape:
+
+```bash
+# Generate a deterministic failure for QA
+failureseed seed command-fail --output ./fixtures/my-failure
+
+# Capture a real failing command
+failureseed run --output ./.failureseed/lint -- pnpm test
+
+# Replay the exact failure
+failureseed replay ./fixtures/my-failure/failureseed.json
+
+# Handoff document
+cat ./fixtures/my-failure/FAILURESEED.md
+```
+
+By default it writes JSON and Markdown under a local directory. The manifest includes the command, the exit code, the environment metadata, and the redacted stderr and stdout. Secrets get caught before anything lands on disk.
+
+The handoff document is deliberate: it gives the next person a file, not a narrative.
+
+<Callout type="tip" title="Capture before you fix">
+Do not reach for the fix. Capture the failure in a reusable fixture first. Your future self and every reviewer will thank you.
+</Callout>
+
+The important detail is not that it captures failure. It is that it captures failure deterministically. A failureseed replay means the next run hits the same failure point, not a nearby failure in the same neighborhood.
+
+That makes failure a thing you can plan around instead of a thing you hope does not happen during the demo.
+
+## TestGold: golden files that do not lie
+
+FailureSeed handles the failing case. `testgold` handles the passing case, and it starts from a different kind of distrust.
+
+Golden file testing is great until the golden file lies.
+
+Most golden frameworks suffer from the same problem: timestamps leak into output, paths shift between environments, UUIDs change between runs, and the diff becomes unreadable noise. The behavior change you need to review is hidden inside terminal soup.
+
+TestGold exists to keep golden files honest without making them painful:
+
+```bash
+npx testgold compare \
+  --actual fixtures/text/actual.txt \
+  --golden fixtures/text/expected.txt \
+  --config fixtures/testgold.config.json
+```
+
+The scrubbers handle deterministic noisy values: `iso-date`, `epoch-ms`, `tmp-path`, `home-path`, `cwd`, `windows-path`, `uuid`. JSON modes sort keys and can sort arrays for stable comparison. The output is a clean unified diff that names the actual behavior change.
+
+The constraint that matters: golden files only move when someone passes `--accept`.
+
+<CompareTable
+  left={{ title: "Golden drift", items: ["Timestamps leak into diffs", "Paths shift between machines", "Golden updates silently in CI", "Behavior change drowns in noise", "Reviewer trusts the summary by default"] }}
+  right={{ title: "TestGold workflow", items: ["Noisy values are scrubbed", "Environment paths normalized", "Golden only moves with --accept", "Diff highlights real changes", "Reviewer inspects the delta directly"] }}
+/>
+
+TestGold also exposes a library API so it works inside test frameworks, not just as a standalone CLI. The result includes status, diff, and a JSON-friendly summary that an agent handoff can embed in a proof report.
+
+## TestMatrix: one run proves nothing
+
+This is the quiet part that nobody wants to hear about:
+
+A command that passes once does not prove the command always passes.
+
+Agents have a particular problem here. The agent runs a check, sees green, and moves on. A human sees a green checkmark and assumes the same thing. But what if the check was flaky? What if it fails one time in twenty? What if it passes on macOS but fails on the CI runner that is a slightly older Node version?
+
+`testmatrix` finds the verification commands hiding in a repo, filters out the risky ones, runs the safe set, and leaves behind a result matrix that says exactly what passed and what did not.
+
+```bash
+# Find and run safe commands
+testmatrix run --cwd ./my-repo
+
+# Dry-run to see what it would do
+testmatrix --dry-run --cwd ./my-repo --json
+
+# Write JSON evidence for agent handoff
+testmatrix --cwd ./my-repo --json --output .testmatrix/results.json
+```
+
+The commands it looks for live in expected places: `package.json` scripts, `scripts/validate.sh`, Makefile targets, justfile recipes, pytest configs. Each command is classified by kind — `test`, `check`, `build`, `smoke`, `validate`, or `unknown`.
+
+The safety posture is intentional. By default, TestMatrix skips commands that look like deploys, publishes, releases, migrations, production work, or network shelling. Skipped commands still appear in the matrix so the omission is visible. That is fail-closed posture: missing a safety gap is worse than being unable to run everything.
+
+The JSON output includes per-command status, exit code, duration, stdout, stderr, and summary counts. An agent can attach that to a handoff, and a reviewer can check the matrix instead of trusting the green checkmark.
+
+<Callout type="warning" title="One pass is not verification">
+A green checkmark on a single execution is not proof. It is one data point. Run the check enough times to trust it.
+</Callout>
+
+## The pattern across all three
+
+These are small tools — intentionally, deliberately small — and they cover three sides of the same shape:
+
+| Tool | What it captures | What it prevents |
+|---|---|---|
+| `failureseed` | The moment of failure | Lost evidence and chaotic reproductions |
+| `testgold` | Expected vs actual output | Golden drift and silent behavior change |
+| `testmatrix` | The full command matrix | False confidence from a single run |
+
+The Day 24 argument is simple: agents need more confidence in the failure path than in the success path, and humans should build that confidence into the tools instead of hoping for it at review time.
+
+That feels pessimistic, but it is actually the only posture that lets you move fast. When failure is captured, deterministic, and replayable, success stops being a guess.
+
+## Where Day 24 lands
+
+The tools connect backwards through the sprint sequence.
+
+Day 21 was about [schemas, logs, and flakes](/blog/day-21-schemas-logs-and-flakes/). Day 8 was about [verification pressure](/blog/day-8-oss-sprint-verification-pressure/). Day 23 was about [fixtures needing memory](/blog/day-23-fixtures-need-a-memory/).
+
+Day 24 sharpens all of those ideas into one operating rule:
+
+**build for the first failure, not the first success.**
+
+failureseed captures the failure point so it survives a handoff.
+
+testgold keeps golden comparisons honest so the diff names actual changes.
+
+testmatrix proves the run is not a one-off green checkmark.
+
+None of these tools make the agent smarter. They make the workflow more honest. And that is the distinction that separates demo-ready from production-ready faster than anything else I have hit this sprint.

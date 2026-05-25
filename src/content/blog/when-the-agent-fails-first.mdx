@@ -1,0 +1,130 @@
+---
+title: "When the Agent Fails First"
+description: "The most useful tool in an agentic workflow is not the one that makes the agent faster. It is the one that captures exactly how the agent failed so the next person does not have to guess."
+pubDate: 2026-05-23
+tags: ["ai", "agents", "developer-tools", "engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: deterministic AI agent failure capture; supporting phrases: AI agent verification, agentic engineering tools, agent workflows, local-first developer tools */}
+
+I keep building the same kind of tool over and over.
+
+Not the kind that makes agents faster at succeeding. The kind that captures exactly how the agent failed.
+
+That sounds counterintuitive. Why would you invest in failure capture before you have working automation? Because the failure capture tool is what turns a chaotic debug cycle into a reviewable, repeatable, portable problem.
+
+Without it, the next agent or human has to reconstruct the problem from memory, vibes, and whatever half-finished chat transcript survived a context window truncation.
+
+With it, they get a file.
+
+## The real bottleneck is not speed
+
+Most agentic tooling starts with speed as the primary metric.
+
+How fast can the agent scaffold a repo? How fast can it implement a feature? How fast can it fix the failing test?
+
+Speed matters. But speed without evidence is just faster guesswork.
+
+<Highlight>
+Fast agents that fail quietly are worse than slow agents that fail loudly. Quiet failure hides the evidence that the next person needs to actually fix the problem.
+</Highlight>
+
+I learned this the hard way across dozens of OSS repos that I built with agent assistance. The first tool I reach for now is never the thing that makes the agent go faster.
+
+It is the thing that makes failure legible.
+
+## Three kinds of failure I keep running into
+
+There are patterns. They are not glamorous patterns, but they are reliable.
+
+### 1. The failing command
+
+An agent runs a command. It fails. The fix would be obvious if you had the exit code, the stderr, the file that triggered it, and the exact working directory.
+
+Instead you get a Slack screenshot or a chat message that says "tests are failing" followed by an ellipsis and a link to a branch you now have to check out to reproduce the problem.
+
+Not useful.
+
+`failureseed` exists because the moment a command fails is the moment you have the most useful data for fixing it, and it is also the moment the system is most likely to lose the data.
+
+A deterministic failing fixture captures:
+
+- The exact command that failed
+- The environment metadata
+- The stderr and stdout without secret leakage
+- A manifest that explains what happened
+
+That gives the next person a replay, not a treasure hunt.
+
+<Callout type="tip" title="Capture at the moment of failure">
+The first tool you build for any agent workflow should not be the one that succeeds. It should be the one that makes the first failure reviewable.
+</Callout>
+
+### 2. The golden mismatch
+
+Test output differs from the expected golden file. Maybe because of a timestamp, a path, an UUID, or a genuine behavior change that someone actually needs to understand.
+
+Golden file testing is one of the most honest review patterns we have. It says: this is what the tool used to produce, and this is what it produces now.
+
+But golden files are only useful when the framework handles them right. When the framework strips timestamps in a way that loses real information, or when the diff is so noisy that the actual behavior change drowns in noise.
+
+`testgold` exists to keep golden comparison honest without keeping it painful. It normalizes timestamps, paths, and UUIDs so the diff you read is actually the diff you should care about. And it never updates the golden without an explicit flag.
+
+That last constraint matters. An agent should not be allowed to silently update a golden file. That is how you get a test suite where every test passes and nobody actually knows what the output is anymore.
+
+### 3. The flaky check
+
+A test passes once and fails twice. An agent runs a check, gets green, and reports success. A human reruns the same check later and gets red.
+
+Nobody lied. Nobody was trying to be deceptive. The system was just non-deterministic and nobody captured that fact.
+
+`flakeradar` exists to run commands repeatedly and classify the output drift as flaky, consistently failing, or consistently passing before anyone attaches confidence to a single run.
+
+That is not an intelligence problem. It is a persistence problem, and persistence is the one thing humans are too impatient to apply reliably.
+
+## The pattern
+
+These tools look completely different on the surface. One captures failing commands. One manages golden fixtures. One runs repeated checks.
+
+They share the same operating rule:
+
+<CompareTable
+  left={{ title: "Without failure capture", items: ["Failure becomes a story", "Debug cycle starts over", "Next agent guesses", "Reviewer reconstructs from chat", "Confidence depends on memory"] }}
+  right={{ title: "With failure capture", items: ["Failure becomes a fixture", "Debug cycle starts from evidence", "Next agent replays from data", "Reviewer inspects the manifest", "Confidence depends on proof"] }}
+/>
+
+Fast agents are great in a demo. They are not useful in production until failure is treated as a first-class artifact.
+
+## The broader thesis
+
+I have written about this from a few angles already: [receipts over autonomy](/blog/receipts-over-autonomy/), [preflight is where agent quality starts](/blog/preflight-is-where-agent-quality-starts/), and [review queues not chat windows](/blog/review-queues-not-chat-windows/).
+
+They all come back to the same point:
+
+**The unit of trust in agentic work is not the agent. It is the artifact the agent produces.**
+
+A successful build log.
+A failing fixture with its stderr.
+A golden diff that names the changed behavior.
+A flaky check report that says how often it flakes.
+
+Those are the things a human or another agent can actually act on.
+
+Everything else is narrative.
+
+## Where this leads
+
+I do not want agents that are better at convincing me they are right.
+
+I want agents that are better at showing me exactly where they were wrong.
+
+Not because being wrong is the goal. Because being demonstrably wrong, in a way that survives a handoff, is the fastest path to getting it right.
+
+The future of useful agentic tooling looks a lot more like a court clerk than a courtroom performer. Less charisma. More exhibits.
+
+That is not the sexy angle. It is the one that actually makes the workflow work.

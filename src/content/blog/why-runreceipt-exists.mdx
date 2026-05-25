@@ -1,0 +1,168 @@
+---
+title: "Why RunReceipt Exists"
+description: "RunReceipt is a local-first CLI for capturing command output, hashes, selected environment context, and verification receipts so agent work can prove what actually ran."
+pubDate: 2026-05-25
+tags: ["open-source", "developer-tools", "agents", "local-first", "engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification receipts; supporting phrases: deterministic AI agents, local-first developer tools, AI coding agents workflow, agentic engineering tools */}
+
+The phrase "I ran the tests" is too vague for agentic engineering.
+
+It was already vague when humans said it. Which tests? From which directory? With what command? What exited zero? What did stdout say? Was stderr empty? Was the environment different? Did the log get trimmed before review?
+
+Agents make that vagueness more expensive.
+
+An agent can run twenty commands in a session, summarize the good parts, forget the noisy parts, and hand the reviewer a sentence that sounds confident but carries very little proof. The human then has to decide whether to trust the sentence, rerun the command, or dig through a transcript.
+
+That is not a verification workflow.
+
+That is a trust fall with a shell prompt.
+
+[RunReceipt](https://github.com/rogerchappel/runreceipt) exists because command claims need receipts.
+
+<Highlight>
+Agent work gets easier to review when "I ran it" becomes a local artifact with the command, exit code, captured output, hashes, byte counts, and explicit environment context.
+</Highlight>
+
+## The problem is not that agents lie
+
+The lazy take is that agents hallucinate, therefore you cannot trust them.
+
+That is true enough to be boring.
+
+The more useful point is that a lot of engineering verification has always been informal. Humans say "tests pass" in a PR description. CI shows a green check. A terminal buffer scrolls past. Somebody pastes the final ten lines into Slack. The proof exists briefly, then dissolves into memory and vibes.
+
+That informality breaks down when agents start doing more of the mechanical work.
+
+If the agent is responsible for running a check, the reviewer needs a compact way to inspect what happened without reconstructing the whole session. A chat transcript is too broad. A raw log is too noisy. A sentence in the final answer is too weak.
+
+The missing object is a receipt.
+
+## What RunReceipt does
+
+RunReceipt is intentionally narrow.
+
+It captures a command and writes JSON and Markdown receipts under `.runreceipt/runs/<id>/`, with convenience copies at `.runreceipt/latest.json` and `.runreceipt/latest.md`.
+
+The normal flow is small:
+
+```bash
+runreceipt exec -- npm test
+runreceipt show .runreceipt/latest.json
+runreceipt verify .runreceipt/latest.json
+runreceipt list --dir .runreceipt
+```
+
+The receipt records the command, timing, exit code, captured stdout and stderr metadata, hashes, byte counts, and selected environment keys when explicitly allowed.
+
+That last qualifier matters.
+
+RunReceipt does not record the full environment by default. It only stores allowlisted keys, and it redacts sensitive-looking keys such as tokens, passwords, credentials, and API keys. If you want `CI` or `GITHUB_SHA` in the receipt, you ask for those keys directly:
+
+```bash
+runreceipt exec --env CI,GITHUB_SHA --redact GITHUB_SHA -- npm test
+```
+
+That is the right default for local-first agent tooling. Evidence should be easy to preserve, but accidental leakage should not be the price of getting proof.
+
+<Callout type="info" title="Receipts are not surveillance">
+The point is not to record everything the developer or agent touched. The point is to preserve the minimum command evidence a reviewer needs to judge a claim.
+</Callout>
+
+## Why this belongs in the harness
+
+RunReceipt is not trying to replace CI.
+
+CI is still the shared gate. It runs in a controlled environment, leaves durable status, and protects the branch. But CI does not cover every useful local check, and it often does not explain the exploratory path that produced a change.
+
+Agent work lives in that messy space before CI.
+
+An agent runs a typecheck. It runs a focused test. It runs a smoke script. It reruns a failing command after a patch. It checks a package dry run. It validates an example. Some of those commands are worth carrying into the handoff.
+
+RunReceipt gives the harness a stable object for that handoff.
+
+It fits the same thesis as [receipts over autonomy](/blog/receipts-over-autonomy/) and [proof before publish](/blog/day-16-proof-before-publish/): the valuable layer is not merely that the agent acted. It is that the action left reviewable evidence behind.
+
+<CompareTable
+  left={{ title: "Without RunReceipt", items: ["Verification is summarized in prose", "Output lives in a transcript", "Environment context is implied", "Reruns are manual archaeology", "Reviewers decide whether to trust the claim"] }}
+  right={{ title: "With RunReceipt", items: ["Verification becomes an artifact", "Output hashes and byte counts can be checked", "Allowed environment context is explicit", "Receipts can be listed and inspected", "Reviewers judge evidence instead of confidence"] }}
+/>
+
+## The origin story
+
+The sprint has kept pushing me toward the same operator rule:
+
+if a claim matters, turn it into an artifact.
+
+`proofdock` packages release evidence. `artifactmap` explains generated files. `fetchfreeze` freezes HTTP fixtures. `testseed` gives fixture data provenance. `failureseed` preserves failure cases.
+
+RunReceipt came from the command layer of that same pressure.
+
+Every agent handoff eventually contains a claim about execution. The agent says it ran the check. The reviewer wants to know if that claim is enough. The smaller the team and the faster the workflow, the more tempting it is to accept the sentence and move on.
+
+That is how quality debt gets smuggled into speed.
+
+The fix is not to slow everything down with process theater. The fix is to make the useful proof cheap enough that it becomes the default.
+
+RunReceipt is that shape: local command in, receipt out.
+
+## The design restraint matters
+
+I like small tools that refuse to become platforms too early.
+
+RunReceipt does not upload logs. It does not coordinate a team dashboard. It does not mutate git state. It does not decide whether the command should be accepted. It captures, shows, verifies, and lists receipts.
+
+That restraint makes it more useful inside an agent harness.
+
+An agent can run it before reporting done. A human can inspect the Markdown file. A script can verify captured stdout and stderr hashes. A future review packet can attach the latest receipt without needing to parse a transcript.
+
+The tool does one thin job, and that thin job removes a recurring ambiguity.
+
+Did the command actually run, and what evidence did it leave?
+
+## Where it fits in the bigger system
+
+The bigger bet is that AI software quality will depend on these small verification objects.
+
+Not because every team wants a folder full of receipts. They do not.
+
+They want faster review, fewer vague handoffs, cleaner escalation, and less time spent asking agents to prove things after the fact. Receipts are the substrate for that.
+
+Once command runs become structured artifacts, other tools can build on them:
+
+- a PR handoff can include the exact focused checks
+- a release gate can require receipts for risky commands
+- an agent review queue can separate claimed verification from captured verification
+- a human can rerun or reject work based on evidence, not tone
+
+That connects directly to [the review queue thesis](/blog/review-queues-not-chat-windows/) and [agent harnesses, not copilots](/blog/agent-harnesses-not-copilots/). The agent is not the whole product. The system around the agent has to make work easier to inspect.
+
+RunReceipt owns one slice of that system: command proof.
+
+## The bet
+
+I think "show me the receipt" becomes normal language in agentic engineering.
+
+Not as bureaucracy. As compression.
+
+A good receipt lets the reviewer skip the performance of trust and look at the artifact. It says what ran, what happened, what was captured, and whether the captured output still verifies.
+
+That is more useful than a confident summary.
+
+It is also more respectful of the human reviewer.
+
+Agents can move fast. They can run the boring checks. They can explore the branch, fix the obvious issues, and package the result.
+
+But when they claim the work is ready, the workflow should ask for proof in a form that survives the conversation.
+
+That is why RunReceipt exists.
+
+Not to make command execution fancy.
+
+To make command claims reviewable.

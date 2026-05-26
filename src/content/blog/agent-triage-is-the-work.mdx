@@ -1,0 +1,176 @@
+---
+title: "Agent Triage Is the Work Now"
+description: "AI coding agents are making implementation cheaper, but the operating advantage is moving to triage: deciding what is ready, risky, blocked, duplicated, or worth doing next."
+pubDate: 2026-05-26
+tags: ["ai", "agents", "workflow", "strategy"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents workflow; supporting phrases: agentic engineering tools, AI software quality, AI agent verification, deterministic AI agents */}
+
+The more useful agents get, the more the job moves from doing the work to triaging the work.
+
+That sounds small. It is not.
+
+The old bottleneck was implementation. Could I write the code? Could I get the test passing? Could I make the thing compile? Could I ship the post, the package, the fixture, the docs, the release note?
+
+Agents make a lot of that cheaper.
+
+Not free. Not solved. Cheaper.
+
+The new bottleneck is deciding which pieces of agent work deserve attention, which ones are risky, which ones duplicate something already in motion, and which ones should be killed before they become review debt.
+
+That is triage.
+
+<Highlight emoji="🧭">
+When agents can create more work than a human can review, triage becomes the operating system.
+</Highlight>
+
+This is why I keep circling the same territory: [review queues](/blog/review-queues-not-chat-windows/), [receipts](/blog/receipts-over-autonomy/), [handoffs](/blog/the-agent-handoff-layer/), [deterministic checks](/blog/deterministic-agents-beat-charismatic-agents/), and small local tools that turn messy agent output into reviewable decisions.
+
+The work is not "make the agent smarter."
+
+The work is "make the next decision obvious."
+
+## Output is no longer scarce
+
+This is the uncomfortable bit for founders and engineering leaders.
+
+Output used to be expensive enough that it created its own discipline. If a feature took a week, you were forced to think before building. If a refactor took two days, you had to justify the blast radius. If a blog post took a morning, you probably knew why it existed.
+
+Agents weaken that constraint.
+
+They can draft ten changes, five posts, three package ideas, and a dozen cleanup branches before lunch. Some of it will be useful. Some of it will be plausible trash. Some of it will be nearly right and therefore dangerous. Some of it will be good, but not important.
+
+The human cannot review it all with the same attention.
+
+So the product surface changes.
+
+You need a way to ask:
+
+- What is this?
+- Why does it exist?
+- What changed?
+- What proof is attached?
+- What risk is still open?
+- Is this the next best thing to review?
+
+That is not a chat problem. It is not a prompt problem. It is an operations problem.
+
+## Triage is different from review
+
+Review asks whether a specific change is acceptable.
+
+Triage asks whether the change deserves review at all.
+
+Those are different decisions, and agent workflows need both.
+
+A review might inspect code quality, tests, security, API behavior, or prose. Triage happens before that. It sorts the queue. It collapses duplicates. It catches missing proof. It notices that the agent built the right thing in the wrong repo. It sees that a branch is stale, a diff is too large, a post overlaps yesterday's post, or a release claim has no install check behind it.
+
+If review is expensive, triage protects review.
+
+<CompareTable
+  left={{ title: "Review-only workflow", items: ["Every agent output gets human attention", "Missing proof is discovered late", "Duplicates waste reviewer time", "Risk is found inside the diff", "Queue order is mostly chronological"] }}
+  right={{ title: "Triage-first workflow", items: ["Only ready work reaches deep review", "Missing proof blocks early", "Duplicates are merged or killed", "Risk is labeled before inspection", "Queue order follows decision value"] }}
+/>
+
+This matters more as the number of agents rises.
+
+One agent can be managed with vibes. Five agents need a queue. Ten agents need triage. Past that, the triage layer is the product.
+
+## The shape of a useful triage layer
+
+A good triage layer is not a dashboard with more badges.
+
+Badges are easy. Decisions are harder.
+
+The useful shape is closer to a small set of gates and packets:
+
+- a task brief before work starts
+- an isolated branch or worktree while work happens
+- a diff packet when the agent is done
+- a proof bundle for claims that matter
+- a risk summary that can be scanned
+- a reviewer question list when the next decision is not obvious
+
+That is why my OSS stack keeps producing small tools instead of one giant agent platform. `taskbrief` shapes the request. `gitcleanroom` and `worktreeguard` contain the work. `proofdock` and `runreceipt` preserve evidence. `agent-qc` checks the handoff. `reviewcue` is starting to package diffs into review context.
+
+These tools are not glamorous by themselves.
+
+Together, they make triage possible.
+
+<Callout type="info" title="The triage layer should be boring">
+If the only way to understand an agent's output is to ask the agent to explain itself again, the system has not captured enough structure.
+</Callout>
+
+## The founder lesson
+
+This is bigger than code review.
+
+Founders are going to run into the same problem across product, content, sales, support, internal ops, and research. Agents will create more candidate work than the company can absorb.
+
+That sounds like a good problem until the queue fills with half-decisions.
+
+A half-decision is expensive. It sits there. It creates guilt. It steals attention. It lets the team pretend work is moving because artifacts exist.
+
+But artifacts are not progress.
+
+Progress is a decision that changes the system.
+
+Ship it. Reject it. Rewrite it. Merge it. Schedule it. Archive it. Hand it to a specialist. Turn it into a customer experiment. Kill it because it is noise.
+
+The founder's job becomes less about squeezing output from the machine and more about building the decision machinery around the machine.
+
+## Speed without triage compounds confusion
+
+There is a version of agent work that feels incredibly productive for the first week.
+
+Branches everywhere. Drafts everywhere. New repos. New docs. New issues. New tools. Every summary sounds competent. Every handoff says the obvious next step is review.
+
+Then the review queue gets heavy.
+
+The human starts skimming. Duplicate ideas slip through. Weak proof gets accepted because the prose is confident. Good work gets buried behind louder work. The agent learns that "done" means "generated," not "ready."
+
+That is not an agent intelligence problem.
+
+That is a missing triage problem.
+
+<Highlight emoji="⚖️">
+Agent speed only compounds when the queue can reject bad work faster than agents can create it.
+</Highlight>
+
+This is the part I think most AI demos underprice. They show creation. They do not show digestion.
+
+Real teams need digestion.
+
+## What I am building toward
+
+My bias is becoming pretty clear:
+
+1. Make agent work smaller.
+2. Make the handoff explicit.
+3. Make proof portable.
+4. Make risk visible.
+5. Make triage cheap.
+
+That is the path from impressive agent output to useful agent operations.
+
+The ideal future is not an agent that confidently tells me everything is fine. The ideal future is a queue where the agent's work arrives already shaped for a decision:
+
+- this is ready
+- this is blocked
+- this is risky
+- this duplicates another branch
+- this needs one specific human call
+- this should be deleted
+
+That is where the leverage is.
+
+Not in more output.
+
+In better triage of output.
+

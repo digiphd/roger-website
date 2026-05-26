@@ -1,0 +1,155 @@
+---
+title: "Why ReviewCue Exists"
+description: "ReviewCue exists because AI code review needs a deterministic local packet before the model sees the diff: changed files, relevant context, risk cues, and reviewer questions."
+pubDate: 2026-05-26
+tags: ["open-source", "ai-agents", "developer-tools", "code-review"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI code review workflow; supporting phrases: AI coding agents workflow, deterministic AI agents, local-first developer tools, AI agent verification */}
+
+`reviewcue` exists because AI code review has a context problem.
+
+Most agent review workflows start with one of two bad defaults:
+
+- give the model too much of the repo and hope it finds the right signal
+- give the model a raw diff and hope it does not miss the surrounding risk
+
+Neither default is good enough.
+
+The first burns context and leaks more local state than necessary. The second is too thin. A diff without nearby tests, package files, docs, config, generated artifacts, and known risk cues is not a review packet. It is just a change.
+
+`reviewcue` is an early-stage local-first CLI for building that packet before the review starts.
+
+<Highlight emoji="🔎">
+The review prompt should not be improvised from a raw diff. It should be compiled from local evidence.
+</Highlight>
+
+That is the whole thesis.
+
+## The workflow pain
+
+AI review agents can be useful. I use them. I want more of them in the workflow.
+
+But the way context gets handed to them is often sloppy.
+
+A human copies a diff into chat. An IDE plugin grabs whatever files it thinks matter. A hosted bot sees the pull request but not the local intent. A coding agent reviews its own work with the same context that produced the work in the first place.
+
+That can catch obvious issues.
+
+It can also miss the boring stuff that actually breaks teams:
+
+- a package file changed but no install or packaging check ran
+- a shell script gained a risky command
+- a test file was not touched near a behavior change
+- generated output got mixed into a human-authored diff
+- docs changed without the command they document
+- a secret-looking string appeared in a fixture
+
+Those are review cues.
+
+They do not require a model to notice. They require deterministic packaging before the model gets involved.
+
+## What ReviewCue is trying to become
+
+The current repository is still in progress. The package metadata describes it plainly: a local-first review packet builder for git diffs.
+
+The PRD is the useful statement of intent:
+
+- read local git diffs and changed files
+- detect related tests, docs, package metadata, and config files
+- flag review cues like missing tests, secret-looking strings, broad dependency changes, generated files, and risky shell commands
+- emit portable Markdown and JSON review packets
+- work offline without model calls
+
+The current implementation has the foundations: TypeScript CLI argument parsing, git diff collection, and a unified diff parser that turns changed files into structured hunks, line additions, deletions, status, binary flags, and rename metadata.
+
+That sounds boring because it is the part that should be boring.
+
+If you cannot parse the diff deterministically, everything above it becomes vibes.
+
+<Callout type="info" title="Early-stage by design">
+ReviewCue is not trying to be an AI reviewer in V1. It is trying to prepare the review input so humans and agents start from a better packet.
+</Callout>
+
+## The packet matters more than the reviewer
+
+There is a tempting product mistake here: jump straight to the reviewer.
+
+Pick a model. Write a prompt. Ask for security issues, bugs, missing tests, readability problems, and edge cases. Return a polished report.
+
+That is useful until the input is wrong.
+
+A good reviewer with the wrong packet still misses things. A cheaper reviewer with the right packet often catches the practical risks faster.
+
+That is the same pattern I keep seeing across agentic engineering tools. The harness matters. The preflight matters. The proof matters. The prompt is only one part of the system.
+
+`reviewcue` sits before the reviewer and asks a smaller question:
+
+what should be in the review packet?
+
+Not "what is the final judgment?"
+
+Not "can a model replace the reviewer?"
+
+Just "what local evidence belongs next to this diff before anyone makes a decision?"
+
+## Local-first is the safety boundary
+
+Review context is sensitive.
+
+It can contain secrets, business logic, customer references, private file paths, experimental code, generated artifacts, or half-finished work. Sending all of it to a model because the packaging layer is lazy is a bad default.
+
+Local-first tooling changes the posture.
+
+`reviewcue` can inspect the repo, build a compact packet, and let the human decide what leaves the machine. Markdown is useful for human handoff. JSON is useful for another tool or agent. The important part is that the packet is explicit.
+
+<CompareTable
+  left={{ title: "Raw review handoff", items: ["Diff copied into chat", "Context chosen by memory", "Risk cues depend on reviewer intuition", "Too much or too little repo state leaves the machine", "Output is hard to reproduce"] }}
+  right={{ title: "ReviewCue-style handoff", items: ["Diff parsed into structure", "Related context selected locally", "Risk cues listed before model review", "Packet can be inspected before sharing", "Markdown and JSON make handoff portable"] }}
+/>
+
+This is not anti-cloud and not anti-model.
+
+It is pro-boundary.
+
+Models should review the packet you meant to send, not whatever context happened to be easiest to paste.
+
+## Why this belongs in the OSS stack
+
+`reviewcue` fits a pattern across the rest of the stack.
+
+`taskbrief` tries to make the task input explicit. `proofdock` tries to make the evidence output explicit. `agent-qc` tries to make the handoff quality explicit. `runreceipt` captures what actually ran. `lockfilelens`, `actionpin`, and `guardrailmd` each make one class of review risk easier to see.
+
+`reviewcue` is the bridge into code review.
+
+It does not need to know whether the next reviewer is Roger, Codex, Claude, Gemini, a GitHub bot, or a teammate. Its job is to package the change so the next reviewer starts closer to the truth.
+
+That is the bigger agentic engineering thesis again:
+
+do not ask the model to infer the operating system around the work.
+
+Build the operating system around the model.
+
+## The deeper insight
+
+Good review is not just a smart opinion.
+
+Good review is the result of the right evidence arriving at the right moment in the right shape.
+
+Agents can help with the opinion. They can summarize, question, compare, and notice patterns. But the evidence shape should be deterministic. The changed files, related tests, config deltas, package metadata, binary flags, generated artifacts, and risky strings should not depend on how charming the review prompt was.
+
+That is why `reviewcue` is worth building even before it becomes impressive.
+
+It moves review quality one layer earlier.
+
+Before the model.
+
+Before the comment.
+
+Before the human burns attention reconstructing context that a local tool could have packaged.
+

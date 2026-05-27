@@ -1,0 +1,146 @@
+---
+title: "Why TaskBrief Exists"
+description: "TaskBrief exists because AI coding agents need scoped, risk-aware task queues from messy human input before they need more autonomy or bigger context windows."
+pubDate: 2026-05-27
+tags: ["open-source", "ai-agents", "developer-tools", "workflow"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent task briefs; supporting phrases: AI coding agents workflow, agentic engineering tools, deterministic AI agents, OSS founder journey */}
+
+`taskbrief` exists because the most dangerous part of an agent run often happens before the agent starts.
+
+The human has a messy blob of intent.
+
+A voice note. A GitHub issue. A project rant. A cross-repo TODO list. A half-written PRD. A Slack thread that started as one bug and somehow became five different product decisions.
+
+Then we hand that blob to a coding agent and act surprised when the output is too broad, too shallow, or too confident.
+
+That is not a model problem first. It is an input problem.
+
+<Highlight emoji="🧾">
+Agents do better work when the task starts as a scoped brief, not a wish with a deadline.
+</Highlight>
+
+`taskbrief` is the input-side companion to the rest of the agentic engineering stack. If `branchbrief` explains what happened after a branch exists, `taskbrief` tries to shape the work before the branch exists.
+
+## The workflow pain
+
+Most agent workflows start from bad task material.
+
+Humans are good at intent and bad at packaging. We know what hurts, what needs to change, what tradeoffs matter, and which parts of the system are fragile. But we often express that as a stream:
+
+- "fix the onboarding thing"
+- "make the CLI safer"
+- "turn those notes into issues"
+- "clean up the docs while you're there"
+- "also check if this needs a test"
+
+An experienced engineer hears all the missing structure in that sentence. Scope, priority, risk, repo boundaries, acceptance criteria, verification, and review notes all need to be recovered.
+
+An agent can sometimes recover them too, but that is exactly the wrong place to spend intelligence.
+
+The task boundary should be explicit before implementation. Otherwise the agent is not just coding. It is project managing itself from a fuzzy input, and the human reviewer has to audit both the work and the invented plan.
+
+That is expensive.
+
+## What TaskBrief does
+
+The current `taskbrief` repository is a TypeScript CLI for turning rough input into structured agent task queues.
+
+The README describes the core shape clearly:
+
+```text
+taskbrief   = messy idea/input -> structured agent task queue
+branchbrief = completed branch -> structured review brief
+CrewCMD     = queue -> worktrees/agents/PRs
+```
+
+The current implementation includes deterministic parser modules for splitting brain dumps into task queue objects, workspace config parsing, repository inference, risk classification, and renderers for Markdown, YAML, JSON, and CrewCMD handoff formats.
+
+The CLI exposes `parse` and `new` commands. It can parse local input deterministically, read from stdin, emit different formats, and generate orchestration handoff artifacts that separate sequential waves from concurrent task groups. There is also an explicit opt-in OpenAI-backed `--llm` parse path for messy PRDs, with schema validation and fail-closed output handling.
+
+The important design choice is that LLM parsing is not the default magical path. The deterministic path matters.
+
+<Callout type="info" title="Input shaping is infrastructure">
+The task brief is not admin work. It is the first safety layer in the agent run.
+</Callout>
+
+## The brief is the first guardrail
+
+There is a temptation to treat guardrails as something that happens at the end.
+
+Run the agent, review the diff, run the tests, check the output, ask for changes.
+
+That is necessary, but it is late.
+
+The first guardrail is the task brief. It decides what the agent is allowed to optimize for. It names the repo, the branch shape, the risk, the verification target, and the expected handoff. It can separate a tiny fix from a broad refactor before the agent has a chance to blend them together.
+
+That is why I care about task shaping as much as verification.
+
+If the input says "improve docs and maybe fix the CLI," the agent has permission to create a mess. If the brief says "update CLI help text only; do not change parser behavior; verify with `npm test` and a help smoke," the agent has a lane.
+
+The model can still make implementation decisions inside that lane.
+
+It just does not have to invent the lane.
+
+## Why this belongs in the OSS stack
+
+`taskbrief` fits the same pattern as the other small tools I have been building: move ambiguity out of the model and into a reviewable artifact.
+
+`agentprimer` tells an agent what kind of repo it is entering. `reviewcue` builds a better review packet from the diff. `proofdock` preserves evidence. `lockstep` finds package drift across a workspace. `runreceipt` records what actually ran.
+
+`taskbrief` sits earlier than all of them.
+
+It asks:
+
+what is the work?
+
+what is in scope?
+
+what is risky?
+
+what should run before review?
+
+what should be handed to the next system?
+
+<CompareTable
+  left={{ title: "Messy agent input", items: ["Intent buried in prose", "Scope inferred by the model", "Risk discovered during review", "Verification chosen after implementation", "Parallel work collides"] }}
+  right={{ title: "TaskBrief input", items: ["Tasks become explicit objects", "Scope and repo hints travel with the work", "Risk is classified upfront", "Verification is part of the brief", "Orchestration can separate waves"] }}
+/>
+
+That is useful for a solo founder running agents across a pile of repos. It is also useful for a team where the "task" is currently whatever someone pasted into chat.
+
+## The bigger thesis
+
+Agentic engineering is not just about making agents write code.
+
+It is about building the operating system around them so their work can be scoped, dispatched, verified, reviewed, and improved.
+
+That operating system needs inputs and outputs. The output side gets a lot of attention because it is visible in the pull request. The input side is quieter, but it may matter more. Bad input turns every later tool into damage control.
+
+This is where `taskbrief` connects to [small contracts beating big prompts](/blog/small-contracts-beat-big-prompts/) and [the first safe task](/blog/the-first-safe-task-is-the-agent-primitive/). A task brief is a contract. It is also a way to find the first safe task inside a larger mess.
+
+That is the practical move.
+
+Do not ask the agent to absorb the mess and become wise.
+
+Turn the mess into a queue the agent can execute.
+
+## The deeper insight
+
+The more agents I run, the less I want the model to be responsible for project management.
+
+I want it to solve scoped problems. I want it to notice local patterns. I want it to produce a clean diff and a useful handoff. I do not want it deciding, from a loose paragraph, whether today is the day to refactor the architecture.
+
+`taskbrief` exists to make that boundary explicit.
+
+It is not glamorous. It is not the part of the workflow that demos well. But it is the part that determines whether the run starts clean or starts in debt.
+
+The agent should begin with a brief.
+
+Not a wish.

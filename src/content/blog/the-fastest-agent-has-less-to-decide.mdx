@@ -1,0 +1,154 @@
+---
+title: "The Fastest Agent Has Less to Decide"
+description: "AI coding agents get faster and safer when the workflow removes unnecessary choices before the model starts: scope, tools, verification, and handoff shape."
+pubDate: 2026-05-27
+tags: ["ai", "agents", "developer-tools", "software-engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents workflow; supporting phrases: deterministic AI agents, agentic engineering tools, AI software quality, AI agent verification */}
+
+The fastest agent is not the one with the biggest context window.
+
+It is not the one with the most tools.
+
+It is not even the one with the most aggressive autonomy settings.
+
+The fastest agent is the one with less to decide.
+
+That sounds backwards if you are still thinking about agents as little software employees that need more freedom to become useful. My experience has gone the other way. Every extra choice you leave open becomes a place where the agent can burn tokens, pick the wrong abstraction, run the wrong command, edit the wrong file, or hand back a summary that sounds confident because the path was never constrained enough to disprove it.
+
+Speed comes from narrowing the decision surface before the model starts.
+
+<Highlight emoji="⚙️">
+Agent velocity is mostly workflow design. The model is fast; the surrounding ambiguity is slow.
+</Highlight>
+
+That is the part I keep coming back to while building harness tools around coding agents.
+
+## Autonomy creates hidden work
+
+There is a version of agent tooling that tries to make the agent feel powerful by handing it the whole room.
+
+Here is the repo. Here is the terminal. Here is the browser. Here are the credentials. Figure it out.
+
+Sometimes it does. Often it wanders.
+
+The agent reads too much, edits too broadly, invents a task boundary, runs a heavyweight verification command when a smaller one would do, or writes a final answer that makes the work sound cleaner than the diff actually is. The human then pays the hidden bill in review.
+
+That is not real speed.
+
+Real speed is when the agent gets a scoped task, a known branch, a constrained write area, a small verification target, and a handoff shape that forces evidence into the review. The agent still has room to solve the problem. It just does not have to invent the operating model before doing the work.
+
+This is why I keep building boring tools.
+
+`taskbrief` narrows messy intent into executable tasks. `branchbrief` turns branch state into review context. `reviewcue` packages a diff before review. `proofdock` and `runreceipt` preserve evidence. `agentprimer` gives the agent a first safe task instead of a lore dump. None of those tools make the model smarter.
+
+They make the model responsible for fewer unnecessary decisions.
+
+## The decision surface
+
+Every agent run has a decision surface.
+
+Some of it belongs to the model:
+
+- how to implement a small behavior change
+- which local helper matches the surrounding code
+- how to explain a tradeoff
+- when a test failure points at the code versus the test
+
+Some of it should not belong to the model:
+
+- which repo is in scope
+- whether publishing is allowed
+- whether production credentials can be used
+- what counts as enough verification
+- whether generated files should be committed
+- what evidence belongs in the handoff
+
+Those are workflow decisions. They should be encoded before the run starts.
+
+<CompareTable
+  left={{ title: "Wide decision surface", items: ["Agent infers scope from chat", "Tools are available by default", "Verification is chosen ad hoc", "Handoff depends on memory", "Review reconstructs intent later"] }}
+  right={{ title: "Narrow decision surface", items: ["Task brief names scope and risk", "Tools are explicit and bounded", "Verification is part of the contract", "Handoff includes receipts", "Review starts from evidence"] }}
+/>
+
+The narrower surface is less magical.
+
+It is also faster.
+
+## Constraints are not bureaucracy
+
+Engineers can be allergic to process, and for good reason. Most process is someone else's anxiety converted into a checklist.
+
+But agent constraints are different when they remove work instead of adding it.
+
+A good task brief saves the agent from re-discovering the task. A good local preflight saves it from guessing repo shape. A good review packet saves the human from re-reading the whole branch cold. A good proof receipt saves everyone from trusting "I ran the tests" as a sentence.
+
+The constraint is useful when it turns an implicit decision into an explicit input.
+
+That is the line.
+
+If the harness exists to slow the work down, it is bad. If it exists to keep the model from spending effort on ambient uncertainty, it is leverage.
+
+This connects directly to [the agent handoff layer](/blog/the-agent-handoff-layer/) and [receipts over autonomy](/blog/receipts-over-autonomy/). Autonomy without receipts just moves effort from implementation into review. Handoffs without constraints turn the human into the parser of last resort.
+
+I want the opposite.
+
+## Less choice, better quality
+
+Quality improves for the same reason speed improves.
+
+When the agent has fewer irrelevant choices, the remaining choices get more attention.
+
+If the task says "only touch the parser and its fixture tests," the agent spends less time scanning unrelated UI code. If the branch policy says "no release commands," the agent does not need to decide whether a publish-looking script is safe. If the verification contract says "run the single affected test and the package build," the final handoff can be judged against something concrete.
+
+That changes the review conversation.
+
+Instead of asking "what did the agent do?" the reviewer asks "did the agent satisfy the contract?"
+
+That is a much better question.
+
+<Callout type="info" title="The contract should be small">
+The point is not to describe every possible move. The point is to remove the decisions that should never have been creative in the first place.
+</Callout>
+
+Small contracts beat big prompts because contracts survive the run. A prompt is consumed at the beginning. A contract is checked at the end.
+
+## The founder angle
+
+This is not just an engineering preference. It is a founder constraint.
+
+If agents are going to become a real production advantage, they cannot require heroic review every time they touch a repo. They need operating lanes. They need deterministic prep. They need evidence that travels with the pull request. They need a way to fail closed instead of performing confidence.
+
+That is the product opportunity I keep seeing under the surface of agent tooling.
+
+The big demos make autonomy look like the prize. I think the better wedge is controlled speed: tools that let a small team safely run more work in parallel without turning every review into archaeology.
+
+That is not as cinematic as "the agent built the whole app."
+
+It is more useful.
+
+## Where this lands
+
+I am less interested in asking agents to be more independent and more interested in making the work around them more deterministic.
+
+Give the agent fewer choices that do not matter.
+
+Give it sharper inputs.
+
+Give it smaller permissions.
+
+Give it a verification target.
+
+Give the reviewer receipts.
+
+The model can still do the creative work. It can still navigate the implementation details. It can still surprise you with a good solution.
+
+But the workflow should not make it decide what safety means from scratch every morning.
+
+The fastest agent has less to decide because the system around it has already done the responsible part.

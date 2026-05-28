@@ -1,0 +1,154 @@
+---
+title: "Why ToolMirror Exists"
+description: "ToolMirror is a local-first registry and drift detector for agent tool catalogs, built because MCP and coding-agent tools need reviewable schemas, docs, diffs, and risk signals."
+pubDate: 2026-05-28
+tags: ["open-source", "ai-agents", "developer-tools", "mcp"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: agent tool catalog drift detector; supporting phrases: MCP tool registry, local-first developer tools, AI agent verification, agentic engineering tools */}
+
+`toolmirror` exists because agent tool catalogs are becoming part of the security and quality boundary.
+
+That sounds dry until you operate agents for real.
+
+The model is not just answering questions anymore. It is getting tool lists. Those tools can read files, write files, send messages, upload artifacts, start commands, fetch remote data, edit state, and trigger workflows. The tool catalog is effectively a contract for what the agent can attempt.
+
+If that contract changes silently, the agent's operating environment changed silently.
+
+That is not a small detail.
+
+`toolmirror` is a local-first CLI for importing JSON tool definitions, normalizing them into a stable lockfile, redacting sensitive defaults, generating Markdown docs, diffing snapshots, and flagging risky tool surfaces.
+
+<Highlight>
+The tools an agent can call deserve the same review pressure as the code it changes.
+</Highlight>
+
+That is the whole point.
+
+## The workflow pain
+
+Agent tool surfaces are messy.
+
+One runtime calls them tools. Another calls them functions. Another exposes them under capabilities. Schemas can live under `inputSchema`, `parameters`, or `schema`. Descriptions vary. Some catalogs are dumped from local harnesses. Some are hand-written. Some come from MCP-style systems. Some are wrapped by coding-agent platforms.
+
+The practical questions are simple:
+
+- what tools exist right now?
+- what parameters do they accept?
+- which tools can mutate state?
+- what changed since the last snapshot?
+- what docs can a human review without opening the runtime UI?
+- did a sensitive-looking default leak into the catalog?
+
+Those questions should not require scrolling through a prompt, a debug log, or an agent transcript.
+
+They should be answerable locally.
+
+## What ToolMirror does
+
+The current `toolmirror` README describes the shape clearly: it imports JSON tool definitions from MCP-style catalogs, Codex/OpenClaw dumps, or hand-written files; normalizes them into a stable lockfile; redacts sensitive defaults; generates Markdown reference docs; diffs snapshots; and flags risky tool surfaces.
+
+The CLI is intentionally small:
+
+- `toolmirror import tools.json --output toolmirror.lock.json`
+- `toolmirror docs toolmirror.lock.json --output TOOLING.md`
+- `toolmirror diff old.lock.json new.lock.json`
+- `toolmirror risk toolmirror.lock.json --min medium --fail-on high`
+
+The implementation is built around stable, sorted output. It detects common catalog shapes under `tools`, `functions`, and `capabilities.tools`. It summarizes schema properties into parameters. It redacts sensitive defaults, examples, constants, and enum values when their paths look like tokens, secrets, passwords, API keys, credentials, or similar data.
+
+The risk scanner is deliberately blunt. It looks for high-risk verbs such as delete, execute, publish, send, upload, write, and run; medium-risk verbs such as create, install, patch, rename, set, and update; and sensitive parameter names such as command, content, destination, email, file, path, recipient, token, or URL.
+
+That is not a complete security model.
+
+It is a useful first witness.
+
+<Callout type="info" title="Local-first by design">
+ToolMirror does not talk to MCP servers directly and does not execute tools. It turns tool definitions into reviewable local artifacts.
+</Callout>
+
+## Why this matters for agents
+
+Agents are only as safe as the room they are working inside.
+
+That room includes prompts, permissions, files, branches, secrets, network access, and tools. The tool catalog is one of the most important parts because it defines the action surface.
+
+A new read-only search tool is one kind of change.
+
+A new `send`, `delete`, `write`, or `execute` tool is another.
+
+The agent may not know the difference in a durable way. The runtime may show the tool list somewhere. The human may assume the catalog is the same as yesterday. The dangerous version is when everybody is half-right and nobody has a reviewable snapshot.
+
+`toolmirror` pushes that into a boring artifact.
+
+Import the catalog. Commit or archive the lockfile. Generate docs. Diff the next snapshot. Fail on high-risk surfaces when the workflow calls for it.
+
+That is the same pattern behind a lot of the OSS stack: move trust out of memory and into artifacts.
+
+## Documentation is part of the control plane
+
+There is another reason I like this tool.
+
+Generated Markdown docs are not just documentation. For agent tools, docs are control-plane visibility.
+
+If an agent can call a tool, the human should be able to inspect what the tool is, what parameters it accepts, and where it came from. If the catalog changed, that change should be easy to review in a diff.
+
+This connects directly to [docs as agent inputs](/blog/docs-are-agent-inputs-not-afterthoughts/) and [local-first agent tools](/blog/local-first-agent-tools/). Documentation is no longer just a human onboarding nicety. It is one of the surfaces agents use to understand the system.
+
+Bad docs become bad agent input.
+
+Missing docs become hidden operating assumptions.
+
+ToolMirror does not try to make the docs charming. It makes them stable and reviewable. That is the right tradeoff for this layer.
+
+<CompareTable
+  left={{ title: "Tool catalog by vibes", items: ["Runtime UI is the source of truth", "Changes are noticed manually", "Risky tools blend into the list", "Docs depend on copy-paste", "Sensitive defaults can leak unnoticed"] }}
+  right={{ title: "ToolMirror workflow", items: ["Catalog is normalized locally", "Snapshots can be diffed", "Risky verbs are flagged", "Markdown docs are generated", "Sensitive fields are redacted"] }}
+/>
+
+## The bigger system-level insight
+
+The deeper insight is that agent capabilities need version control pressure.
+
+We already apply this pressure to code. A dependency change gets a lockfile diff. A GitHub Actions change gets review. A prompt change should get a snapshot. A release should get checks. A command run should get a receipt.
+
+Tool catalogs belong in that same family.
+
+If a local agent suddenly has a new `upload_file` action, that should be visible. If an MCP config introduces a tool with a `command` parameter, that should be visible. If a schema changes from a narrow enum to an open string, that should be visible.
+
+Not because every change is bad.
+
+Because invisible capability drift is how review queues lose meaning.
+
+`toolmirror` is a small tool, but it sits on a serious boundary: what the agent is allowed to try.
+
+## Where it fits in the stack
+
+This fits beside the other harness tools rather than replacing them.
+
+[MCPSeal](/blog/why-mcpseal-exists/) looks at MCP server configs as permission documents. [ActionPin](/blog/why-actionpin-exists/) reviews GitHub Actions risk. [RunReceipt](/blog/why-runreceipt-exists/) captures what commands actually ran. [ReviewCue](/blog/why-reviewcue-exists/) packages code review context before model review.
+
+ToolMirror focuses on the tool catalog itself.
+
+It answers: what capabilities are exposed, what shape do they have, and what changed?
+
+That is a narrow question. Narrow is good here. Agentic engineering does not need one giant oracle trying to understand everything. It needs a set of boring witnesses that each make one operational fact harder to miss.
+
+## Why this is worth building
+
+The agent ecosystem is moving toward more pluggable tools, more MCP servers, more local harnesses, and more scheduled automation.
+
+That direction is useful. It is also risky if capability review stays informal.
+
+I do not want agent tools to be magic strings hidden in runtime memory. I want them mirrored into files, documented, diffed, redacted, and scanned. I want a human reviewer to see the action surface before the agent uses it. I want scheduled jobs to fail when a high-risk tool appears unexpectedly.
+
+That is not anti-agent.
+
+It is how agents earn more scope.
+
+`toolmirror` exists because the action surface matters. If agents are going to do real work, their tools need receipts too.

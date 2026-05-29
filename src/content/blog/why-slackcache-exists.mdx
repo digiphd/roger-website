@@ -1,0 +1,175 @@
+---
+title: "Why SlackCache Exists"
+description: "SlackCache exists because AI agents need scoped, local, reviewable workspace context before Slack history becomes another opaque source of private operational memory."
+pubDate: 2026-05-29
+tags: ["open-source", "ai-agents", "developer-tools", "local-first"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: local-first Slack search for AI agents; supporting phrases: local-first developer tools, AI coding agents workflow, agentic engineering tools, private workspace context */}
+
+`slackcache` exists because team memory keeps ending up in Slack, and agent workflows need a safer way to use that memory.
+
+Not a giant workspace export dumped into a model.
+
+Not a hosted search product that quietly makes every conversation feel like infrastructure.
+
+Not another credential-heavy integration just to answer one operational question.
+
+A small local cache. An explicit import. A scope report. Redaction by default. Search and thread inspection from the terminal.
+
+<Highlight>
+Slack context is useful. Unscoped Slack context is a liability.
+</Highlight>
+
+That is the whole reason the tool exists.
+
+## The workflow pain
+
+Slack is where a lot of real decisions live.
+
+The ticket says one thing. The PR says another. The runbook is stale. The actual reason the team chose a path is sitting in a thread from last Thursday between the person who owned the incident and the person who knew the vendor edge case.
+
+Humans know how to navigate that mess because they have social context. They remember the channel. They know which thread matters. They know which jokes to ignore and which short message carried the real decision.
+
+Agents do not get that for free.
+
+If you hand an agent a pile of Slack history, you create two problems at once:
+
+- the agent gets too much noisy context
+- the system may expose more private conversation than the task needed
+
+That is a bad trade. It makes the model more informed and the workflow less controlled.
+
+`slackcache` is a narrow answer: turn selected Slack export or fixture data into a deterministic local index, then let a human or agent search the specific context needed for the task.
+
+## What SlackCache does
+
+The current tool is intentionally simple.
+
+It imports local Slack export/API-style fixture JSON, builds a local JSON index, applies redaction by default, and reports exactly what it indexed.
+
+The basic flow looks like this:
+
+```bash
+slackcache import ./fixtures/sample --output ./.slackcache
+slackcache scope --index ./.slackcache
+slackcache search "deploy" --index ./.slackcache --channel general --limit 5
+slackcache thread 1777586400.000100 --index ./.slackcache --channel general
+```
+
+There are no Slack API requests in V1. The input is local. The output is local. The cache is written where you tell it to write the cache.
+
+The import step prints a scope report: channel count, user count, message count, date range, and redaction counts. That matters because the first question in any agent context workflow should be "what did we just hand the system?"
+
+<Callout type="tip" title="Scope before search">
+The scope report is not decoration. It is the first safety check. Before an agent reasons over workspace context, you should know how much context was indexed.
+</Callout>
+
+Redaction is on by default for emails, URLs, Slack-token-shaped strings, and generic `token=...` or `secret=...` patterns. You can turn it off for trusted local workflows, but the default posture is conservative.
+
+That default is the product.
+
+## Why local-first matters here
+
+Local-first is not just an aesthetic choice for this repo.
+
+Slack history is operational memory. It can include customer names, credentials accidentally pasted into threads, vendor details, internal arguments, half-formed strategy, and decisions that only make sense in context.
+
+That does not mean agents should never use it.
+
+It means the access path should be boring, scoped, and inspectable.
+
+<CompareTable
+  left={{ title: "Loose Slack context", items: ["Large exports copied around", "Unclear channel scope", "Private text passed too early", "No redaction count", "Agent sees more than the task needs"] }}
+  right={{ title: "SlackCache workflow", items: ["Local import", "Explicit channel and date scope", "Redaction by default", "Scope report before search", "Thread inspection after narrow query"] }}
+/>
+
+This is the same operating model behind [local-first agent tools](/blog/local-first-agent-tools/) and [the agent handoff layer](/blog/the-agent-handoff-layer/). The goal is not to make the agent omniscient. The goal is to give it enough context to be useful without turning the whole workspace into a prompt.
+
+## The origin story
+
+The origin pressure was simple: agents need context, but context is not neutral.
+
+A repo gives you code. A runbook gives you intended procedure. A ticket gives you declared work. Slack gives you the messy human layer around all of it.
+
+That messy layer is valuable. It is also where privacy mistakes happen.
+
+I wanted a tool that made the first step explicit:
+
+1. import only the local export or fixture you chose
+2. show the scope before anyone searches
+3. redact obvious risky text by default
+4. search narrowly
+5. inspect the exact thread
+6. decide what context is safe to pass along
+
+That is a better primitive than "connect the agent to Slack."
+
+The phrase sounds convenient. It hides too many decisions.
+
+## The system-level insight
+
+Agents do not need unlimited context. They need accountable context.
+
+That is the bigger thesis behind `slackcache`.
+
+The product value is not merely faster search. It is a context boundary a reviewer can reason about.
+
+What did we import?
+
+Which channels were included?
+
+How many messages?
+
+What was redacted?
+
+Which thread did the agent inspect?
+
+Was the final handoff based on a narrow search or a broad scrape?
+
+Those questions are not overhead. They are the difference between a useful context tool and a privacy accident with a CLI.
+
+<Callout type="info" title="Context needs chain of custody">
+When workspace memory becomes agent input, the path from raw history to final answer should be visible. Otherwise the agent may be right for reasons nobody can audit.
+</Callout>
+
+This is why I keep returning to [deterministic agents](/blog/deterministic-agents-beat-charismatic-agents/) and [independent witness layers](/blog/the-agent-should-not-be-the-only-witness/). Context is evidence. Evidence needs boundaries.
+
+## What it is not
+
+`slackcache` is not a replacement for Slack search.
+
+It is not a company knowledge graph.
+
+It is not an enterprise archive product.
+
+It does not try to become the place where every conversation lives.
+
+That restraint is intentional. The useful version of the tool is small enough to understand during a review. Import, scope, search, thread. If that local packet is enough, use it. If it is not enough, make a bigger deliberate decision instead of silently widening the agent's access.
+
+That is the posture I want in more agent tooling.
+
+Start narrow. Show the scope. Preserve the evidence. Let the human decide the next boundary.
+
+## The takeaway
+
+SlackCache exists because agent workflows are going to need team memory, and team memory deserves better boundaries than "paste the thread into chat."
+
+The tool is deliberately local-first and unglamorous. It turns Slack export data into a reviewable cache, gives you scope before search, redacts risky text by default, and lets the agent or human inspect the exact thread that matters.
+
+That is the shape I trust:
+
+context, but scoped.
+
+search, but local.
+
+memory, but reviewable.
+
+If agents are going to work with the messy places where teams actually decide things, the first job is not to make access seamless.
+
+The first job is to make access accountable.

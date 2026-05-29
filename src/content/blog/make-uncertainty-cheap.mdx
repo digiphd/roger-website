@@ -1,0 +1,157 @@
+---
+title: "Make Uncertainty Cheap"
+description: "AI agent workflows improve when doubt is cheap to surface, preserve, and review. The strongest harnesses make uncertainty explicit before it becomes rework."
+pubDate: 2026-05-29
+tags: ["ai-agents", "verification", "engineering", "founder"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification; supporting phrases: deterministic AI agents, AI coding agents workflow, AI software quality, agentic engineering tools */}
+
+The expensive part of agentic engineering is not the mistake.
+
+The expensive part is finding the mistake after the system has already smoothed it into confidence.
+
+That is the operational trap I keep running into. An agent can be wrong in a way that is easy to fix if it says "I am unsure here" at the right moment. The same mistake becomes expensive when it arrives as a polished summary, a green-looking handoff, and a PR that hides the weak assumption three screens down.
+
+The product surface I care about now is not just speed.
+
+It is the cost of uncertainty.
+
+<Highlight>
+The best agent harnesses do not eliminate doubt. They make doubt cheap enough to handle while it is still small.
+</Highlight>
+
+That sounds less glamorous than autonomy. It is also the thing that makes autonomy survivable.
+
+## Confidence is the default shape
+
+Models are very good at completing the shape of finished work.
+
+Give an agent a task, a repo, and enough tool access, and it can usually produce something that looks coherent. It can name the files it changed. It can explain the intent. It can describe the checks. It can write a respectable PR body.
+
+That is useful.
+
+It is also dangerous when the workflow has no place for unresolved doubt.
+
+Was the test actually meaningful?
+
+Was the fixture representative?
+
+Did the agent inspect the right config file?
+
+Did the build pass because the change was correct, or because the path was never exercised?
+
+Was a risky permission widened in a file nobody asked about?
+
+These are normal engineering questions. They are not a failure of AI. They are the ordinary uncertainty of software work, accelerated by tools that can now generate more surface area faster than a human can casually inspect.
+
+The problem is that many agent workflows treat uncertainty as a private thought inside the model. If the agent does not preserve it, the reviewer never sees it.
+
+## Make doubt an artifact
+
+The better pattern is to give uncertainty somewhere to live.
+
+Not as an apology.
+
+Not as a vague disclaimer at the end.
+
+As an artifact:
+
+- a skipped check with a reason
+- a failed command with the exact exit code
+- a risk note attached to the changed file
+- a proof bundle that says what was and was not collected
+- a review packet that separates facts from judgment
+- a task brief that records assumptions before implementation starts
+
+That is why I keep building small tools around the agent instead of trying to make the agent sound more careful.
+
+A prompt can ask for honesty. A harness can make honesty easier to verify.
+
+<Callout type="tip" title="Uncertainty should be inspectable">
+If doubt only exists in the agent's final paragraph, it is too easy to lose. Put it in files, reports, check outputs, and review queues where the next person can act on it.
+</Callout>
+
+This is the same reason [the agent should not be the only witness](/blog/the-agent-should-not-be-the-only-witness/) and why [receipts beat autonomy](/blog/receipts-over-autonomy/). The review system needs evidence that survives the run.
+
+## The founder version of this problem
+
+There is also a founder lesson here.
+
+It is tempting to chase the version of the product that removes friction from the demo. Fewer prompts. Fewer confirmations. Fewer gates. More automatic motion.
+
+That can make the product feel better for five minutes.
+
+It can also move the real cost into the review queue.
+
+If the user has to spend ten minutes reconstructing whether the agent did the right thing, the product did not remove friction. It moved friction from creation to trust.
+
+That is a worse place for it.
+
+Creation friction is visible. Trust friction is sneaky. It shows up as second-guessing, rerunning commands, reading huge diffs, reopening old chat context, and eventually using the tool for smaller tasks because the big tasks are too hard to trust.
+
+This is why "make uncertainty cheap" is a product requirement, not just an engineering taste.
+
+If a tool wants bigger responsibility, it has to make uncertainty cheaper than manual review from scratch.
+
+## What cheap uncertainty looks like
+
+Cheap uncertainty has a few properties.
+
+It is early. The system surfaces it before the user has mentally accepted the work as finished.
+
+It is specific. "Potential risk" is weak. "Did not run integration tests because the local database URL was missing" is useful.
+
+It is attached to evidence. A risk note should point at a file, command, artifact, or assumption.
+
+It is small enough to decide on. A reviewer should be able to approve, reject, defer, or ask for one focused follow-up.
+
+It is preserved. The next agent or human should not need the original chat transcript to understand the doubt.
+
+<CompareTable
+  left={{ title: "Expensive uncertainty", items: ["Hidden in model memory", "Appears after review starts", "Described in vague prose", "Requires rerunning the task", "Turns into distrust of the whole branch"] }}
+  right={{ title: "Cheap uncertainty", items: ["Captured as an artifact", "Raised before handoff", "Tied to specific evidence", "Supports one clear decision", "Narrows the review surface"] }}
+/>
+
+That last point matters most.
+
+The purpose of surfacing doubt is not to make every agent handoff sound timid. It is to reduce the blast radius of doubt. Instead of "I do not trust this PR," the reviewer can say "I need one more check on this path."
+
+That is a much better workflow.
+
+## Speed needs a doubt budget
+
+Fast agents create a new management problem: they generate more possible uncertainty per hour.
+
+The answer is not to slow them down by default. The answer is to budget for doubt in the system.
+
+Some tasks deserve a hard gate. Some deserve a warning. Some deserve a note. Some deserve no ceremony at all. The trick is deciding which uncertainty is cheap to ignore and which uncertainty compounds into rework.
+
+That is where deterministic harnesses earn their keep.
+
+`taskbrief` can make assumptions explicit before the work starts. `agent-qc` can reject weak handoffs. `proofdock` can package evidence. `runreceipt` can preserve command output. `policydiff` can flag widened permissions. `slackcache` can keep context local and scoped before an agent reasons over it.
+
+None of those tools make the model omniscient.
+
+They make the workflow less dependent on the model pretending uncertainty is gone.
+
+## The operating rule
+
+The rule I keep coming back to is simple:
+
+**do not optimize only for how fast the agent can produce an answer. Optimize for how cheaply the system can expose why the answer might be wrong.**
+
+That is where quality compounds.
+
+A team with cheap uncertainty can give agents more work because the review process knows where to look. A team with expensive uncertainty will keep shrinking the tasks until the agent is only trusted with chores.
+
+That is the difference between using AI as a typing accelerator and building an actual agentic engineering system.
+
+The next wave of useful agent tools will not just be better at doing.
+
+They will be better at preserving doubt before confidence becomes expensive.

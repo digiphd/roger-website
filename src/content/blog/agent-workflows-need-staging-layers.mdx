@@ -1,0 +1,147 @@
+---
+title: "Agent Workflows Need Staging Layers"
+description: "The safest AI agent workflows do not jump straight from prompt to production action. They rehearse in worktrees, fixtures, dry runs, proof bundles, and review queues first."
+pubDate: 2026-05-30
+tags: ["ai", "agents", "developer-tools", "strategy", "software-engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent staging workflow; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI agent verification */}
+
+The dangerous version of agent autonomy skips a layer.
+
+It goes straight from prompt to action.
+
+Prompt to branch mutation. Prompt to API call. Prompt to outbound message. Prompt to release command. Prompt to some irreversible thing that now needs a human to clean up if the model guessed wrong.
+
+That is not autonomy. That is a missing staging environment.
+
+Serious software teams already understand this for code. You do not edit production directly because a developer sounded confident in Slack. You use branches, review apps, test environments, CI, feature flags, rollout plans, and rollback paths.
+
+Agents need the same idea, but across more surfaces.
+
+<Highlight emoji="🧪">
+The agent should rehearse the action before it gets permission to make the action real.
+</Highlight>
+
+That is the layer I keep building toward.
+
+## The staging layer is bigger than a test environment
+
+When people hear "staging," they often think about a deployed environment between local and production.
+
+That is useful, but too narrow for agent work.
+
+An agent staging layer is any place where the workflow can make intent inspectable before side effects become real.
+
+For coding agents, that can be an isolated git worktree. For command output, it can be a snapshot or golden comparison. For external tools, it can be a dry run. For workspace automation, it can be a plan with scopes and fixture-backed previews. For release work, it can be a proof bundle and a blocked publish path.
+
+The common shape is simple:
+
+- isolate the work
+- simulate or preview the risky action
+- collect evidence
+- ask for review at the right boundary
+- only then escalate permission
+
+That shape is more important than any single tool.
+
+## Prompt-to-action is a product smell
+
+The moment an agent tool can touch the outside world, the product question changes.
+
+It is no longer "can the model figure out the task?"
+
+It is "what happens between figuring out the task and doing the risky thing?"
+
+That middle layer is where most products are underbuilt. They treat side effects as just another tool call. They rely on model judgment, a broad OAuth scope, and maybe a confirmation prompt at the end.
+
+That works for demos because demos are narrow and controlled.
+
+It is weaker in real operations because real operations have ambiguous intent, stale context, flaky dependencies, partial credentials, busy humans, and review queues that already have too much noise.
+
+<Callout type="warning" title="Confirmation is not staging">
+A modal that says "Are you sure?" is not enough. The human needs to inspect the plan, proof, scope, and likely effect before the action becomes real.
+</Callout>
+
+The staging layer is the artifact between the model's intention and the system's side effect.
+
+## What the layer looks like in practice
+
+The best version is not one giant platform.
+
+It is a set of small deterministic rehearsals around the work.
+
+`worktreeguard` keeps code changes away from the main checkout. `taskbrief` narrows the task before execution. `clisnapshot`, `testgold`, and `snapdiff` make generated output comparable. `workspacewire` plans sensitive workspace operations without live mutation. `releasebox` and `proofdock` push release and review work through explicit evidence before anything gets published.
+
+Each tool is small. The pattern is the product.
+
+The agent gets a lane where it can do useful work without being trusted with the final irreversible step too early.
+
+<CompareTable
+  left={{ title: "Prompt-to-action workflow", items: ["Agent infers scope", "Tools can mutate immediately", "Proof is a summary", "Human reviews after the fact", "Rollback carries the safety burden"] }}
+  right={{ title: "Staged agent workflow", items: ["Scope is declared first", "Risky actions are rehearsed", "Proof is collected before review", "Human decides at the boundary", "Escalation depends on evidence"] }}
+/>
+
+That does not make the agent less useful.
+
+It makes useful work survivable.
+
+## Staging is how speed compounds
+
+The usual objection is that staging sounds slower.
+
+In practice, it is faster because it prevents the slowest kind of review: archaeology after an agent has already touched too much.
+
+If the agent creates an isolated branch, leaves a clean diff, runs a known check, captures output, and packages the proof, review starts from evidence.
+
+If the agent sends the email, changes the calendar, edits the shared document, or publishes the package first, review starts from consequences.
+
+Those are radically different workflows.
+
+The first one lets a human spend judgment. The second forces a human to spend attention, reputation, and cleanup effort.
+
+This connects with [receipts over autonomy](/blog/receipts-over-autonomy/) and [the review queue as the agent interface](/blog/review-queues-not-chat-windows/). Fast agent work only compounds when the output arrives in a form that can be accepted, rejected, or redirected quickly.
+
+Staging is how that happens.
+
+## The deeper product insight
+
+A lot of AI products frame permission as a gate at the beginning.
+
+Connect your account. Grant access. Let the agent work.
+
+I think permission should be progressive.
+
+Start with local context. Move to a plan. Move to a dry run. Move to a proof artifact. Move to a human decision. Then, if the evidence is good enough, let the workflow perform the live action.
+
+That is not bureaucracy. That is matching permission to evidence.
+
+It also creates a better product surface. Instead of asking the user to trust a model, the product can show the rehearsal:
+
+- the diff before merge
+- the command before execution
+- the email before send
+- the OAuth scope before authorization
+- the release checklist before publish
+- the proof bundle before approval
+
+That is where trust actually gets built.
+
+## The blunt version
+
+Agents should not go straight from "I think I know what you want" to "I did the thing."
+
+They should go through a staging layer.
+
+Rehearse the action. Show the boundary. Collect the proof. Make the risk visible. Ask for review before the side effect crosses into the real world.
+
+That is the operating model I want for agentic engineering tools.
+
+Not less ambition.
+
+Better choreography between intent, evidence, permission, and action.

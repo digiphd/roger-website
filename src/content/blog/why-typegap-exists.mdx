@@ -1,0 +1,149 @@
+---
+title: "Why TypeGap Exists"
+description: "TypeGap is a local-first TypeScript type coverage auditor for finding any, unknown, and missing annotations before agent-generated code turns type safety into theatre."
+pubDate: 2026-05-30
+tags: ["oss", "typescript", "ai", "agents", "developer-tools"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: TypeScript type coverage auditor; supporting phrases: AI software quality, agentic engineering tools, deterministic AI agents, TypeScript any detection */}
+
+`typegap` exists because TypeScript can look safer than it is.
+
+That is not a TypeScript complaint. TypeScript is one of the best leverage points in modern JavaScript work. The problem is the gap between "this project uses TypeScript" and "this project has a useful type safety net."
+
+Agents make that gap easier to create.
+
+An agent can move quickly through a codebase, add a handler, patch a parser, wire a CLI flag, and keep the build green while quietly leaving `any`, `unknown`, missing return types, and weak generic holes behind it. The code compiles. The PR summary sounds clean. The reviewer sees `.ts` files and assumes the type system did more work than it actually did.
+
+That assumption is expensive.
+
+<Highlight emoji="🧩">
+Type safety is not a badge on the repo. It is a coverage surface that can drift.
+</Highlight>
+
+TypeGap is a small local tool for making that drift visible.
+
+## The pain: green TypeScript can still hide weak contracts
+
+The common version of this problem is boring:
+
+- `noImplicitAny` stays disabled because turning it on would be a migration project
+- a fast prototype ships with `any` in the interesting path
+- a helper loses an explicit return type
+- `Record<string, any>` sneaks into a boundary object
+- a catch parameter or rest argument becomes a permanent blind spot
+
+None of those are dramatic by themselves.
+
+Together, they make the agent's work harder to trust. The whole point of TypeScript is that contracts survive the immediate run. If the contracts are missing exactly where the code is changing fastest, the reviewer is back to reading prose and hoping the model did not paper over uncertainty.
+
+That is the wrong layer to trust.
+
+## What TypeGap does
+
+`typegap` is a TypeScript type coverage auditor.
+
+It parses `.ts` and `.tsx` files with `@typescript-eslint/typescript-estree`, walks the AST, and reports the places where type coverage is weak without requiring `tsc` to succeed first.
+
+The CLI can scan a directory, print a text report, emit JSON, show detail rows, enforce a minimum coverage threshold, and compare against a saved baseline:
+
+```bash
+typegap ./src --detail
+typegap --format json
+typegap --min-coverage 90
+typegap --baseline coverage.json
+typegap --compare coverage.json
+```
+
+It looks for explicit `any`, `unknown`, missing annotations, weak generics such as `Array<any>` and `Record<string, any>`, and the annotatable sites where a stronger contract would matter.
+
+The important design decision is that it works statically. It does not need the project to be in a perfect build state before it can tell you where the type holes are.
+
+<Callout type="info" title="Audit the surface before the migration">
+Some repos cannot turn every strict TypeScript flag on immediately. A coverage auditor gives you a smaller first step: find the holes, baseline them, and stop new ones from becoming invisible.
+</Callout>
+
+That matters for real agent workflows, because agents often work inside imperfect repos.
+
+## Why this belongs in the harness
+
+You could tell the agent to write good TypeScript.
+
+You should.
+
+But "write good TypeScript" is not a gate. It is a preference.
+
+A useful gate says:
+
+- how many annotatable sites exist
+- how many are covered
+- where the weak spots are
+- whether coverage dropped
+- whether the branch violates the threshold
+
+That is the kind of artifact a reviewer can use. It turns a vague quality standard into a concrete diff.
+
+This is the same broader pattern behind tools like [Agent-QC](/blog/why-agent-qc-exists/), [ProofDock](/blog/why-proofdock-exists/), and [RunReceipt](/blog/why-runreceipt-exists/). The agent can still reason, write, and adapt. The harness owns the repeatable check.
+
+## Why not just run the compiler?
+
+You should still run the compiler.
+
+TypeGap is aimed at a different question.
+
+`tsc` asks whether the current program satisfies the configured type rules. TypeGap asks how much of the relevant surface is actually annotated, and where the project is relying on loose contracts.
+
+Those questions overlap, but they are not identical.
+
+<CompareTable
+  left={{ title: "Compiler-only posture", items: ["Build passes or fails", "Strictness depends on current config", "Weak annotations can become normal", "Review sees a green command", "Coverage trend is hard to spot"] }}
+  right={{ title: "TypeGap posture", items: ["Coverage is measured", "Holes are listed directly", "Baselines make drift visible", "Thresholds can fail CI", "Reviewer sees the weak contracts"] }}
+/>
+
+For agent-generated work, that distinction is useful. A branch can compile and still leave behind lower-quality contracts than the branch started with.
+
+TypeGap gives that regression a name.
+
+## The origin story
+
+Most of the tools in this OSS stack come from a small repeated irritation.
+
+This one is the irritation of reviewing TypeScript that looks fine at a glance but has less contract than the file extension implies.
+
+That becomes sharper when agents are involved. Agents are very good at producing plausible TypeScript. They are also very good at using the shortest available escape hatch when the task boundary is unclear, the surrounding code is loose, or the type shape is annoying.
+
+I do not want the answer to be "review harder."
+
+I want the answer to be "make the weak surface obvious."
+
+## Where it fits
+
+TypeGap sits in the same lane as [deterministic agent workflows](/blog/deterministic-agents-beat-charismatic-agents/) and [small contracts beating big prompts](/blog/small-contracts-beat-big-prompts/).
+
+It does not make the model smarter. It makes one part of the review contract measurable.
+
+That is the practical theme that keeps showing up:
+
+- local first
+- deterministic output
+- JSON for automation
+- text for humans
+- thresholds for CI
+- baselines for drift
+
+The goal is not perfect typing on day one. The goal is to stop pretending the type surface is healthy because the repo uses TypeScript.
+
+## The takeaway
+
+TypeScript gives agent workflows a huge advantage when the contracts are real.
+
+But the word "TypeScript" is not proof.
+
+`typegap` is the little audit layer between "the code compiles" and "the type surface is still trustworthy." It finds the holes without needing a successful build, makes the weak spots reviewable, and gives teams a way to stop new type debt from hiding inside fast agent work.
+
+That is exactly the kind of boring tool I want more of.

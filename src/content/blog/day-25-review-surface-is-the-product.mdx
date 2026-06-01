@@ -1,0 +1,172 @@
+---
+title: "Day 25: The Review Surface Is the Product"
+description: "Day 25 of the 60 Day OSS Sprint: agentattest, toolbill, and depscreen all point at the same bottleneck in agentic engineering - the work is only as useful as the evidence a reviewer can inspect."
+pubDate: 2026-05-31
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent review evidence; supporting phrases: AI coding agents workflow, agentic engineering tools, agent provenance receipts, dependency review CLI */}
+
+Day 25 was about the part of agent work that decides whether the speed matters:
+
+review.
+
+Not review as a polite final step. Review as the actual product surface for agentic engineering.
+
+If an agent changes code, summarizes confidently, and leaves a reviewer to reconstruct what happened, the workflow is not finished. It has just moved the hard part downstream. The diff may be useful. The summary may even be correct. But the reviewer still has to answer the same question:
+
+what can I trust quickly?
+
+The strongest thread today ran through `agentattest`, `toolbill`, and `depscreen`.
+
+`agentattest` records local provenance receipts for agent-assisted git changes. `toolbill` turns coding-agent logs and git changes into a compact bill of materials. `depscreen` reviews JavaScript dependency changes with offline heuristics and report output.
+
+Different tools. Same pressure.
+
+<Highlight>
+The review surface is not decoration around the work. It is where agent speed either compounds or turns into review debt.
+</Highlight>
+
+That is the Day 25 lesson.
+
+## The challenge: reviewers need evidence, not confidence
+
+Agents are very good at sounding finished.
+
+That is useful when the summary is backed by artifacts. It is dangerous when the summary becomes the artifact.
+
+A reviewer does not need another paragraph saying the implementation is clean. They need to know which files changed, which commands ran, what the command results were, what dependencies moved, what risks were flagged, and what the tool did not try to prove.
+
+This is the same argument behind [receipts over autonomy](/blog/receipts-over-autonomy/) and [the agent handoff layer](/blog/the-agent-handoff-layer/), but Day 25 sharpened it around the review interface itself.
+
+The agent can be fast. The harness has to make that speed inspectable.
+
+## AgentAttest: provenance should be local before it is official
+
+`agentattest` starts from a careful boundary.
+
+It is not a formal supply-chain attestation system. The README says the current receipts are unsigned local JSON, useful for review and handoff rather than tamper-proof guarantees.
+
+That honesty matters.
+
+The tool collects a receipt for changes since a ref, records changed files, file hashes, git metadata, and configured verification command results, then can verify that the current workspace still matches the receipt. It can also render the receipt as Markdown for a PR or handoff note.
+
+The workflow is intentionally plain:
+
+```bash
+npm exec -- agentattest init
+npm exec -- agentattest collect --since origin/main
+npm exec -- agentattest verify agent-attestation.json
+npm exec -- agentattest markdown agent-attestation.json
+```
+
+The interesting part is the shape of the claim.
+
+Without a receipt, an agent handoff says, "I changed these files and ran the checks."
+
+With a receipt, the handoff can say, "Here are the files, hashes, git metadata, commands, and results captured at this point in the workspace."
+
+That does not remove judgment. It gives judgment something better to stand on.
+
+<Callout type="tip" title="Name the level of proof">
+A local provenance receipt is not a cryptographic guarantee. That is fine. The important thing is that the artifact says what it proves and what it does not.
+</Callout>
+
+I like tools that are explicit about their authority. A lot of agent tooling accidentally overclaims. AgentAttest does the more useful thing: it creates a review artifact without pretending that artifact is more official than it is.
+
+## ToolBill: agent work needs a bill of materials
+
+`toolbill` looks at the problem from the other side.
+
+If AgentAttest answers "what is the state of this repo change?", ToolBill asks "what did the agent actually do to get here?"
+
+The current MVP parses simple OpenClaw or Codex-like text logs and JSONL event streams. It can summarize commands, files touched, network-like actions, model invocations, tool invocations, verification commands, and elapsed time when the source has it. It can also summarize the current repo since a ref.
+
+That is not glamorous. It is exactly the kind of unglamorous layer agent workflows need.
+
+```bash
+npm exec -- toolbill summarize fixtures/openclaw-text.log
+npm exec -- toolbill json fixtures/codex-jsonl.log
+npm exec -- toolbill git --since origin/main
+```
+
+The point is not to create surveillance theatre around agents. The point is to compress review.
+
+If a reviewer can see that an agent ran two commands, touched three files, performed no network-like actions, and ran one verification command, they have a much better starting point than "the agent said it was done."
+
+If the bill shows broad file churn, network-like actions, no verification, or a mismatch between the claimed scope and the actual work, that is also useful. The review can start at the risk instead of discovering it halfway through.
+
+This is one of the bigger founder/operator lessons from the sprint:
+
+agent speed creates an audit surface whether you design one or not.
+
+The only question is whether that surface is a clean artifact or a pile of chat history.
+
+## DepScreen: dependencies are review decisions
+
+`depscreen` brings the same review-surface idea into dependency changes.
+
+Dependency review is easy to treat as background noise. A package gets added, the lockfile moves, CI passes, and everyone hopes the change is fine.
+
+That posture is too weak for agent-built projects.
+
+Agents can add dependencies quickly. They can also add broad version ranges, non-registry specs, lifecycle scripts, missing lockfiles, missing license metadata, and lockfile churn that nobody intended to review. A human may catch those things. A deterministic preflight should make them hard to miss.
+
+DepScreen is deliberately offline and heuristic. It does not claim to be a vulnerability database or proof that dependencies are safe. It creates snapshots, scans projects, diffs snapshots, and renders reports.
+
+```bash
+npx depscreen snapshot --root . --output depscreen.lock.json
+npx depscreen scan --root . --format text --fail-on high
+npx depscreen diff baseline.json current.json --format markdown
+npx depscreen report depscreen.json --format markdown --output DEPENDENCIES.md
+```
+
+That boundary is the right one.
+
+The tool does not need to know every vulnerability on the internet to be valuable. It just has to make dependency risk visible before review turns into archaeology.
+
+<CompareTable
+  left={{ title: "Weak review surface", items: ["Agent summary is the main artifact", "Verification lives in terminal scrollback", "Dependency churn is easy to miss", "Logs are too raw to inspect", "Reviewer starts by reconstructing the run"] }}
+  right={{ title: "Receipt-driven review", items: ["Provenance receipt names changed files", "Commands and results are attached", "Dependency findings become review prompts", "Agent activity has a bill of materials", "Reviewer starts from structured evidence"] }}
+/>
+
+## The deeper pattern
+
+These tools are not competing attempts to solve review. They are three slices of the same surface:
+
+| Tool | Review question | Artifact |
+|---|---|---|
+| `agentattest` | What changed, and can this workspace still match the receipt? | Local provenance JSON and Markdown |
+| `toolbill` | What did the agent do during the run? | Compact bill of materials from logs and git changes |
+| `depscreen` | Did dependency risk move? | Snapshot, scan, diff, and report output |
+
+That pattern keeps showing up across the sprint.
+
+Day 16 was about [proof before publish](/blog/day-16-proof-before-publish/). Day 22 was about [release evidence without leaking the run](/blog/day-22-release-evidence-without-leaks/). Day 24 was about [building for first failure](/blog/day-24-deterministic-failure/).
+
+Day 25 moves the idea one step closer to the reviewer:
+
+do not just generate evidence. Shape the evidence into the surface where the decision happens.
+
+## Where Day 25 lands
+
+The more agent work I run, the less interested I am in generic claims about autonomy.
+
+Autonomy is only useful when the review loop can keep up.
+
+AgentAttest gives changed code a local provenance receipt. ToolBill gives agent activity a compact bill of materials. DepScreen gives dependency changes a deterministic review prompt.
+
+None of them make the model smarter. That is not the job.
+
+They make the work easier to inspect.
+
+That is the practical edge. Agentic engineering does not fail because the model cannot produce enough output. It fails when the output arrives faster than trust can move through the system.
+
+The review surface is where that trust moves.
+
+Build it like it is the product, because for agent-assisted engineering, it is.

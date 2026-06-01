@@ -1,0 +1,182 @@
+---
+title: "Why CutPilot Exists"
+description: "CutPilot is a local-first agentic video editing helper for transcript-aware EDLs, ffmpeg render plans, and reviewable artifacts around small cuts from local footage."
+pubDate: 2026-06-01
+tags: ["open-source", "ai-agents", "developer-tools", "video", "local-first"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: local-first agentic video editing CLI; supporting phrases: AI coding agents workflow, ffmpeg EDL tooling, transcript-aware video editing, local-first developer tools */}
+
+`cutpilot` exists because video editing is exactly the kind of workflow where agents can be useful and dangerous at the same time.
+
+Useful because a lot of editing work is structured: inspect the footage, find the transcript, choose a preset, build an edit decision list, validate timings, plan an `ffmpeg` command, and leave artifacts for review.
+
+Dangerous because local footage is personal, large, messy, and easy to damage if a tool treats the media folder like a generic build directory.
+
+So the shape of the tool matters.
+
+`cutpilot` is a local-first CLI and agent skill layer for building small, inspectable video edits from local footage. It creates a simple EDL, validates the timeline, plans `ffmpeg` commands, and writes agent-friendly artifacts such as packed transcript notes and diagnostics.
+
+<Highlight>
+The interesting part is not "AI edits video." The interesting part is making the edit plan explicit before anything touches the footage.
+</Highlight>
+
+## The workflow pain
+
+Transcript-first video editing has a real pull.
+
+You want to take a long clip, find the hook, trim the dead air, shape a 15-second short, maybe produce a carousel or a talking-head cleanup, and do it without manually scrubbing every second.
+
+That sounds perfect for agents.
+
+But the normal agent failure mode is too expensive here. If an agent guesses at timestamps, overwrites media, renders the wrong aspect ratio, loses track of transcript boundaries, or hides the `ffmpeg` command behind a cheerful summary, the user is stuck cleaning up a visual mess.
+
+Video needs a plan surface.
+
+That is what an EDL gives you.
+
+Instead of asking the agent to directly "make a good video," `cutpilot` asks it to produce and validate a small JSON contract:
+
+```json
+{
+  "version": 1,
+  "title": "Launch short",
+  "preset": "short-15",
+  "aspect": "9:16",
+  "targetSeconds": 15,
+  "segments": [
+    {
+      "id": "s01",
+      "source": "take01.mp4",
+      "start": 0.42,
+      "end": 3.72,
+      "role": "hook",
+      "text": "This works",
+      "reason": "Selected from transcript word boundaries."
+    }
+  ]
+}
+```
+
+That contract is much easier to inspect than a rendered video nobody can explain.
+
+## What CutPilot does
+
+The README describes the current workflow plainly:
+
+```sh
+cutpilot init
+cutpilot inspect
+cutpilot edl create --preset short-15 --title "Launch short"
+cutpilot edl validate
+cutpilot render --dry-run
+cutpilot artifacts
+```
+
+That sequence is the product thesis in miniature.
+
+`cutpilot init` creates a `.cutpilot/` workspace with edit, render, transcript, artifact, temp, and preset folders.
+
+`cutpilot inspect` scans local video files and writes a manifest.
+
+`cutpilot edl create` builds a first-pass edit decision list from source metadata and optional transcripts.
+
+`cutpilot edl validate` checks source bounds, duration, and transcript word-boundary alignment.
+
+`cutpilot render --dry-run` emits an `ffmpeg` command plan without rendering.
+
+`cutpilot artifacts` writes packed transcript notes, timeline diagnostics, and an agent brief.
+
+That last part is important. The agent brief is not decorative. It is the handoff layer. It lets a human or follow-up agent see the planned edit as structured work instead of terminal folklore.
+
+<Callout type="tip" title="Dry runs are product design">
+For local media workflows, a dry-run render plan is not just a safety feature. It is the review surface where the user decides whether the agent understood the cut.
+</Callout>
+
+## Why local-first matters here
+
+The repo is intentionally smaller than a SaaS video editor.
+
+No auth. No billing. No cloud queue. No proprietary generation pipeline.
+
+That is not a lack of ambition. It is the point.
+
+Local footage should not have to leave the machine just because an agent is helping with the edit. The safer primitive is to inspect local files, produce local plans, validate local contracts, and only run the local render when the plan is acceptable.
+
+This fits the broader pattern behind [local-first agent tools](/blog/local-first-agent-tools/) and [preflight is where agent quality starts](/blog/preflight-is-where-agent-quality-starts/).
+
+Agents get better when the surrounding tool narrows the world for them.
+
+In `cutpilot`, that means the agent is not trying to become a full nonlinear editor. It is helping produce a reviewable timeline contract and command plan.
+
+## The transcript boundary
+
+The transcript support is one of the more useful constraints.
+
+`cutpilot` accepts optional word-level transcript JSON under `.cutpilot/transcripts/<source-basename>.json`. When transcripts exist, generated segment edges can align to word boundaries, and manually edited EDLs can warn when a cut lands inside a word.
+
+That sounds small until you imagine reviewing an agent-made short.
+
+The difference between a clean cut and a cut inside a word is the difference between "this agent saved me time" and "now I have to babysit the edit."
+
+This is the same lesson as [deterministic agents beat charismatic agents](/blog/deterministic-agents-beat-charismatic-agents/).
+
+Do not ask the model to be persuasive about whether the edit is good. Give the workflow a deterministic check for the thing that usually makes the edit feel wrong.
+
+## The agent skill is part of the product
+
+`cutpilot` also ships a skill under `skills/cutpilot/SKILL.md` for Codex, Claude, and OpenClaw-style local agents.
+
+That detail matters.
+
+The CLI is the deterministic layer. The skill is the operating procedure around it.
+
+For agentic tools, those two pieces belong together. If the skill tells the agent how to inspect, validate, dry-run, and preserve footage boundaries, the workflow becomes less dependent on a giant prompt in a chat window.
+
+That is the bigger agentic engineering thesis again:
+
+put the rules where the agent can use them, and put the proof where the reviewer can inspect it.
+
+<CompareTable
+  left={{ title: "Loose video agent", items: ["Agent guesses the edit shape", "Commands hidden in summary", "Footage boundaries implicit", "Transcript cuts reviewed by ear", "Artifacts scattered after the run"] }}
+  right={{ title: "CutPilot workflow", items: ["EDL is the edit contract", "Dry-run ffmpeg plan is reviewable", "Local footage stays untouched until render", "Word-boundary checks flag bad cuts", "Agent brief and diagnostics are written"] }}
+/>
+
+## Why this repo belongs in the OSS stack
+
+Most of my harness tools live around code review, release checks, prompts, dependencies, and agent handoffs.
+
+`cutpilot` pushes the same pattern into media.
+
+That is useful because the agent problem is not limited to code. The moment agents touch real work, the same questions come back:
+
+- What is the plan?
+- What is the contract?
+- What did the tool inspect?
+- What will it do before it does it?
+- What artifact can a human review?
+
+Video just makes the cost of ambiguity more obvious.
+
+If an agent makes a bad code edit, the diff can show it. If an agent makes a bad video cut, the failure is temporal and visual. You need the plan before the render, not just the output after the fact.
+
+## The takeaway
+
+`cutpilot` is not trying to replace an editor.
+
+It is trying to make the first agent-assisted cut inspectable.
+
+That is the right level of ambition for a harness tool: small enough to trust, structured enough to automate, and local enough that the user's footage does not become collateral damage.
+
+The bigger lesson is simple. Agentic media work needs the same thing agentic code work needs.
+
+Not more magic.
+
+Better contracts.
+
+In this case, the contract is an EDL, a transcript boundary check, a dry-run `ffmpeg` plan, and a pile of local artifacts the reviewer can actually read.

@@ -1,0 +1,208 @@
+---
+title: "Day 26: Make the Review Path Smaller"
+description: "Day 26 of the 60 Day OSS Sprint: lockstep, airgapquery, and policydiff all push agent work toward the same discipline - shrink the review path before asking anyone to trust the output."
+pubDate: 2026-06-03
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent review workflow; supporting phrases: deterministic AI agents, agentic engineering tools, local-first developer tools, AI agent verification */}
+
+Day 26 was about a constraint I keep relearning:
+
+the reviewer should not have to inspect the whole world.
+
+That sounds obvious until you watch an agent finish a task by handing over a broad diff, a confident summary, and a pile of terminal output. The work may be good. The checks may have passed. But if the reviewer has to reconstruct the shape of the system before they can inspect the change, the agent has not reduced the work enough.
+
+It has moved the work.
+
+The strongest thread today ran through `lockstep`, `airgapquery`, and `policydiff`.
+
+`lockstep` maps script and toolchain drift across JavaScript and TypeScript workspaces. `airgapquery` tests whether local document retrieval can run without hidden network calls. `policydiff` turns noisy JSON and YAML policy changes into a risk summary.
+
+Different surfaces. Same thesis.
+
+<Highlight>
+Agent output gets easier to trust when the harness makes the review path smaller before the human arrives.
+</Highlight>
+
+That is the Day 26 lesson.
+
+## The challenge: scope is the silent review tax
+
+Agentic engineering does not only create code. It creates review obligations.
+
+Every new file, dependency, script, config change, and generated artifact asks the reviewer to answer a question. Is this necessary? Is it safe? Did it widen access? Did it skip a check? Did it introduce a network path? Did it silently drift from the policy the rest of the repo follows?
+
+One or two questions are fine.
+
+Forty questions spread across a workspace are how velocity turns into avoidance.
+
+This is why I keep coming back to harness tools. Not because I want agents wrapped in ceremony. Because the useful version of speed is the version where review starts from a narrowed surface.
+
+Day 25 was about [the review surface being the product](/blog/day-25-review-surface-is-the-product/). Day 26 pushes that idea one step earlier:
+
+make the surface smaller before the reviewer touches it.
+
+## Lockstep: drift should not require a workspace archaeology pass
+
+`lockstep` starts with a boring problem that becomes expensive in a portfolio of small tools.
+
+You think every package has a `test` script. Some do not.
+
+You think every repo has `build`, `check`, and `smoke`. A few have renamed them, skipped them, or wired validation commands to scripts that no longer exist.
+
+You think the Node engine, package manager, and lockfile expectations are roughly consistent. Then release work begins, and the agent spends its first pass rediscovering drift instead of making the change.
+
+Lockstep scans a workspace, reads each `package.json`, compares it against a local policy, and writes a report.
+
+```bash
+lockstep init --write-policy
+lockstep scan . --policy lockstep.config.json
+lockstep scan . --format markdown --output DRIFT.md
+lockstep scan . --fail-on-drift
+```
+
+The details matter because the tool does not execute package scripts. It does not install dependencies. It does not post telemetry. It reads manifests and reports drift.
+
+That makes it useful as an early gate.
+
+Before an agent starts release work, it can ask a smaller question: does this workspace still have the scripts and toolchain shape we expect?
+
+If the answer is no, the review path changes. The task is not "ship the release." The task is "fix or account for drift." That is a cleaner handoff than discovering halfway through that the repo never had the command the plan depended on.
+
+<Callout type="tip" title="Shrink the task before running it">
+A drift report is not busywork. It is a way to stop an agent from building on assumptions the workspace no longer satisfies.
+</Callout>
+
+This matters more with agents than with humans.
+
+A human maintainer may remember which repos are odd. An agent receives the folder in front of it. If the local policy is not encoded, the model has to infer the policy from examples. That inference can be decent. It is still weaker than a deterministic scan.
+
+Lockstep turns "this repo feels inconsistent" into a report the reviewer can inspect.
+
+That is not glamorous. It is the foundation.
+
+## AirgapQuery: local-only claims need local-only evidence
+
+`airgapquery` attacks a different kind of vague confidence.
+
+Every privacy-sensitive document workflow eventually says some version of this:
+
+"It runs locally."
+
+That sentence is not enough.
+
+Does ingestion read only the directory passed to it? Does retrieval produce citations? Are large files skipped deliberately? Are hidden files excluded by default? Does the smoke test prove there was no runtime network path, or does it just avoid using an obvious API key?
+
+AirgapQuery keeps the V1 deliberately small. It inspects local text documents, chunks and tokenizes supported files deterministically, queries local chunks with transparent scores and citations, and emits JSON or Markdown evidence.
+
+```bash
+airgapquery inspect fixtures/sample --format markdown
+airgapquery inspect fixtures/sample --format json --output out/inspect.json
+airgapquery query fixtures/sample \
+  --question "How do agents prove there are no hidden network calls?" \
+  --format markdown \
+  --top 3
+```
+
+The tool is not an LLM API wrapper. It does not run embeddings. It does not call telemetry. It does not crawl credentials. The current implementation uses deterministic token scoring over local fixtures so the retrieval path is inspectable and replaceable.
+
+That boundary is the point.
+
+If I am going to claim a workflow is local-first, I want an artifact that makes the claim easier to review. Not a paragraph. Not a demo. A report that says what files were inspected, what was skipped, what citations were returned, and what safety boundaries were in force.
+
+This connects directly to [local-first agent tools](/blog/local-first-agent-tools/) and [the agent should not be the only witness](/blog/the-agent-should-not-be-the-only-witness/).
+
+The model can say "no network calls." The harness should leave evidence that makes the claim checkable.
+
+<CompareTable
+  left={{ title: "Trusting the claim", items: ["Local-first is described in prose", "Retrieval output lacks citations", "Skipped files are invisible", "Network boundary is implied", "Reviewer inspects the demo path"] }}
+  right={{ title: "Reviewing the evidence", items: ["Local inspection creates a report", "Chunks include cited file ranges", "Skipped files are explicit", "No-runtime-network posture is documented", "Reviewer inspects the boundary"] }}
+/>
+
+AirgapQuery is intentionally not trying to be the whole private RAG stack.
+
+That restraint is useful. It gives the agent and reviewer a narrow proof point: can this local ingestion and retrieval path run as a deterministic smoke test before private documents touch anything more complex?
+
+That is the right-sized question for a harness tool.
+
+## PolicyDiff: permissions should not hide inside noisy config
+
+The third tool, `policydiff`, is about the config changes that look harmless until they are not.
+
+Policy files are hard to review because they are often structurally noisy. JSON and YAML diffs can contain reordered keys, added sections, nested changes, and naming differences that bury the one line that matters.
+
+That one line might be:
+
+- `contents: read` became `contents: write`
+- an approval requirement disappeared
+- a guardrail was disabled
+- a role widened
+- a package lifecycle script appeared
+- a CORS or network exposure changed
+
+An agent can make those changes quickly. It can also summarize them too softly.
+
+PolicyDiff compares JSON or YAML files and directories, classifies risky changes, and renders text, JSON, or Markdown.
+
+```bash
+policydiff compare fixtures/before fixtures/after
+policydiff compare policy.before.yml policy.after.yml --format markdown
+policydiff compare before after --format json --output policydiff.json
+policydiff explain policydiff.json --format markdown
+```
+
+The output is not a formal proof. It is a reviewer assistant. That is the honest boundary.
+
+But the boundary is still valuable.
+
+If a pull request changes repository permissions, workflow permissions, branch protection, package scripts, or secret-adjacent paths, the reviewer should not have to visually diff nested config and hope the risky part jumps out.
+
+The harness should name the risk.
+
+That is especially important in agent workflows because agents tend to be good at broad syntactic changes. They can update config, docs, and scripts in one pass. That convenience is exactly why review needs a second deterministic lens.
+
+PolicyDiff makes the policy delta legible before the reviewer has to decide whether it is acceptable.
+
+## The pattern across all three
+
+These tools are small, but they share the same operating model:
+
+| Tool | Narrow question | Review artifact |
+|---|---|---|
+| `lockstep` | Did scripts and toolchain policy drift? | Workspace drift report |
+| `airgapquery` | Can local retrieval produce inspectable evidence without hidden network behavior? | Inspection and query report |
+| `policydiff` | Did policy or config risk widen? | Classified risk summary |
+
+The deeper pattern is that none of them asks the reviewer to trust a model summary first.
+
+They create a smaller surface.
+
+Lockstep reduces workspace uncertainty. AirgapQuery reduces local-first uncertainty. PolicyDiff reduces policy-change uncertainty.
+
+That is what I want from harness tools. Not magic. Not autonomy theatre. A reliable way to turn a sprawling review problem into a few concrete decisions.
+
+## Where Day 26 lands
+
+The more OSS work I push through agents, the more convinced I am that the winning workflow is not "let the agent do everything."
+
+It is:
+
+give the agent a smaller world.
+
+Lockstep gives the agent a clearer workspace. AirgapQuery gives local document workflows a checkable boundary. PolicyDiff gives config reviewers a risk-first diff.
+
+Together they point at a useful discipline for the rest of the sprint:
+
+do not ask a human to review everything the agent touched. Build tools that tell the human which part of the work deserves attention first.
+
+That is how agent speed becomes operational instead of theatrical.
+
+Make the review path smaller.
+
+Then move fast.

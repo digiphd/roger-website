@@ -1,0 +1,135 @@
+---
+title: "Why DepScreen Exists"
+description: "DepScreen is a local-first dependency review CLI for agent-built JavaScript projects. It exists because dependency changes need deterministic prompts before they become supply-chain risk."
+pubDate: 2026-06-02
+tags: ["oss", "developer-tools", "security", "ai"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: local dependency review CLI; supporting phrases: dependency review for AI coding agents, JavaScript supply chain tooling, local-first developer tools, agentic engineering tools */}
+
+Agents are very good at adding dependencies.
+
+That is useful until it is not.
+
+A coding agent can reach for a package to save time, unblock an implementation, parse a format, render output, or avoid writing boring glue code. Sometimes that is exactly the right move.
+
+But dependency changes are not ordinary code changes.
+
+They alter the trust boundary of the project.
+
+`depscreen` exists because agent-built JavaScript projects need a local, deterministic way to make dependency review visible before a human approves the change.
+
+## The problem is not that dependencies are bad
+
+I am not interested in dependency purism.
+
+Small tools should use the ecosystem when it makes sense. Rewriting everything from scratch is its own form of risk.
+
+The problem is unreviewed dependency drift.
+
+A pull request can look small while the lockfile tells a different story. A package spec can look harmless while it points to a git URL, local file, broad range, or hosted source. A lockfile can introduce install scripts that deserve a second look. A large churn event can hide inside a feature branch that otherwise reads cleanly.
+
+None of that means the change is automatically unsafe.
+
+It means the reviewer should be prompted.
+
+<Highlight emoji="🔎">
+The dependency review layer should not pretend to prove safety. It should make the right questions hard to miss.
+</Highlight>
+
+That distinction matters.
+
+`depscreen` is explicitly not a replacement for `npm audit`, Socket, Snyk, or maintainer judgment. Its first job is narrower and more operational: create deterministic review prompts from local project facts.
+
+## What DepScreen does
+
+The CLI is intentionally local-first.
+
+It scans `package.json`, `package-lock.json`, and `pnpm-lock.yaml` without registry calls, telemetry, or a network dependency for the core checks.
+
+The current commands are practical:
+
+- `snapshot` writes a deterministic dependency snapshot
+- `scan` reviews the current package and lockfile state
+- `diff` compares two saved snapshots
+- `report` renders saved JSON results into text, JSON, or Markdown
+
+The findings are also deliberately review-shaped. The first release flags broad dependency ranges, git or URL-style specs, local file dependencies, lockfile packages with install or build scripts, missing or unknown license metadata where available, moderate or large lockfile churn, and newly added or changed direct dependency specs.
+
+That is the right level of ambition for a first version.
+
+Not "trust this package."
+
+"Here is the part of the dependency surface a human should inspect."
+
+<Callout type="tip" title="Local-first matters here">
+Dependency review should be easy to run in a branch, in CI, or inside an agent handoff without sending private project metadata to another service by default.
+</Callout>
+
+## Why this belongs in the agent harness stack
+
+Most AI coding workflows treat dependency review as an afterthought.
+
+The agent implements the feature. Tests pass. The pull request opens. The reviewer sees a diff, maybe a lockfile, and hopefully notices the dependency implications.
+
+That is too late and too easy to miss.
+
+In the harness stack, dependency review should be another proof artifact.
+
+The agent should be able to say:
+
+- I changed these dependency specs
+- this snapshot changed from baseline to current
+- these review prompts were generated
+- this churn is expected or needs human attention
+- no network calls were required to produce this evidence
+
+That fits the same thesis behind [Agent-QC](/blog/why-agent-qc-exists/), [ProofDock](/blog/why-proofdock-exists/), and [RunReceipt](/blog/why-runreceipt-exists/): serious agent work needs receipts, not just summaries.
+
+<CompareTable
+  left={{ title: "Dependency drift by vibes", items: ["Agent adds a package", "Lockfile changes are skimmed", "Risk is buried in the diff", "Reviewer notices late", "Decision depends on memory"] }}
+  right={{ title: "DepScreen workflow", items: ["Snapshot the dependency surface", "Scan package and lockfiles", "Flag review prompts", "Render Markdown evidence", "Reviewer decides with context"] }}
+/>
+
+## The useful humility
+
+I like that `depscreen` has a clear status note.
+
+It is an early public build. Its current rules are heuristic review prompts. They are not proof that a dependency is safe.
+
+That humility is not weakness. It is good tool design.
+
+A lot of security-adjacent tooling overclaims. That creates a different kind of danger because users start treating green output as permission to stop thinking.
+
+For agentic engineering, the better pattern is explicit evidence with explicit limits.
+
+Tell me what was checked.
+
+Tell me what was not checked.
+
+Tell me what deserves review.
+
+Then let the human make the call.
+
+## The bigger founder lesson
+
+As the OSS stack grows, I keep running into the same operational truth.
+
+Agent speed creates review debt unless the workflow creates artifacts fast enough to keep up.
+
+Dependencies are a perfect example. One new package can save hours. One careless package can cost days. The point is not to slow the agent down every time it reaches for the ecosystem.
+
+The point is to make that reach inspectable.
+
+`depscreen` turns dependency change from a hidden side effect into a reviewable object.
+
+That is the kind of tool I want more of: small, local, deterministic, honest about its limits, and designed to sit inside a larger review pipeline.
+
+The agent can still move fast.
+
+But the dependency surface should not move silently.

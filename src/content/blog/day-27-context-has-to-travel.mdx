@@ -1,0 +1,171 @@
+---
+title: "Day 27: Context Has to Travel"
+description: "Day 27 of the 60 Day OSS Sprint: ctxquilt, secretshape, and smokegrid all point at the same agent workflow problem - context, secrets, and smoke evidence need portable shapes before speed can compound."
+pubDate: 2026-06-03
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: portable context for AI coding agents; supporting phrases: AI coding agents workflow, agentic engineering tools, AI agent verification, local-first developer tools */}
+
+Day 27 was about a problem that sounds small until it starts eating the workflow:
+
+context that cannot travel.
+
+An agent can do good work inside one run and still leave the next reviewer with almost nothing useful. The code changed. The terminal scrolled by. The prompt made sense at the time. The secret requirements were "obvious" to the person who already knew them. The smoke test passed on one machine, but the proof is not shaped well enough for anyone else to inspect.
+
+That is where speed starts leaking.
+
+The strongest thread today ran through `ctxquilt`, `secretshape`, and `smokegrid`.
+
+`ctxquilt` packs compact, reproducible repository context bundles for coding agents. `secretshape` describes and validates required secret shapes without exposing the values. `smokegrid` is a fixture-backed CLI smoke test runner for developer tools.
+
+Different tools. Same operating rule.
+
+<Highlight>
+Agent work compounds only when the context, constraints, and verification evidence can move to the next run without losing their shape.
+</Highlight>
+
+That is the Day 27 lesson.
+
+## The challenge: chat is a bad container for operational context
+
+AI workflows still put too much trust in chat memory.
+
+That is understandable. Chat is convenient. It is where the plan forms, where the agent explains itself, and where a lot of the useful context appears. But chat is a weak operational container. It is hard to diff. It is hard to replay. It is hard to budget. It is hard to redact with confidence. It is hard to hand to another agent without dragging in a pile of stale or irrelevant material.
+
+For one-off work, that might be tolerable.
+
+For a 60 day sprint across a growing pile of repos, it is not.
+
+The pattern I keep seeing is that agentic engineering needs smaller artifacts with sharper jobs:
+
+- a context bundle that says what was included and omitted
+- a secret schema that explains what config shape is required without exposing values
+- a smoke manifest that proves the CLI still does the smallest useful thing
+
+Those artifacts do not replace judgment. They make judgment cheaper.
+
+That connects directly to the argument in [the review surface is the product](/blog/day-25-review-surface-is-the-product). A reviewer should not have to reconstruct the work from a confident summary. The workflow should carry the evidence forward.
+
+## ctxquilt: context should be packed, not pasted
+
+`ctxquilt` is the most direct version of today's theme.
+
+It collects repository text from include globs, applies ignore rules and redactions, estimates token cost, and emits a Markdown or JSON bundle with a manifest explaining what was included and what was omitted.
+
+That sounds like a context helper. It is really a boundary-setting tool.
+
+When an agent gets repository context, the question should not be "how much can we fit?" The better question is "which context is worth carrying, what did we intentionally exclude, and what budget are we spending?"
+
+That matters because context is not free.
+
+Too little context makes the agent guess. Too much context makes the run noisy, expensive, and harder to audit. Unshaped context creates a hidden dependency on whatever happened to be pasted into the chat at the start.
+
+`ctxquilt` moves that decision into a reproducible artifact.
+
+The CLI shape is intentionally practical:
+
+```sh
+npx ctxquilt pack --include "src/**/*.ts" --include README.md --budget 12000 --output context.md
+npx ctxquilt explain context.md
+```
+
+That is the right level of boring.
+
+A bundle can travel. A manifest can be reviewed. A token budget can be argued with. Redaction rules can be inspected. The next agent can start from a known input instead of inheriting whatever the previous chat happened to remember.
+
+## secretshape: secrets need contracts without exposure
+
+`secretshape` tackles the other side of context: the part everyone is nervous about writing down.
+
+Secrets are operationally important, but their values should not become part of the agent's working memory. That creates a practical problem. The agent still needs to know what the application expects. A reviewer still needs to know whether `.env.example` is complete. CI still benefits from checking that required names, categories, patterns, and docs have not drifted.
+
+The answer is not to expose the values.
+
+The answer is to describe the shape.
+
+`secretshape` validates project secret documentation such as `.env.example` against a small schema. It reports missing, stale, and invalid entries by name and category only. It supports schema initialization, shape checks, Markdown docs, JSON output, and optional local config checks without printing values.
+
+That boundary is important.
+
+Agent tooling should make invisible assumptions visible without making sensitive material more exposed. A tool that turns private configuration into a safer public contract is much more useful than a tool that merely tells the agent to "be careful with secrets."
+
+<Callout title="The useful distinction">
+Agent workflows do not need secret values to reason about secret requirements. They need the names, categories, expectations, and documentation shape to be explicit enough that drift becomes visible.
+</Callout>
+
+This is the same deeper principle from [fail-closed agent tools](/blog/fail-closed-agent-tools). The tool should narrow the blast radius by default. It should not require heroic restraint from the agent at the most dangerous moment.
+
+## smokegrid: the smallest proof still needs a fixture
+
+`smokegrid` is the verification piece.
+
+It is a fixture-backed CLI smoke test runner for developer tools. Its package metadata describes a real release surface: TypeScript build, type check, Node tests, a smoke command, dry-run package smoke, and a `release:check` script that ties them together.
+
+The important bit is not that it runs commands. Plenty of tools run commands.
+
+The useful bit is that smoke evidence gets a shape.
+
+Small OSS CLIs need a way to prove the most basic user path still works. Not a giant integration environment. Not a full production simulation. Just enough fixture-backed evidence that a reviewer can tell whether the tool still does the minimum useful thing.
+
+That matters more in agent-heavy work because agents tend to overstate verification.
+
+"I ran the tests" is weaker than a named smoke fixture. "The CLI works" is weaker than a checked smoke manifest. "The package is ready" is weaker than a release check that includes build, test, smoke, and package dry-run.
+
+The pattern is simple:
+
+<CompareTable
+  left={{ title: "Weak handoff", items: ["Agent pastes selected files into chat", "Secrets are described informally or hidden in tribal memory", "Smoke result is mentioned in a summary"] }}
+  right={{ title: "Portable evidence", items: ["Context bundle records included files, omitted files, and budget", "Secret schema validates required names and docs without values", "Fixture-backed smoke command becomes part of release evidence"] }}
+/>
+
+None of that is glamorous. All of it makes the next review faster.
+
+## The deeper insight: portability is part of quality
+
+I used to think about agent quality mostly in terms of correctness.
+
+Did the diff compile? Did the tests pass? Did the implementation match the brief? Did the agent avoid touching unrelated files?
+
+Those still matter.
+
+But the sprint keeps making the same point from different directions: correctness is not enough if the work cannot travel.
+
+A correct change with no portable context is hard to review. A correct setup with undocumented secret requirements is hard to run. A correct CLI with no stable smoke evidence is hard to trust. A correct agent summary with no artifact behind it is just another claim.
+
+That is why local-first developer tools keep showing up in this sprint. They give agent work a physical shape:
+
+- files instead of vibes
+- schemas instead of assumptions
+- fixtures instead of "it worked once"
+- manifests instead of memory
+- reviewable artifacts instead of private confidence
+
+That is also why I keep coming back to deterministic workflows. Determinism is not only about making the machine repeat itself. It is about making the work legible enough that another person, another agent, or another run can pick it up without losing the important constraints.
+
+## What changed in the sprint
+
+Day 27 sharpened the workflow around portability.
+
+`ctxquilt` makes repository context easier to pack and explain. `secretshape` makes secret requirements inspectable without exposing the secret values. `smokegrid` makes the smallest useful CLI proof more repeatable.
+
+Together, they point at a practical rule for the rest of the sprint:
+
+<Highlight>
+If a piece of context matters to the work, it should have a portable artifact. If it cannot safely travel, it is not ready to become an agent dependency.
+</Highlight>
+
+That is not slower than chat-driven work.
+
+It is slower than pretending the next run will remember everything.
+
+But it is much faster than rebuilding context after every handoff, rerunning vague checks, or discovering too late that the agent made a hidden assumption about secrets, fixtures, or repo shape.
+
+The sprint is not just producing tools. It is slowly turning into a library of small containers for trust.
+
+Day 27 made that more obvious.

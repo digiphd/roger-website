@@ -1,0 +1,163 @@
+---
+title: "Agent Input Contracts Beat Output Polish"
+description: "AI coding agents get safer and faster when the work starts with explicit inputs: scope, permissions, fixtures, proof requirements, and review contracts instead of prettier final summaries."
+pubDate: 2026-06-02
+tags: ["ai", "agents", "engineering", "workflow"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agent workflow; supporting phrases: deterministic AI agents, agentic engineering tools, AI software quality, AI agent verification */}
+
+Most teams are trying to improve agents at the wrong end of the task.
+
+They polish the final answer. They tune the handoff summary. They ask for better reasoning traces. They add a prettier pull request template. They want the model to explain itself more clearly after the work is done.
+
+Some of that helps.
+
+But the highest-leverage improvement usually happens before the agent starts.
+
+The input contract is the control surface.
+
+## The output is already too late
+
+When an agent hands you a confident summary, a lot has already happened.
+
+It chose which files mattered. It decided what the task meant. It inferred how much risk was acceptable. It picked checks. It skipped checks. It made assumptions about permissions, dependencies, fixtures, branches, and review expectations.
+
+If those things were not explicit at the start, the output summary is mostly archaeology.
+
+You are reading a polished reconstruction of decisions the system did not constrain when they mattered.
+
+<Highlight emoji="📌">
+If the task starts fuzzy, the review starts expensive.
+</Highlight>
+
+That is the pattern I keep seeing in agentic engineering.
+
+The model can be strong. The diff can be useful. The summary can be articulate. But if the inputs were vague, the reviewer has to recover the real contract from the residue.
+
+That is slow.
+
+And worse, it feels like speed until the human pays the bill.
+
+## What an input contract actually contains
+
+An agent input contract does not need to be bureaucratic.
+
+It needs to be concrete enough that the agent cannot silently redefine success.
+
+For coding work, I want the task to say:
+
+- what problem is being solved
+- which files or areas are in scope
+- what is explicitly out of scope
+- which commands should prove the change
+- which fixtures or examples matter
+- what permissions the agent has
+- what kind of handoff the reviewer needs
+- where uncertainty should be surfaced instead of hidden
+
+That sounds simple because it is simple.
+
+The hard part is making it habitual.
+
+Without the contract, the agent optimizes for completion. With the contract, it optimizes inside a shape that a human can review.
+
+<Callout type="tip" title="Contracts make delegation cheaper">
+The point is not to make the prompt longer. The point is to remove decisions that should not be rediscovered by every agent on every run.
+</Callout>
+
+This is why tools like [TaskBrief](/blog/why-taskbrief-exists/), [PromptSnap](/blog/why-promptsnap-exists/), and [Agent-QC](/blog/why-agent-qc-exists/) keep showing up in the stack.
+
+They are not glamorous.
+
+They turn intent into something testable.
+
+## The agent should not own the definition of done
+
+The most dangerous sentence in agent workflows is some version of:
+
+"I completed the task."
+
+Not because the agent is lying.
+
+Because "completed" is often underspecified.
+
+Did it run the right tests? Did it use live data? Did it touch unrelated files? Did it preserve existing user changes? Did it update the generated artifact? Did it create a branch from the right base? Did it capture why a check was skipped?
+
+If the input contract does not define those things, the agent fills the gap.
+
+That is not intelligence. That is uncontrolled policy.
+
+<CompareTable
+  left={{ title: "Output-first workflow", items: ["Agent infers scope", "Checks are chosen ad hoc", "Summary arrives after decisions", "Reviewer reconstructs intent", "Confidence can hide drift"] }}
+  right={{ title: "Input-contract workflow", items: ["Scope is explicit", "Proof is named up front", "Permissions are bounded", "Reviewer compares against a contract", "Uncertainty has a place to go"] }}
+/>
+
+This is the difference between a helpful assistant and a production workflow.
+
+One can improvise.
+
+The other has to be inspectable.
+
+## Speed comes from fewer silent choices
+
+People often hear "contract" and think "slower."
+
+I think that is backwards.
+
+The slow part is not writing a crisp task. The slow part is debugging a vague one.
+
+Every silent choice becomes a review question later. Every unclear boundary creates a possible side quest. Every missing fixture creates a debate about whether the change actually works. Every skipped proof command becomes a trust negotiation.
+
+The fastest agent is not the one that can decide everything.
+
+The fastest agent is the one that has less to decide.
+
+That is why [the fastest agent has less to decide](/blog/the-fastest-agent-has-less-to-decide/) is not just a productivity line. It is an architecture principle.
+
+Reduce the decision surface. Preserve the creative surface.
+
+Let the model do the work that benefits from judgment and synthesis. Stop making it guess the operational rules of the shop.
+
+## This is founder work, not prompt trivia
+
+For a founder building with agents, input contracts are not a niche prompt-engineering detail.
+
+They are operating leverage.
+
+If one agent run is fuzzy, you can muscle through review.
+
+If fifty agent runs are fuzzy, the company becomes a pile of attractive half-truths.
+
+The real bottleneck becomes not whether the model can produce code. It becomes whether the organization can decide what to trust.
+
+That is where small harness tools matter.
+
+They externalize the standards:
+
+- briefs before implementation
+- fixtures before claims
+- dry runs before side effects
+- proof bundles before approval
+- review queues before chat archaeology
+
+None of that requires a giant platform. It requires taste, repetition, and a refusal to let fluency substitute for evidence.
+
+## The blunt version
+
+I do not want agents that only write better endings.
+
+I want agents that start with better contracts.
+
+An output summary can tell me what the agent thinks happened. An input contract lets me judge whether the right thing happened.
+
+That is the bigger shift.
+
+The future of AI coding agents is not just better models producing smoother work.
+
+It is better systems making the work harder to misunderstand.

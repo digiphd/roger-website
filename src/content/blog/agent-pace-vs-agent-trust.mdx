@@ -1,0 +1,104 @@
+---
+title: "The Agent Trust Budget You Do Not Measure"
+description: "AI agents earn trust in small deposits and lose it in large withdrawals. This is the trust budget — and most teams are operating near zero without knowing it."
+pubDate: 2026-06-03
+tags: ["ai", "agents", "engineering", "strategy", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+{/* SEO intent: AI agent trust budget for teams; supporting phrases: deterministic AI agents, AI agent verification, agentic engineering tools, AI coding agents workflow, AI software quality */}
+
+There is a budget that most agent teams are spending down without realizing it exists.
+
+It is not the token budget. That one is visible — you see the bill, you argue about it, you optimize.
+
+It is not the scope budget. That one is usually obvious — a task grows past its boundary and someone pushes back.
+
+It is the **trust budget**. And it is the one that kills agent adoption even when the metrics look good.
+
+<Highlight>
+Agents earn trust with small, consistent deposits. They lose them in large withdrawals. The problem is that withdrawals feel immediate and deposits feel invisible.
+</Highlight>
+
+Once a trust budget hits zero, the team stops deploying the agent. The metrics still say it is productive. The person making the decision has simply stopped trusting the output enough to merge it.
+
+## The asymmetry is the whole problem
+
+Consider what happens when a coding agent opens a PR:
+
+If the changes are good, the reviewer saves maybe twenty minutes. Nice. But the reviewer still had to open the PR, read the diff, check the tests, skim the summary, and decide. The trust budget increases slightly — it always does — but the increase is small and forgettable.
+
+If the changes break something the reviewer did not expect, or the summary is wrong about what changed, or the agent opened a second PR while the first one was still under review, or it pushed directly to main against policy — that is a withdrawal. And it is a large one.
+
+<StatBlock stats={[
+  { label: "Good PR saves", value: "~20 min" },
+  { label: "Bad PR costs", value: "60–120 min" },
+  { label: "Silent trust cost", value: "Permanent" }
+]} />
+
+The math is not on the agent's side. One bad interaction can erase the goodwill from half a dozen good ones. That asymmetry is baked into human review behavior. People do not notice when things go right as vividly as they notice when something goes wrong.
+
+Agents are not exempt from this. They are subject to it more sharply than human collaborators because the expectation that they should be correct is higher. When a human makes a mistake, it is understood. When an agent makes a mistake, it is evidence that the system is unreliable.
+
+## Why speed makes it worse
+
+The faster agents move, the more opportunities they create for trust withdrawals.
+
+A human developer commits a few times a day. An agent can open ten PRs before lunch. If each PR is a small trust transaction, the agent is spending trust ten times more frequently and withdrawing it ten times more often when something goes sideways.
+
+Speed is not a trust strategy. Speed is an exposure strategy.
+
+<Callout title="What this means in practice">
+If you run agents at higher velocity without improving the quality of each individual output, your trust budget is being consumed faster than it is being replenished. The symptom is that PRs sit unreviewed, not because nobody has time, but because nobody trusts the diff enough to open it.
+</Callout>
+
+This is not theoretical. I have seen PRs from agents that were technically correct sit for days because the reviewer had already been burned twice that week. The trust budget was depleted. The PR quality was irrelevant.
+
+## The trust layer is not a policy document
+
+Teams try to solve this by writing policies. "Agents should not merge directly." "Agents should run all tests before opening a PR." "Code review is required for agent work."
+
+These are necessary. They are not sufficient.
+
+Policy documents do not restore a depleted trust budget. What restores it is **evidence**.
+
+Evidence that the agent's output is shaped in a way a reviewer can inspect without starting from scratch. Evidence that the agent ran its own verification and left receipts. Evidence that the agent's confidence level matches reality.
+
+<CompareTable 
+  headers={["Approach", "Trust impact", "Reviewer burden"]}
+  rows={[
+    ["Agent opens PR with summary", "Neutral to negative", "Full diff review required"],
+    ["Agent runs tests + shows output", "Slightly positive", "Test verification required"],
+    ["Agent provides shaped evidence packet", "Positive", "Focused review on specific changes"],
+    ["Human reviews agent evidence", "Strongly positive", "Confirmation, not investigation"]
+  ]}
+/>
+
+The fourth row is the one that moves the trust budget in the right direction. When a human reviews agent-shaped evidence and confirms it, that is the largest trust deposit available. It is the moment the reviewer says "yes, this is what I expected to see, and it matches what I care about."
+
+That is why I have been building harness tools throughout this OSS sprint. Not to slow agents down. To give them a way of working that makes each PR a deposit instead of a gamble.
+
+## Three practical rules
+
+1. **Shape the output before the reviewer touches it.** Small diffs, clear summaries, scoped changes, and visible verification matter more than volume. See [Day 26's point about making the review path smaller](/blog/day-26-review-path-smaller/).
+
+2. **Leave evidence, not summaries.** A summary is an opinion. Evidence is inspectable. See [Day 28 on evidence shape](/blog/day-28-evidence-needs-a-shape/).
+
+3. **Let the agent verify itself first.** An agent that opens a PR without running smoke checks is withdrawing trust. An agent that includes its own verification results is depositing it. See [receipts over autonomy](/blog/receipts-over-autonomy/).
+
+## The budget is real whether you measure it or not
+
+Your team already has a trust budget for agent work. You may not think about it. You may not measure it. But every PR, every handoff, every review, and every silent hesitation when someone sees agent-name in the contributor column is a transaction on that budget.
+
+The question is not whether the budget exists.
+
+It is whether you are paying it down or building it up.
+
+<Highlight>
+The agents that earn lasting trust are not the fastest. They are the ones whose output makes the reviewer feel safe.
+</Highlight>

@@ -1,0 +1,131 @@
+---
+title: "Day 28: Evidence Needs a Shape"
+description: "Day 28 of the 60 Day OSS Sprint: repocapsule, agenthandoff, and rundossier all converge on one rule - agent work is only as trustworthy as the evidence shape it leaves behind."
+pubDate: 2026-06-03
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+
+{/* SEO intent: portable evidence packets for AI agent workflows; supporting phrases: AI agent verification, deterministic AI agents, agentic engineering tools, AI coding agents workflow, local-first developer tools */}
+
+Day 28 was shaped by a problem that gets worse the faster agents move:
+
+the harder the work, the more important it is that evidence has a shape.
+
+An agent can change fifty files, run twelve commands, and open a PR with a confident summary. The summary may be accurate. It may not. If all the reviewer has to work with is prose, the inspection starts from scratch every time.
+
+That is not speed. That is deferred labor.
+
+The strongest thread today ran through `repocapsule`, `agenthandoff`, and `rundossier`.
+
+`repocapsule` captures sanitized repository state into deterministic JSON and Markdown for bug reports and debugging. `agenthandoff` builds local-first handoff packets that carry context, risks, and next steps between runs. `rundossier` turns messy local agent and developer runs into portable evidence dossiers.
+
+Different entry points. Same underlying discipline.
+
+<Highlight>
+Agent work becomes trustworthy when the harness packages evidence into reviewable artifacts instead of expecting the reviewer to reconstruct what happened.
+</Highlight>
+
+That is the Day 28 lesson.
+
+## The challenge: "it worked locally" is not an artifact
+
+The most common phrase in agentic engineering work is probably some variation of "it works on my machine."
+
+That phrase has always been a weak handoff. With agents, it is worse.
+
+Agents work at higher velocity. They touch more files. They chain more commands. They fail in more ways that look like success. And they summarize their own output, which means the reviewer is often inspecting a description of the work rather than the work itself.
+
+Three tools emerged from this exact tension today.
+
+## RepoCapsule: the repo should speak for itself
+
+`repocapsule` captures a repository's current state into a deterministic JSON capsule plus a readable Markdown report. It records git facts, package metadata, included text files with SHA-256 hashes, and optional failing command output — without uploading anything by default.
+
+The important constraint is that the capsule is share-by-review, not share-by-accident.
+
+`.git`, `node_modules`, `dist`, build output, caches, `.env` files, and common secret patterns are all excluded or redacted. Home directory paths are stripped unless explicitly allowed. The capsule can be attached to an issue or handed to another agent, but only after a human has inspected it.
+
+```sh
+repocapsule init
+repocapsule scan --markdown .repocapsule/report.md
+repocapsule report --input .repocapsule/capsule.json --output .repocapsule/report.md
+```
+
+That boundary is what makes it useful.
+
+A bug report that says "something broke" invites investigation. A bug report that says "here is the exact repo state, these are the changed files, this is the command output, and here is what was redacted" invites confirmation. The gap between investigation and confirmation is where velocity lives.
+
+This connects back to the review surface argument from [Day 25](/blog/day-25-review-surface-is-the-product/). The capsule is not just a snapshot. It is a review-friendly artifact that makes the surface of the problem visible before anyone opens a terminal.
+
+<Callout title="The practical rule">
+The best repository capsule is the one that tells the reviewer what to look at and what was intentionally excluded. A capsule that captures everything captures nothing useful.
+</Callout>
+
+## AgentHandoff: the gap between runs matters
+
+`agenthandoff` is the tool that takes today's theme most seriously.
+
+If an agent is going to hand work to a human or another agent, the handoff should carry more than a summary. It should carry:
+
+- the git state when work began — branch, HEAD, upstream, ahead/behind, dirty status
+- what files changed during the run
+- which package scripts exist and what they do
+- explicit command logs that were captured along the way
+- the risks the agent spotted
+- the next steps the human or next agent needs to take
+
+```sh
+agenthandoff start --title "Finish auth refactor"
+npm test 2>&1 | tee .agenthandoff/npm-test.log
+agenthandoff capture --log .agenthandoff/npm-test.log
+agenthandoff finish --log .agenthandoff/npm-test.log --summary "Auth tests passing" --risk "Session start ref may be stale"
+agenthandoff validate HANDOFF.md
+```
+
+Each command writes a concrete artifact. `HANDOFF.md` is what the reviewer reads. `.agenthandoff/handoff.json` is what the next agent reads if someone hands work back to automation.
+
+The validation step catches missing sections, stale git refs, and failed commands. That matters because an agent may forget to include something important. A human may write a handoff that is too optimistic about what was actually finished. Validation catches the gap.
+
+This ties directly to [Day 18's point about handoffs](/blog/day-18-handoffs-are-where-speed-compounds/). The handoff is the moment velocity either compounds or leaks. A well-shaped handoff preserves everything the next run needs to start clean. A vague handoff forces the next run to rediscover context.
+
+## RunDossier: receipts without the SaaS
+
+`rundossier` is the newest version of the same instinct.
+
+It runs local commands, records their exit codes and output, tracks touched files and git state, and packages everything into Markdown, JSON, and self-contained HTML dossiers. No SaaS storage. No telemetry. Just a local evidence trail that a reviewer or future agent can open and inspect.
+
+```sh
+rundossier init
+rundossier run -- npm test
+rundossier collect
+rundossier report
+open .rundossier/out/dossier.html
+```
+
+The dossier outputs are deliberately multi-format: a Markdown handoff for humans, a JSON packet for automation, and an HTML viewer that loads without an external server. That makes the evidence portable in a practical way — someone reviewing a PR can open a single HTML file and see the full run record.
+
+The capture policy in `.rundossier/config.json` is important. It lets the project owner define what gets recorded, what gets redacted, and what is in scope. That means the evidence shape is not an accident of whatever the agent happened to log. It is a policy that the reviewer can trust.
+
+<Callout title="Evidence without the upload tax">
+The useful thing about local-first evidence packets is that they do not require uploading run logs to a third-party service before a reviewer can inspect them. The evidence lives in the worktree. It travels with the repo. It does not depend on any service being online.
+</Callout>
+
+This connects to [receipts over autonomy](/blog/receipts-over-autonomy/) and [the agent should not be the only witness](/blog/the-agent-should-not-be-the-only-witness/). The more autonomous the agent, the more important it is that its work leaves behind something the human can independently verify.
+
+## The deeper pattern
+
+Three tools. Three slightly different surfaces. The same rule:
+
+<Highlight>
+Speed without evidence shape is just expensive confidence. The harness should package agent output into something a reviewer can trust without running the agent's commands from scratch.
+</Highlight>
+
+That matters for the OSS sprint because the pace of work makes informal handoffs unreliable. A good day produces several repos several changes each. A single chat summary cannot carry the proof. Each piece of work needs its own shape.
+
+RepoCapsule gives the repo a voice. AgentHandoff gives the gap between runs a structure. RunDossier gives the individual run a receipt. Together they make a workflow where an agent can be fast and the review does not get slower.
+
+That is the bar. Everything else is optimization.

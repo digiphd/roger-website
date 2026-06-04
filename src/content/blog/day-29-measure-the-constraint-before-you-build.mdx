@@ -1,0 +1,136 @@
+---
+title: "Day 29: Measure the Constraint Before You Build"
+description: "Day 29 of the 60 Day OSS Sprint: contextmeter, mcpchangefeed, and repo-to-content all expose the same operator instinct — measure the bottleneck, map the landscape, and ground your output in facts before you write a single line of feature code."
+pubDate: 2026-06-04
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "context-optimization"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import StatBlock from "../../components/mdx/StatBlock.astro";
+
+{/* SEO intent: AI context window optimization for agent workflows; supporting phrases: MCP server discovery, deterministic AI agents, agentic engineering tools, AI coding agents workflow, evidence-grounded content generation */}
+
+Day 29 came together around a pattern I keep running into in every layer of this stack:
+
+the first thing you should build is not the feature — it is the measurement that tells you what matters.
+
+That instinct runs through `contextmeter`, `mcpchangefeed`, and `repo-to-content`.
+
+`contextmeter` measures how much of an LLM's context window your codebase actually consumes. `mcpchangefeed` maps the MCP server landscape so you know what exists, what changed, and what is stale. `repo-to-content` reads real repository facts and generates evidence-grounded content that can be checked against those facts.
+
+Three different domains. Same first move.
+
+<Highlight>
+If you do not measure the constraint first, you are just building in a fog that feels like progress.
+</Highlight>
+
+That is the Day 29 thread.
+
+## The challenge: building blind is expensive
+
+Most of the inefficiency in agent-augmented engineering comes from the same source: starting work without understanding the shape of the problem.
+
+An agent gets a repository with 45 files. Nobody checks whether those 45 files will even fit in a single context window. The agent reads through a directory listing without seeing the duplication. The prompt carries stale assumptions because nobody verified what tools exist in the ecosystem.
+
+Speed makes this worse because bad assumptions compound faster.
+
+## ContextMeter: your codebase costs more tokens than you think
+
+`contextmeter` started as a direct response to a practical moment when I needed to understand whether a codebase would fit in an agent session.
+
+It sounds trivial. It is not.
+
+The tool scans a path, estimates tokens using tiktoken-compatible counting, identifies redundancy across files, and simulates whether the work fits in any target context window:
+
+```sh
+contextmeter count .
+contextmeter analyze .
+contextmeter simulate . --model gpt-4o --limit 128000
+contextmeter report . --json
+```
+
+The important output is not the total token count. It is the breakdown:
+
+- which files carry duplicated content
+- how much boilerplate is inflating the context budget
+- what pruning strategy recovers the most room
+
+<Callout title="The practical rule">
+The first optimization is never a smarter prompt. It is removing content the agent does not need to see.
+
+Most repos carry 10–40% redundant context. ContextMeter surfaces that number.
+</Callout>
+
+This connects to the context budgeting theme from earlier sprint days. Day 27 showed that [`ctxquilt`](/blog/day-27-context-has-to-travel/) packs context into portable bundles. ContextMeter asks the harder question: is that bundle too big to be useful?
+
+## MCPChangeFeed: the landscape is already crowded, know what changed
+
+The MCP ecosystem is growing fast. New servers, renamed packages, stale documentation, tools that appeared for two weeks and disappeared.
+
+Building an agent integration on top of an ecosystem you do not track is how you ship broken connectors.
+
+`mcpchangefeed` approaches this the same way the sprint approaches everything else — with evidence, not opinion:
+
+```sh
+node dist-cli/cli.js top --input fixtures/servers.json
+node dist-cli/cli.js search filesystem --input fixtures/servers.json
+node dist-cli/cli.js diff --before fixtures/servers-before.json --after fixtures/servers.json
+```
+
+It tracks public MCP servers from registry data, normalizes metadata, and surfaces the changes that matter:
+
+- which servers are new or removed
+- which packages were renamed
+- which documentation went stale
+- which tools are getting fast updates versus going dormant
+
+This matters because the most common failure mode in agent tooling is building on top of a server you assumed was maintained and stable. A changefeed converts that assumption into something you can check.
+
+## Repo-to-Content: facts before narrative
+
+`repo-to-content` inverts the usual content pipeline. Instead of writing a post and hoping it is accurate, it reads actual repository facts and generates content artifacts that are ground-truth verifiable:
+
+```bash
+node src/cli.js fixtures/sample-repo --format posts --out content
+node src/cli.js --check-claims content/posts.md content/evidence.json
+```
+
+The `--check-claims` flag is the important part. It does not trust the content it just generated. It verifies every claim against the evidence file.
+
+If a generated post says "the project uses a custom parser," the checker looks for the actual parser code. If it does not find it, the claim fails. The post does not ship.
+
+<Highlight>
+Content that cannot be proven against the repo it describes is marketing material. Evidence-grounded content is reviewable work that a human can actually vet.
+</Highlight>
+
+This connects to the deterministic failure pattern from [Day 24](/blog/day-24-deterministic-failure/). If we can detect deterministic failure in test suites, we can also detect hallucinated claims in generated content. The same discipline applies.
+
+## The pattern: measure, map, ground
+
+Put these three tools together and you see the same operating instinct repeated across different domains:
+
+<StatBlock title="Day 29 in one line">
+Measure the constraint. Map the landscape. Ground the output in facts. Everything after that is execution.
+</StatBlock>
+
+| Tool | Domain | The measurement |
+|---|---|---|
+| ContextMeter | Context windows | Token budget and redundancy in your codebase |
+| MCPChangeFeed | Tool ecosystem | What exists, what changed, what is stale |
+| Repo-to-Content | Content generation | Claims verified against repository evidence |
+
+The through-line is that each one refuses to let you start building until you first understand what you are working with. That is not overhead. That is the difference between speed and velocity.
+
+Day 29 was the day I stopped accepting "it probably fits" and started requiring "here is the measurement."
+
+## What this says about the sprint
+
+The 60 Day OSS Sprint is not trying to prove how many repos I can ship. It is trying to prove that agentic engineering work gets better when the operator layer measures constraints first.
+
+Most of the repos in this sprint are tools that answer a specific operational question before the agent starts. That is not a coincidence. It is the thesis.
+
+---
+
+*Day 29. June 4, 2026. The context window, the ecosystem landscape, and the content pipeline all agreed on the same thing: measure the constraint before you build.*

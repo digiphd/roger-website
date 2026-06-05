@@ -1,0 +1,180 @@
+---
+title: "Day 30: Failures Need Fixtures"
+description: "Day 30 of the 60 Day OSS Sprint: failureseed, docneedle, and fixtureforge all point at the same agent workflow rule - failures, docs, and test inputs need reproducible fixtures before another agent can trust the handoff."
+pubDate: 2026-06-05
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "testing"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: deterministic fixtures for AI agent testing; supporting phrases: AI coding agents workflow, agentic engineering tools, reproducible failure handoff, local-first developer tools, AI agent verification */}
+
+Day 30 landed on a lesson that sounds obvious until you watch an agent hand off a failure:
+
+if the failure cannot be replayed, the handoff is still mostly a story.
+
+The strongest thread today ran through `failureseed`, `docneedle`, and `fixtureforge`.
+
+`failureseed` captures real failing commands and generates deterministic failing fixtures. `docneedle` searches local docs and exports compact source-linked packs for agents. `fixtureforge` stamps out deterministic file-tree fixtures for CLI tests.
+
+Different tools. Same pressure point.
+
+<Highlight>
+Agent workflows get serious when the awkward parts of the work become replayable: the failure, the docs, and the test input.
+</Highlight>
+
+That is the Day 30 theme.
+
+## The challenge: failure summaries are too soft
+
+When an agent hits a failing check, the default handoff is usually prose.
+
+It says the command failed. It quotes part of the output. It guesses at the cause. It says what might be next. Sometimes that is enough.
+
+Often it is not.
+
+The next reviewer still has to reconstruct the working directory, rerun the command, infer which output mattered, separate real signal from noisy paths or tokens, and decide whether the failure is stable or just a one-off local state problem.
+
+That is a bad place to spend human judgment.
+
+Earlier sprint days kept circling around evidence shape. [Day 28](/blog/day-28-evidence-needs-a-shape/) was about making run evidence portable. [Day 29](/blog/day-29-measure-the-constraint-before-you-build/) was about measuring the constraint before building. Day 30 adds the testing version:
+
+make the failure reproducible before asking anyone else to reason about it.
+
+## FailureSeed: a failing command should become an artifact
+
+`failureseed` is the most direct version of the idea.
+
+It has two jobs:
+
+- generate small deterministic failing fixtures for agent QA
+- capture a real failing command into JSON and Markdown handoff files
+
+That split matters.
+
+Sometimes you need a synthetic failure because you are testing the agent workflow itself. You want a known command failure, a config mismatch, or a missing script scenario that behaves the same every time.
+
+Sometimes you need to capture the actual failure in front of you.
+
+The CLI keeps both paths local and inspectable:
+
+```sh
+node bin/failureseed.js list
+node bin/failureseed.js seed command-fail --output ./tmp/command-fail
+node bin/failureseed.js run --output ./tmp/capture -- npm test
+node bin/failureseed.js replay ./tmp/capture/failureseed.json --dry-run
+```
+
+The output is not just a log. It is a replayable bundle:
+
+- `failureseed.json` for the machine-readable failure shape
+- `FAILURESEED.md` for the reviewer-friendly handoff
+- compact command metadata
+- redacted stdout and stderr where obvious token patterns appear
+
+<Callout title="The practical rule">
+A failing command should not disappear into terminal scrollback. Capture it while it is fresh, redact what should not travel, and make the replay path explicit.
+</Callout>
+
+This is the difference between "the agent saw a failure" and "the workflow preserved the failure."
+
+That distinction becomes important when the next agent starts from the handoff. The second agent should not need to trust the first agent's summary. It should be able to inspect the failure, replay the command, and decide what is real.
+
+## DocNeedle: the docs failure is usually a retrieval failure
+
+`docneedle` looks like a different category of tool at first.
+
+It is a tiny local search engine for project docs, notes, runbooks, and agent memory folders. It scans Markdown-like local files, builds a manifest, returns ranked snippets, and exports compact packs for agent handoff.
+
+```sh
+docneedle inspect . --output .docneedle
+docneedle search . "release escalation" --limit 5
+docneedle pack . --query "onboarding checklist" --output .docneedle/onboarding-pack.md
+```
+
+The connection to Day 30 is this:
+
+many agent failures are not code failures. They are context retrieval failures.
+
+The instruction existed somewhere in `docs/`. The release rule was in a runbook. The escalation path lived in an onboarding note. The agent did not find it, or found too much, or pasted a whole folder into context and buried the useful bit under noise.
+
+`docneedle` gives that part of the workflow a fixture-like shape. The pack is small. The snippets are source-linked. The manifest says what local docs were inspected. The agent gets a focused input instead of a vague instruction to "read the docs."
+
+That is not a replacement for `grep`. It is the layer before `grep`, when you do not know the exact words yet.
+
+<Highlight>
+If the docs matter to the task, they should be retrievable as a named pack, not rediscovered from memory every time an agent starts.
+</Highlight>
+
+This ties back to [Day 27](/blog/day-27-context-has-to-travel/). Context that matters has to travel. DocNeedle makes the docs slice of that context easier to carry without turning the whole repository into prompt soup.
+
+## FixtureForge: fake repos should be boring and repeatable
+
+The third tool, `fixtureforge`, handles the thing every CLI eventually needs and too many projects hand-roll badly:
+
+realistic local fixtures.
+
+It generates deterministic file trees for CLI tests. A spec plus a seed produces the same files and the same manifest. The built-in presets cover the kinds of test inputs that agent tools keep needing:
+
+- small Node CLI projects
+- polyrepo layouts
+- messy config files
+- fake credential-looking files
+- malformed JSON, odd filenames, binary blobs, and symlinks
+
+```sh
+fixtureforge init fixtureforge.json
+fixtureforge build fixtureforge.json tmp/my-fixture
+fixtureforge validate tmp/my-fixture --manifest tmp/my-fixture/.fixtureforge-manifest.json
+fixtureforge presets
+```
+
+That sounds like test plumbing. It is more important than that.
+
+Agent tools often need to prove behavior against awkward repository states. But using real repos as test input is risky, noisy, and hard to reproduce. Using tiny hand-written fixtures is better, but they drift. Someone changes a file and the test still passes for the wrong reason. Someone forgets why the weird filename exists. Someone adds a fake secret and the scanner test starts teaching the wrong habit.
+
+FixtureForge turns the fixture into a declared object.
+
+The spec says what should exist. The seed keeps generation stable. The manifest lets validation catch drift. The safety model rejects absolute paths, parent traversal, empty path segments, and null bytes in generated fixture paths.
+
+That is the right kind of boring.
+
+<CompareTable
+  left={{ title: "Soft testing surface", items: ["Failure described in a chat summary", "Docs searched from memory", "Fixtures copied by hand", "Drift discovered during review", "Agent asks the next run to trust prose"] }}
+  right={{ title: "Replayable surface", items: ["Failure captured as JSON and Markdown", "Docs exported as source-linked packs", "Fixtures generated from specs and seeds", "Drift checked against manifests", "Agent gives the next run something to inspect"] }}
+/>
+
+## The deeper insight: replay is an operator feature
+
+There is a version of agent tooling that treats replay as a testing detail.
+
+I think that is too small.
+
+Replay is an operator feature.
+
+It changes the way the human reviews the work. It changes the way the next agent starts. It changes the trust model from "read my summary" to "inspect this artifact." It turns a failure from an interruption into a durable input.
+
+That is the same thesis showing up in different clothes across the sprint:
+
+- `failureseed` makes the failing command portable
+- `docneedle` makes the relevant docs portable
+- `fixtureforge` makes the test input portable
+
+<Callout title="Day 30 in one line">
+The best handoff is not the one with the most explanation. It is the one where the next run can replay the important part.
+</Callout>
+
+The hard part of agentic engineering is not making agents talk more clearly. They already talk plenty.
+
+The hard part is making their work leave behind artifacts that survive the next context switch.
+
+Day 30 was about the unglamorous layer that makes that possible: deterministic failures, retrievable docs, and generated fixtures that can be checked again tomorrow.
+
+That is where speed starts becoming reviewable.
+
+---
+
+*Day 30. June 5, 2026. The lesson was simple: do not hand off a mystery when you can hand off a fixture.*

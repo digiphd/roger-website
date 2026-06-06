@@ -1,0 +1,184 @@
+---
+title: "Day 31: Readiness Needs a Public Surface"
+description: "Day 31 of the 60 Day OSS Sprint: repo-review-skill, tool-demo-script, and ossrank all pushed the same lesson - readiness is not real until another person or agent can inspect the surface it leaves behind."
+pubDate: 2026-06-06
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "open-source"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: open source readiness for AI agent workflows; supporting phrases: AI coding agents workflow, agentic engineering tools, deterministic AI agents, AI software quality, open source developer tools */}
+
+Day 31 was about a less glamorous part of shipping open source:
+
+the work is not ready because the repo exists.
+
+It is ready when the next person can understand it, demo it, and judge it without needing private context from the person who made it.
+
+That thread showed up across `repo-review-skill`, `tool-demo-script`, and `ossrank`.
+
+`repo-review-skill` inspects a local Node repository and turns maintainer instincts into prioritized, testable improvement tasks. `tool-demo-script` generates runnable demo scripts and then verifies the commands still work. `ossrank` is a static-first public data product for ranking GitHub contributors by country, with generated SEO assets, JSON snapshots, and methodology guardrails.
+
+Different outputs. Same pressure.
+
+<Highlight>
+Open source readiness is a surface area problem. If the repo, demo, or public data product cannot explain itself under review, it is still leaning on the founder's memory.
+</Highlight>
+
+That is the Day 31 theme.
+
+## The challenge: private context does not scale
+
+During a sprint, it is very easy to confuse creation with readiness.
+
+The repo has a name. The package has a CLI. The README exists. The test script passes. The agent says the branch is done.
+
+That is useful, but it is not enough.
+
+The harder question is whether the next operator can pick up the work without asking what mattered. Does the README explain the workflow? Does the package expose the right scripts? Is there a license? Are there examples? Can the demo commands be run again? Does the public product say where its data came from and what the caveats are?
+
+That is the layer I keep finding myself building around the actual tools.
+
+Earlier sprint days focused on replayable evidence. [Day 30](/blog/day-30-failures-need-fixtures/) was about failures, docs, and fixtures becoming portable artifacts. Day 31 moves one step outward:
+
+make readiness itself inspectable.
+
+## RepoReviewSkill: maintainer judgment should become a task list
+
+`repo-review-skill` is a deliberately practical tool.
+
+It reviews a local Node repository and looks for the things a maintainer would naturally check before handing work to another agent or reviewer:
+
+- package metadata, scripts, descriptions, and defaults
+- README install instructions, structure, and placeholder text
+- test setup, test directories, and coverage signals
+- CI configuration
+- examples or demo directories
+- license presence
+
+Then it ranks issues by severity and emits JSON plus Markdown.
+
+```sh
+repo-review-skill ./my-project --out review.json --summary review.md
+npx @rogerchappel/repo-review-skill ./my-project --no-fs-write
+```
+
+The important design choice is that it does not modify the repo. It inspects, ranks, and writes a review artifact.
+
+That restraint is what makes it useful for agent workflows. A reviewer can hand the report to an implementation agent. A follow-up agent can take the top critical or high-severity task. A human can disagree with the ranking without losing the shape of the review.
+
+<Callout title="The practical rule">
+Do not ask an agent to "make the repo better" when you can give it a ranked readiness report with concrete, testable issues.
+</Callout>
+
+That is a small shift, but it changes the work. The agent no longer has to invent what "better" means. It has a surface to inspect.
+
+## ToolDemoScript: a demo is not real until the commands still run
+
+`tool-demo-script` tackles the same readiness problem from the user's side.
+
+The repo can have a decent README and still be hard to show. A CLI might expose useful commands, but the person making the demo has to remember the happy path, avoid stale examples, and guess which commands are safe to run.
+
+The tool generates a structured Markdown demo from a CLI repo:
+
+- install, version, and usage sections
+- detected CLI entrypoints from `package.json`
+- examples pulled from `examples/` directories
+- narration metadata
+- a confidence report for README, license, CI, tests, and examples
+
+Then it verifies demo commands locally with a smoke-testing path:
+
+```sh
+tool-demo-script demo --repo ./my-cli --out demo.md
+tool-demo-script verify --repo ./my-cli demo.md
+```
+
+That second command is the part that matters.
+
+A demo script is content. A verified demo script is a promise with a check behind it.
+
+The safety model is intentionally narrow: verification runs locally, skips install commands, uses a short timeout, and keeps the default command set to safe CLI surfaces like `--version`, `--help`, `list`, and `info`.
+
+That fits the broader sprint pattern. The goal is not to make agents more confident. The goal is to make the artifact easier to trust.
+
+<Highlight>
+If a demo cannot be verified, it is not a demo yet. It is a script-shaped hope.
+</Highlight>
+
+## OSSRank: public products need visible caveats
+
+`ossrank` is a bigger surface than the first two tools.
+
+It is not just a package-readiness helper. It is a static-first public data product for finding top GitHub contributors by country using public signals such as commits, public pull requests, repository count, and followers.
+
+That kind of product has a different risk profile. The failure mode is not only "the CLI does not work." The failure mode is overclaiming.
+
+So the README is full of operational guardrails:
+
+- use official GitHub APIs only
+- treat GitHub profile location as unverified free text
+- rank observed public signals, not private contribution or identity claims
+- preserve last-known-good data when refreshes fail
+- publish methodology, raw JSON, sitemap, robots, headers, redirects, and canonical URLs
+- expose a manifest with completed shards, failed shards, stale pages, API mode, duration, and source commit
+
+That is the same readiness lesson at public scale.
+
+If a data product is going to be inspected by users, search engines, and future agents, the caveats cannot live in the builder's head. They need to be part of the product surface.
+
+<CompareTable
+  left={{ title: "Private readiness", items: ["Founder knows what is missing", "Demo path lives in memory", "Ranking caveats stay implicit", "Agent gets vague improvement prompts", "Review depends on trust"] }}
+  right={{ title: "Inspectable readiness", items: ["Repo review emits ranked issues", "Demo script is generated and verified", "Public data ships with methodology and manifest", "Agent gets concrete follow-up tasks", "Review depends on artifacts"] }}
+/>
+
+## The deeper insight: readiness is an interface
+
+I used to think about readiness as a checklist.
+
+README, license, tests, CI, examples, metadata. Tick the boxes and move on.
+
+That is still useful, but it is not the whole picture.
+
+Readiness is an interface.
+
+It is how the next agent understands the repo. It is how a reviewer decides what to trust. It is how a user decides whether a CLI is worth trying. It is how a public data product says, "Here is what this means, and here is what it does not mean."
+
+That connects directly to [Day 28](/blog/day-28-evidence-needs-a-shape/) and [Day 29](/blog/day-29-measure-the-constraint-before-you-build/). Evidence needs a shape. Constraints need measurement. Readiness needs a public surface.
+
+The recurring mistake is treating those surfaces as polish.
+
+They are not polish.
+
+They are part of the product.
+
+## What this changes in the sprint
+
+The 60 Day OSS Sprint keeps producing small tools, but the real system is the machinery around them.
+
+Every new repo creates a second-order problem: how do I know this thing is ready for another agent, another reviewer, or another user?
+
+Day 31 answered that from three angles:
+
+- `repo-review-skill` turns maintainer judgment into a ranked handoff
+- `tool-demo-script` turns demos into generated, verifiable scripts
+- `ossrank` turns public methodology and data caveats into first-class product surfaces
+
+<Callout title="Day 31 in one line">
+The faster the build loop gets, the more important it becomes for every repo to leave behind a surface that can be inspected without private context.
+</Callout>
+
+That is where the sprint is getting sharper.
+
+Not just more repos.
+
+More reviewable repos. More demoable tools. More public artifacts that say what they are, what they checked, and where the edges are.
+
+That is the kind of open source output an agent team can actually compound.
+
+---
+
+*Day 31. June 6, 2026. The lesson was simple: readiness is not a feeling. It is an interface the next reviewer can inspect.*

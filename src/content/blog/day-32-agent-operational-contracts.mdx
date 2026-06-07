@@ -1,0 +1,184 @@
+---
+title: "Day 32: Agents Need Operational Contracts"
+description: "Day 32 of the 60 Day OSS Sprint: agentabi, replaypack, and prooftrace all point at the same rule - agent workflows need contracts for the runtime, the command evidence, and the proof they leave behind."
+pubDate: 2026-06-07
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: operational contracts for AI agents; supporting phrases: deterministic AI agents, AI coding agents workflow, AI agent verification, local-first developer tools, agentic engineering tools */}
+
+Day 32 was about a part of agent work that is easy to ignore until it breaks:
+
+the operating environment is part of the product.
+
+Not the marketing page. Not the README. Not the prompt.
+
+The actual runtime contract.
+
+That thread showed up across `agentabi`, `replaypack`, and `prooftrace`.
+
+`agentabi` snapshots the operational ABI of terminal coding agents. `replaypack` records command transcripts, fixture hashes, exit status, and matchers into diffable evidence packs. `prooftrace` is still early-stage, but its direction is clear from the sprint work: classify command evidence so proof can travel with the handoff instead of staying buried in logs.
+
+Different layers. Same pressure.
+
+<Highlight>
+Agent workflows do not just need better instructions. They need operational contracts that say what runtime was used, what command was run, and what evidence survived the run.
+</Highlight>
+
+That is the Day 32 theme.
+
+## The challenge: agent drift is not always code drift
+
+When a human reviews an agent's work, the obvious question is usually, "What changed in the repo?"
+
+That is necessary, but it is not enough.
+
+Agent workflows have another kind of drift.
+
+The CLI changed. The permission flag changed. The help output changed. A required environment variable disappeared. The command still ran, but the output no longer matches the artifact the last agent handed over. A transcript exists, but nobody knows whether it captured the right fixture, the right matcher, or the right exit code.
+
+That is not source drift.
+
+It is operational drift.
+
+Earlier sprint days kept pushing toward inspectable handoffs. [Day 28](/blog/day-28-evidence-needs-a-shape/) was about giving evidence a structure. [Day 30](/blog/day-30-failures-need-fixtures/) was about making failures replayable. [Day 31](/blog/day-31-readiness-needs-a-public-surface/) was about readiness becoming an interface.
+
+Day 32 is the next layer:
+
+lock down the contract around the agent and its proof.
+
+## AgentABI: the agent runtime needs a lockfile
+
+`agentabi` is a local-first CLI for snapshotting terminal coding-agent operational ABIs.
+
+That sounds dry, which is probably why it matters.
+
+The tool creates a starter config, captures a deterministic local snapshot, checks the current machine against a committed lockfile, and compares snapshots:
+
+```sh
+agentabi init
+agentabi capture --config agentabi.yaml --output agentabi.lock.json
+agentabi check --config agentabi.yaml --lock agentabi.lock.json
+agentabi diff baseline.json current.json --json
+```
+
+The important detail is what it treats as contract surface.
+
+It can record safe probes like `--version` and `--help`, required environment variable presence, permission flags, and local tool catalog references. It records only whether required env vars are present, not their values. Probes are restricted to safe help and version style arguments.
+
+That is the right shape for agent infrastructure.
+
+When a workflow depends on a terminal agent, the behavior of that agent is not a vague external assumption. It is part of the build environment. If the CLI changes, the permission model changes, or the help surface changes, the workflow should be able to notice before a reviewer has to reverse-engineer the difference from a weird failure.
+
+<Callout title="The practical rule">
+If an agent is part of the delivery path, snapshot its operational surface the same way you snapshot dependencies, fixtures, and generated artifacts.
+</Callout>
+
+This is not about freezing everything forever.
+
+It is about making drift visible.
+
+## ReplayPack: command proof should be portable
+
+`replaypack` works one layer closer to the command.
+
+It records a command transcript, fixture hashes, exit status, and matchers into a JSONL pack. Then it can verify or render that pack later:
+
+```sh
+replaypack record --name basic -- npm test
+replaypack verify examples/basic.replaypack.jsonl
+replaypack verify examples/basic.replaypack.jsonl --rerun
+replaypack render examples/basic.replaypack.jsonl --format markdown
+```
+
+The pack is deliberately reviewable:
+
+- a `header` with metadata, command, env allowlist, redaction names, and fixture hashes
+- ordered `stream` chunks for stdout and stderr
+- a `result` with exit code, signal, duration, final output, and matchers
+
+That is the kind of evidence an agent workflow can actually hand to the next step.
+
+Terminal output is not enough. A pasted success line is not enough. A screenshot is not enough. The useful artifact is the smallest thing that lets another person or agent answer:
+
+what ran, against which fixture, with which allowed environment, and what counted as passing?
+
+ReplayPack's safety model fits that question. No hidden network calls. No telemetry. Explicit env allowlists. Redaction support. Fixture hashes that keep the input honest.
+
+<Highlight>
+The point is not to make command output prettier. The point is to turn command proof into a durable object.
+</Highlight>
+
+That changes the handoff. The next reviewer does not need to trust the agent's confidence. They can inspect the pack, render the Markdown, or rerun the verification path when that is appropriate.
+
+## ProofTrace: evidence needs classification, not just capture
+
+`prooftrace` is earlier-stage than the other two tools, but the sprint lesson around it is already useful.
+
+Capturing command output is only the first move.
+
+After that, the workflow still has to decide what kind of proof it has. Is this build evidence? Test evidence? Lint evidence? Smoke evidence? A version probe? A generated artifact check? A command that ran but did not prove what the agent claims?
+
+That classification layer matters because review queues get noisy fast.
+
+If every artifact is just "proof," the reviewer has to reclassify it mentally. If every command result is just a blob of output, the next agent has to rediscover what it means. If the evidence is categorized up front, the handoff becomes much easier to route.
+
+That is the role I want `prooftrace` to play in the system:
+
+not another log bucket, but a way to make proof easier to sort, compare, and trust.
+
+<CompareTable
+  left={{ title: "Loose agent evidence", items: ["Agent version assumed", "Permission surface implicit", "Command output pasted into prose", "Fixtures not tied to proof", "Reviewer classifies evidence by memory"] }}
+  right={{ title: "Operational contract", items: ["Agent ABI snapshot checked", "Flags and env presence made visible", "Transcript stored as a pack", "Fixture hashes travel with the result", "Evidence type is classified for review"] }}
+/>
+
+## The deeper insight: contracts beat confidence
+
+A lot of AI tooling still tries to solve trust with better narration.
+
+The agent explains what it did. The summary sounds reasonable. The final answer lists verification. The tone is confident.
+
+That helps, but it does not carry the system.
+
+Contracts carry the system.
+
+An agent ABI lockfile says the runtime changed. A transcript pack says exactly what command ran. Fixture hashes say the input did not silently move. Evidence classification says what kind of proof the reviewer is looking at.
+
+Those are small, boring objects.
+
+They are also the things that make speed survivable.
+
+The more I build this sprint, the more I think the real product is not any single CLI. It is the review loop forming around them: preflight, capture, classify, verify, hand off, and repeat.
+
+That loop needs contracts at every boundary.
+
+## What this changes in the sprint
+
+Day 32 sharpened the line between "an agent did some work" and "an agent left behind an inspectable operational record."
+
+That record needs at least three layers:
+
+- `agentabi` for the runtime contract
+- `replaypack` for the command evidence contract
+- `prooftrace` for the proof classification contract
+
+<Callout title="Day 32 in one line">
+The agent is not trustworthy because it sounds certain. It gets easier to trust when its runtime, commands, and evidence are all inspectable.
+</Callout>
+
+That is where the sprint keeps moving.
+
+Less faith in summaries.
+
+More pressure on artifacts.
+
+More small contracts that make it cheaper for the next reviewer, the next agent, or the next founder to keep moving without guessing what changed.
+
+---
+
+*Day 32. June 7, 2026. The lesson was simple: agent speed compounds when the operating contract is visible enough to check.*

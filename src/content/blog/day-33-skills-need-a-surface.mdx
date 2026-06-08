@@ -1,0 +1,212 @@
+---
+title: "Day 33: Skills Need a Surface"
+description: "Day 33 of the 60 Day OSS Sprint: agent-skill-index, api-handshake-skill, and cmdcontract pushed the same lesson - agent skills need a searchable surface, integration handshakes, and executable proof before they can compound."
+pubDate: 2026-06-08
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "agentic-engineering"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: agent skills for AI coding workflows; supporting phrases: AI coding agents workflow, deterministic AI agents, agentic engineering tools, AI agent verification, local-first developer tools */}
+
+Day 33 was about a problem that shows up once the agent workflow starts getting real:
+
+skills are only useful if the next agent can find them, understand their boundary, and prove the work they produce.
+
+That thread showed up across `agent-skill-index`, `api-handshake-skill`, and `cmdcontract`.
+
+`agent-skill-index` turns local skill folders into a searchable JSON index and a Markdown catalog. `api-handshake-skill` plans API integration work from local specs and produces starter fixtures for contract and acceptance tests. `cmdcontract` runs executable CLI contract specs so README examples and smoke commands do not silently drift.
+
+Different tools. Same pressure.
+
+<Highlight>
+Agent skills do not compound because they exist. They compound when their discovery, handoff, and verification surfaces are explicit enough for another agent to use without guessing.
+</Highlight>
+
+That is the Day 33 theme.
+
+## The challenge: hidden capability is not capability
+
+The sprint has been pushing toward smaller tools with sharper contracts.
+
+That creates a new bottleneck.
+
+Once there are enough tools, prompts, skills, and workflow helpers, the question stops being "can I build another one?" and becomes "can another agent find the right one at the right time?"
+
+A skill sitting in a folder is not enough. A README is not enough. A good instruction file is not enough if the next agent has to scrape around the workspace, infer side effects, and hope it picked the right capability for the task.
+
+That is hidden capability.
+
+Hidden capability does not scale.
+
+Earlier sprint days kept landing on the same underlying rule. [Day 28](/blog/day-28-evidence-needs-a-shape/) was about evidence becoming inspectable. [Day 31](/blog/day-31-readiness-needs-a-public-surface/) was about readiness becoming an interface. [Day 32](/blog/day-32-agent-operational-contracts/) was about runtime and command proof becoming operational contracts.
+
+Day 33 moves that thinking into the skill layer.
+
+The skill itself needs a surface.
+
+## AgentSkillIndex: discovery should be structured
+
+`agent-skill-index` is a local-first CLI for generating a searchable catalog of agent skills.
+
+It scans skill folders, extracts common metadata from `SKILL.md`, writes a JSON index for agents, and can render a human-readable Markdown catalog:
+
+```sh
+agent-skill-index ~/.codex/skills --out skill-index.json --docs SKILLS.md --fail-on-warnings
+```
+
+The useful part is not just the list of names.
+
+The tool extracts the things that matter when an agent has to choose whether a skill is safe and relevant:
+
+- name, slug, description, and source path
+- when-to-use guidance
+- required tools and inputs
+- side-effect boundaries and approval requirements
+- examples and validation workflow
+- inferred safety level
+- warnings for missing metadata
+
+That is the difference between a folder full of instructions and an actual capability surface.
+
+An agent should not have to open every skill and make a vibes-based decision. It should be able to search a catalog, see the boundary, notice warnings, and decide whether the skill fits the task.
+
+<Callout title="The practical rule">
+If skills are part of the agent runtime, index them like runtime capability. Discovery should be structured, not dependent on memory.
+</Callout>
+
+The safety posture is also important. `agent-skill-index` reads under the skill root you provide and writes only the explicit output files. It does not install, execute, publish, or mutate skills.
+
+That is the right trade.
+
+Capability discovery should be cheap, local, and inspectable.
+
+## APIHandshakeSkill: integration work needs a plan before code
+
+`api-handshake-skill` works at a different layer, but it is solving the same kind of handoff problem.
+
+API integrations are one of the easiest places for agents to produce confident nonsense.
+
+The endpoint names look plausible. The auth flow sounds reasonable. The retry policy gets a sentence. Webhooks get a paragraph. Then the first real run exposes the missing signature check, the undefined sandbox environment, the absent idempotency key, or the rate limit nobody planned for.
+
+`api-handshake-skill` pushes the workflow earlier.
+
+It reads local specs and notes, generates a Markdown integration plan, flags coverage gaps, and creates starter fixtures for contract and acceptance tests:
+
+```sh
+api-handshake-skill plan specs/ --out integration-plan.md
+api-handshake-skill fixtures integration-plan.md --out fixtures/
+```
+
+The plan checks for the pieces that usually decide whether the integration will survive review:
+
+- authentication model
+- endpoint inventory
+- request and response schemas
+- webhook events and signatures
+- retry and idempotency policy
+- rate limits
+- sandbox and production environment map
+- acceptance checks
+
+That is not glamorous work.
+
+It is exactly the work agents need more of.
+
+The deeper point is that a skill should not just say "build the connector." It should force the handshake into an artifact first. If the artifact has gaps, the agent can report them before writing code around assumptions.
+
+<Highlight>
+The best time to catch a missing API contract is before the agent has turned the assumption into implementation.
+</Highlight>
+
+The tool stays offline by default. It does not call APIs, validate credentials, register webhooks, or send generated fixtures anywhere.
+
+That matters because the planning phase should not need production access to become useful.
+
+## CmdContract: examples should execute
+
+`cmdcontract` brings the proof layer back to the command line.
+
+It is a small local-first harness for executable CLI contract specs. It can generate a starter spec from README command fences, run contracts in isolated temp workspaces, normalize noisy output, and render reports:
+
+```sh
+cmdcontract init --from README.md --out contracts/readme.yaml
+cmdcontract run contracts/readme.yaml --format tap
+cmdcontract report .cmdcontract/results.json --format markdown
+```
+
+The contract format is deliberately plain: command, workspace-relative `cwd`, explicit environment variables, timeout, copied fixtures, and expectations for exit code plus stdout or stderr content.
+
+That is enough to catch a lot of embarrassing drift.
+
+The README says the command works. The CLI changed. The example still looks correct because nobody ran it. The next agent copies it into a demo, a test, or a blog post. Now stale documentation has become stale product surface.
+
+`cmdcontract` makes that failure cheaper to catch.
+
+It also has the right safety instincts for agent workflows:
+
+- commands run in temp directories by default
+- fixture and `cwd` paths are blocked if they escape the workspace
+- only a small environment is passed through unless the contract opts in
+- secret-looking values are redacted from captured output
+- generated README contracts skip common dangerous commands
+
+That turns examples into something closer to proof.
+
+Not perfect proof.
+
+Useful proof.
+
+<CompareTable
+  left={{ title: "Loose skill workflow", items: ["Skills found by memory", "Side effects inferred by reading prose", "API assumptions become code", "README examples trusted by sight", "Review depends on agent confidence"] }}
+  right={{ title: "Surfaced skill workflow", items: ["Skills indexed for search", "Boundaries and warnings extracted", "Integration gaps become a plan", "Examples execute as contracts", "Review depends on artifacts"] }}
+/>
+
+## The deeper insight: skills are products for agents
+
+It is tempting to treat skills as internal glue.
+
+They are not.
+
+A skill is a product for an agent.
+
+That means it needs the same things any useful product surface needs: a name, a clear job, constraints, safety boundaries, inputs, outputs, examples, and a way to know whether it worked.
+
+Humans can sometimes tolerate a messy internal convention because they have memory and context. Agents are much worse at that. They need the capability shaped for retrieval, selection, execution, and review.
+
+This is why the three tools belong together in the Day 33 lesson.
+
+`agent-skill-index` makes skills discoverable. `api-handshake-skill` turns one risky class of work into a planning artifact. `cmdcontract` makes command examples executable enough to catch drift.
+
+That is the skill surface:
+
+find it, scope it, run it, prove it.
+
+## What this changes in the sprint
+
+Day 33 sharpened the difference between having agent capability and operating agent capability.
+
+Having capability means the repo exists. The skill exists. The instruction exists. The README exists.
+
+Operating capability means the next agent can discover the tool, understand its boundaries, produce the right handoff artifact, and verify the examples that users or reviewers will see.
+
+That is a much higher bar, but it is also the only bar that compounds.
+
+<Callout title="Day 33 in one line">
+Agent skills need product surfaces: searchable enough to find, constrained enough to trust, and executable enough to prove.
+</Callout>
+
+The sprint is still about shipping small OSS tools.
+
+But the system around those tools keeps becoming clearer.
+
+More capability is not the win by itself. More inspectable capability is the win. The next layer is making every skill, command, and handoff easier for another agent to pick up without inheriting a pile of hidden assumptions.
+
+That is how agent teams get faster without getting mushier.
+
+---
+
+*Day 33. June 8, 2026. The lesson was simple: skills do not become infrastructure until their surfaces are visible enough for another agent to use and check.*

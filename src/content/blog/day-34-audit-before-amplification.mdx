@@ -1,0 +1,245 @@
+---
+title: "Day 34: Audit Before Amplification"
+description: "Day 34 of the 60 Day OSS Sprint: agent-run-audit-skill, connector-catalog, and codereel all pushed the same lesson - agent output should be audited before it gets reused, connected, or turned into distribution."
+pubDate: 2026-06-09
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent audit workflow; supporting phrases: AI coding agents workflow, deterministic AI agents, agentic engineering tools, AI agent verification, local-first developer tools */}
+
+Day 34 was about a trap that shows up when agent work starts to move faster:
+
+the output starts getting reused before it has been audited.
+
+That thread showed up across `agent-run-audit-skill`, `connector-catalog`, and `codereel`.
+
+`agent-run-audit-skill` turns local agent transcripts into compact audit reports. `connector-catalog` validates local connector capability catalogs and generates documentation for agents. `codereel` turns a local repository into a grounded walkthrough package for demo videos, launch posts, or release reviews.
+
+Different surfaces. Same pressure.
+
+<Highlight>
+Agent work should not jump straight from "completed" to "amplified." It needs an audit layer between the run and the next place that run gets reused.
+</Highlight>
+
+That is the Day 34 theme.
+
+## The challenge: reuse multiplies mistakes
+
+The sprint has been building more than individual CLIs.
+
+It has been building a loop.
+
+An agent runs. A reviewer inspects. A tool captures proof. A skill turns a workflow into a repeatable pattern. A catalog makes capabilities discoverable. A content layer explains the work to humans.
+
+That loop is powerful, but it has a failure mode:
+
+bad evidence gets promoted.
+
+A transcript says something happened, but nobody extracts the actual commands, files, blockers, or side-effect risks. A connector action looks available, but the required scopes, dry-run behavior, or approval level are implicit. A repo gets turned into a demo or launch asset, but the claims are not tied back to inspected files.
+
+At small scale, those are annoying mistakes.
+
+At agent-team scale, they compound.
+
+Earlier sprint days kept building toward inspectable surfaces. [Day 31](/blog/day-31-readiness-needs-a-public-surface/) was about readiness becoming an interface. [Day 32](/blog/day-32-agent-operational-contracts/) was about runtime and command evidence becoming contracts. [Day 33](/blog/day-33-skills-need-a-surface/) was about skills becoming searchable, scoped, and verifiable.
+
+Day 34 moves one layer further:
+
+before the output is reused, connected, or turned into distribution, audit it.
+
+## AgentRunAuditSkill: transcripts need a second pass
+
+`agent-run-audit-skill` is deliberately narrow.
+
+It reads a local transcript file and turns it into an evidence-oriented run report:
+
+```sh
+agent-run-audit audit ./transcript.md --out .audit
+agent-run-audit summarize .audit/audit.json
+agent-run-audit check .audit/audit.json
+```
+
+The generated report extracts the pieces that matter after an agent run:
+
+- commands
+- files
+- URLs
+- blockers
+- TODOs
+- verification evidence
+- side-effect risks
+
+The `check` command fails for blocked runs and high-risk external-account activity.
+
+That last part matters.
+
+A final agent message can sound complete while still hiding risk in the transcript. Maybe the run touched an external account. Maybe verification was claimed but not evidenced. Maybe a blocker was mentioned once and then buried under a confident close-out.
+
+The audit pass gives the next reviewer a smaller object to inspect.
+
+<Callout title="The practical rule">
+Do not treat an agent transcript as the handoff. Treat it as raw material for an audit report.
+</Callout>
+
+The safety model is also the point. The tool does not execute transcript commands, mutate repositories, call GitHub, send notifications, or contact external services. It reads one transcript file and writes the selected output directory.
+
+That is the right posture for an audit layer.
+
+Audit should reduce uncertainty without adding new side effects.
+
+## ConnectorCatalog: capabilities need explicit risk labels
+
+`connector-catalog` looks at a different part of the system: connector capabilities.
+
+Agents are getting more useful because they can do more than edit local files. They can read from tools, write to systems, send messages, open tickets, search workspaces, and trigger workflows.
+
+That is exactly why the capability surface has to be explicit.
+
+`connector-catalog` records connector actions in simple local files and validates fields such as:
+
+- action id
+- required fields
+- scopes
+- side effect type
+- approval level
+- dry-run behavior
+
+The CLI is intentionally boring:
+
+```sh
+connector-catalog check connectors/
+connector-catalog docs connectors/ --out CONNECTORS.md
+connector-catalog schema --out connector.schema.json
+```
+
+The catalog format forces the uncomfortable questions to be answered before an agent uses the action:
+
+```yaml
+id: slack.message.send
+connector: slack
+action: chat_post_message
+summary: Send a message to a Slack channel after confirmation.
+side_effect: send
+approval: confirm
+scopes: [chat:write]
+dry_run: Render channel, message body, and thread target without sending.
+```
+
+That is a small artifact with a lot of leverage.
+
+An agent should not have to infer whether a connector reads, writes, sends, deletes, or touches an external system. A reviewer should not have to discover approval requirements by reading implementation code after the fact. A dry run should not be a vague promise.
+
+The catalog makes the risk label part of the capability.
+
+<Highlight>
+The connector is not ready because the API call exists. It is ready when its side effects, scopes, approval level, and dry-run behavior are visible before use.
+</Highlight>
+
+The package never calls connector APIs. It only reads catalog files, validates them, and writes generated documentation when requested.
+
+That is the Day 34 pattern again:
+
+audit the surface before amplification.
+
+## CodeReel: launch assets need grounded claims
+
+`codereel` moves from internal operations to distribution.
+
+This is where the temptation gets stronger.
+
+A repo exists. The README sounds decent. The agent can write a launch post. Another tool can generate a video script. A founder wants to show the thing.
+
+But distribution magnifies mistakes faster than review does.
+
+If a launch asset claims the repo does something it does not do, the error does not stay in the branch. It becomes the story. It becomes the demo. It becomes the material another agent uses later as if it were source truth.
+
+`codereel` is built around that constraint.
+
+It inspects real files first, generates grounded claims, and emits renderer-neutral assets another tool can turn into media:
+
+```sh
+codereel inspect ./repo --out .codereel
+codereel kit ./repo --out .codereel
+codereel verify .codereel/storyboard.json --repo ./repo
+codereel export .codereel/storyboard.json --out .codereel/frames
+```
+
+The full kit includes:
+
+- `repo.json` with detected repo facts
+- `claims.json` with generated claims and evidence
+- `script.md` for narrated walkthroughs
+- `storyboard.json` for scene timelines
+- `demo-commands.md` with safe local command suggestions
+- `verification.json` for claims and scenes
+- `assets.md` with screenshot and capture cues
+
+That is the part I care about.
+
+The output is not a finished marketing machine. It does not render the final video, generate avatars, call TTS APIs, post to social media, or run discovered project commands.
+
+It builds the reviewable kit before the media layer.
+
+<CompareTable
+  left={{ title: "Unaudited amplification", items: ["Transcript becomes final memory", "Connector risk inferred late", "Claims written from vibes", "Demo assets drift from repo facts", "Distribution repeats the mistake"] }}
+  right={{ title: "Audited amplification", items: ["Transcript becomes an audit report", "Connector actions carry scopes and side effects", "Claims link to inspected evidence", "Walkthrough kit stays renderer-neutral", "Review happens before reuse"] }}
+/>
+
+## The deeper insight: amplification is a risk boundary
+
+Most teams treat risk boundaries as permission boundaries.
+
+That is partly right.
+
+Sending a Slack message is riskier than reading a local file. Publishing a package is riskier than running a test. Deleting data is riskier than generating a report.
+
+But agent workflows have another boundary:
+
+amplification.
+
+When an output becomes a catalog entry, a run report, a launch script, a demo, a public post, or a handoff artifact, it starts shaping future decisions. It becomes easier to trust. It becomes easier to copy. It becomes easier for another agent to cite without rechecking.
+
+That is useful only if the object is grounded.
+
+This is why Day 34 sits naturally after the last few days. Skills need a surface. Operational proof needs contracts. Readiness needs an interface.
+
+And once those surfaces exist, they need an audit step before they get reused.
+
+Not because every artifact must be perfect.
+
+Because compounding only works when the artifacts getting compounded are worth trusting.
+
+## What this changes in the sprint
+
+Day 34 made the sprint feel more like an operating system for agent work.
+
+There is the run. There is the capability catalog. There is the distribution layer. Each one needs a small local tool that reduces ambiguity before the next step uses it.
+
+That gives the three tools a shared job:
+
+- `agent-run-audit-skill` audits what happened in the run
+- `connector-catalog` audits what a connector is allowed to do
+- `codereel` audits what a repo can honestly claim before it becomes media
+
+<Callout title="Day 34 in one line">
+The more agent work gets reused, connected, and promoted, the more important it becomes to audit the artifact before it becomes someone else's input.
+</Callout>
+
+That is the shape of the sprint now.
+
+Not just faster builds.
+
+Faster builds with smaller truth objects between each stage.
+
+Run reports. Capability catalogs. Grounded walkthrough kits. Reviewable artifacts that keep the next agent, the next reviewer, and the next launch asset from inheriting a sloppy assumption.
+
+That is how speed stays useful after the first pass.
+
+---
+
+*Day 34. June 9, 2026. The lesson was simple: amplification is a risk boundary, so audit the artifact before it starts shaping the next run.*

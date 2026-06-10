@@ -1,0 +1,202 @@
+---
+title: "Day 35: Untrusted Input Needs a Boundary"
+description: "Day 35 of the 60 Day OSS Sprint: actiontaint, modelpermit, and scriptaudit all point at the same rule - agent workflows need static boundaries before untrusted input, model access, or local commands get amplified."
+pubDate: 2026-06-10
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "security"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent security boundaries; supporting phrases: deterministic AI agents, AI coding agents workflow, AI agent verification, agentic engineering tools, local-first developer tools */}
+
+Day 35 was about a security lesson that keeps getting more practical as agents move closer to real workflows:
+
+untrusted input needs a boundary before it reaches the agent.
+
+That thread showed up across `actiontaint`, `modelpermit`, and `scriptaudit`.
+
+`actiontaint` is an early-stage local GitHub Actions workflow scanner for agentic injection risk. `modelpermit` is an early-stage static policy checker for model and tool permissions. `scriptaudit` reads package scripts and local command docs, then produces a deterministic safety map for commands an agent might run.
+
+Different surfaces. Same pressure.
+
+<Highlight>
+Agent safety is not just about what the model says. It is about which input gets trusted, which capability gets permitted, and which command gets treated as safe enough to run.
+</Highlight>
+
+That is the Day 35 theme.
+
+## The challenge: agents make input paths executable
+
+Most software teams already know that untrusted input is dangerous.
+
+The agent version of that problem is stranger.
+
+A pull request title can become prompt material. An issue body can become task context. A changed file can influence a CI workflow. A README command can become the next shell command. A package script can become a "reasonable" verification step because it has a name like `check` or `smoke`.
+
+None of those surfaces are new.
+
+What changed is that agents are very good at turning text into action.
+
+Earlier sprint days kept pushing toward inspectable proof and handoff surfaces. [Day 32](/blog/day-32-agent-operational-contracts/) was about runtime and command evidence becoming contracts. [Day 33](/blog/day-33-skills-need-a-surface/) was about making skills searchable and checkable. [Day 34](/blog/day-34-audit-before-amplification/) was about auditing output before it gets reused.
+
+Day 35 moves the audit boundary earlier:
+
+before the agent consumes the input, check the path the input can take.
+
+## ActionTaint: workflow text is not automatically safe context
+
+`actiontaint` is still in progress, so the honest way to describe it is as a planned local scanner rather than a finished security product.
+
+The direction is the important part.
+
+Its PRD defines a GitHub Actions workflow scanner for agentic injection risk:
+
+```sh
+actiontaint scan .github/workflows
+```
+
+The scanner is meant to parse workflow YAML, jobs, steps, permissions, triggers, and expressions. Then it flags untrusted contexts flowing into dangerous places:
+
+- pull request titles
+- issue bodies
+- comments
+- changed file content
+- shell `run` steps
+- prompt inputs
+- token-bearing steps
+- release automation
+
+That is exactly the kind of static check agent workflows need.
+
+If a workflow feeds `github.event.issue.body` into a prompt that can influence a write operation, that is not just "context." It is an input path. If a pull request title gets interpolated into a shell command, that is not just developer convenience. It is a boundary failure.
+
+<Callout title="The practical rule">
+Do not wait until an agent has already consumed untrusted workflow text. Trace where the text can flow before it becomes prompt material, command material, or release material.
+</Callout>
+
+The useful constraint is that `actiontaint` is framed as a local deterministic CLI, not a hosted scanner. No network calls by default. No workflow execution. Reports with severity, evidence path, and remediation.
+
+That keeps the first version small enough to trust.
+
+## ModelPermit: permissions should be declared before the run
+
+`modelpermit` is also early-stage, and its README says that plainly.
+
+The PRD is still useful because it names a permission surface that is usually implicit:
+
+which models, tools, network scopes, write paths, secret handling rules, and approval modes are allowed for this repo?
+
+The intended CLI is simple:
+
+```sh
+modelpermit init
+modelpermit check modelpermit.json
+modelpermit explain
+```
+
+The point is not runtime enforcement. The PRD explicitly keeps that out of scope.
+
+That matters.
+
+There is room for sandboxes, policy engines, MCP permission systems, and vendor-specific controls. But a repo-level permit file solves a different problem: it gives reviewers and agents a shared declaration before the work starts.
+
+An agent should not have to infer whether a repo allows network access. It should not guess whether a model class is acceptable for a task. It should not discover write-path limits only after it has already planned the edit.
+
+<Highlight>
+The permission conversation should happen before the agent run, not as a footnote in the final summary.
+</Highlight>
+
+That is the value of a static permit.
+
+Even before enforcement exists, a checked policy file changes the review loop. The agent can say "this task requires a network scope the repo has not permitted." A reviewer can see whether approval mode is strict, permissive, or missing. CI can fail when a policy is malformed or dangerous.
+
+Not perfect safety.
+
+A visible boundary.
+
+## ScriptAudit: command names are not safety guarantees
+
+`scriptaudit` is further along as a concrete local tool.
+
+It scans package scripts, workspace hints, Makefile targets, local documentation command fences, Justfile recipes, and simple Taskfile commands. Then it emits a deterministic safety map:
+
+```sh
+scriptaudit scan . --out docs/SCRIPTS.md
+scriptaudit scan examples/fixtures/risky --format json --fail-on dangerous
+scriptaudit init --preset oss-cli
+```
+
+The risk model is deliberately plain:
+
+- `safe` for low-risk local checks like tests, builds, smoke commands, and static checks
+- `caution` for commands with local side effects, generated artifacts, containers, env-file references, or network-capable tools
+- `dangerous` for destructive cleanup, deploy, publish, permission changes, or policy-blocked commands
+- `unknown` when there is not enough evidence
+
+This fills a gap every coding agent runs into.
+
+The repo has a `package.json`. The scripts look familiar. `npm test` is probably fine. `npm run release` is probably not. `npm run clean` might be harmless or it might delete files the current task needs. A README says to run a shell command, but the command contains curl, Docker, a token reference, or a publish step.
+
+Humans use judgment there.
+
+Agents need an artifact.
+
+`scriptaudit` does not execute discovered scripts. It scans, classifies, and writes reports. It also tells the agent to read the recommended sequence first, run safe verification commands before broader checks, and ask for human approval before dangerous commands.
+
+That is the right shape for agentic engineering: static, boring, reviewable, and useful before action.
+
+<CompareTable
+  left={{ title: "Loose agent boundary", items: ["Workflow text treated as safe context", "Model and tool permissions inferred", "Network scope discovered late", "Script names trusted by convention", "Dangerous commands noticed after planning"] }}
+  right={{ title: "Static boundary", items: ["Untrusted workflow flows traced", "Permit file declares allowed capability", "Approval mode visible before the run", "Scripts classified before execution", "Review starts from evidence"] }}
+/>
+
+## The deeper insight: boundaries are product surfaces
+
+Security tools often get framed as blockers.
+
+That framing misses the agent workflow point.
+
+A boundary is a product surface for the next agent.
+
+It tells the agent where not to guess. It tells the reviewer what the repo expects. It tells CI which assumptions are allowed to pass quietly and which ones need to fail loudly.
+
+This is why the three tools fit together even though they operate on different inputs.
+
+`actiontaint` asks where untrusted workflow data can flow. `modelpermit` asks what capability the repo allows. `scriptaudit` asks which local commands are reasonable for an agent to run.
+
+Those are not separate concerns once an agent is doing the work.
+
+They are one boundary stack:
+
+input, capability, command.
+
+## What this changes in the sprint
+
+Day 35 made the security layer feel less abstract.
+
+The sprint is not trying to build one giant agent safety platform. It is building small local objects that make the risky parts visible before they turn into action.
+
+That matters because agents compress the distance between reading and doing.
+
+A sentence can become a plan. A plan can become a shell command. A shell command can become a release step. A release step can become a public artifact.
+
+The answer is not to slow everything down with ceremony.
+
+The answer is to make the boundary cheap enough that the agent can hit it early.
+
+<Callout title="Day 35 in one line">
+Agent safety starts before execution: trace untrusted input, declare permitted capability, and classify commands before the agent turns text into action.
+</Callout>
+
+That is where the sprint keeps moving.
+
+Not toward bigger promises.
+
+Toward smaller checkpoints that make the next action less mysterious.
+
+---
+
+*Day 35. June 10, 2026. The lesson was simple: the fastest agent still needs a boundary before untrusted text becomes trusted work.*

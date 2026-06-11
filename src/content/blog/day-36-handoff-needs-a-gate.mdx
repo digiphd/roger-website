@@ -1,0 +1,210 @@
+---
+title: "Day 36: The Handoff Needs a Gate"
+description: "Day 36 of the 60 Day OSS Sprint: agent-qc, atomcommit, and handoffpad point at the same operating rule - agent work should pass a deterministic handoff gate before a reviewer inherits the branch."
+pubDate: 2026-06-11
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent handoff quality gate; supporting phrases: deterministic AI agents, AI coding agents workflow, AI agent verification, agentic engineering tools, local-first developer tools */}
+
+Day 36 was about the moment right before an agent hands work to a human:
+
+the handoff needs a gate.
+
+That thread showed up across `agent-qc`, `atomcommit`, and `handoffpad`.
+
+`agent-qc` catches deterministic workflow failures before an agent reports done. `atomcommit` turns local changes into a small atomic commit plan. `handoffpad` builds a compact, redacted bundle from the task brief, git changes, command results, omissions, and next steps.
+
+Different tools. Same pressure.
+
+<Highlight>
+An agent should not be able to declare the work complete until the handoff itself has passed a small deterministic check.
+</Highlight>
+
+That is the Day 36 theme.
+
+## The challenge: "done" can be structurally broken
+
+The frustrating failures are not always in the code.
+
+Sometimes the branch is fine, but the PR body is broken. Sometimes the agent made one sprawling change and the reviewer has to reverse-engineer the commit shape. Sometimes the summary sounds confident, but the important omission is missing: the smoke test did not run, no deploy was attempted, the package script was only checked syntactically, or a risky follow-up was left implicit.
+
+Those failures are easy to dismiss because they look like presentation problems.
+
+They are not.
+
+They are workflow integrity problems.
+
+Earlier sprint days kept circling this from different sides. [Day 18](/blog/day-18-handoffs-are-where-speed-compounds/) was about handoffs becoming throughput infrastructure. [The agent handoff layer](/blog/the-agent-handoff-layer/) was about trust getting built after the code is written. [Day 35](/blog/day-35-untrusted-input-needs-a-boundary/) was about static boundaries before untrusted input becomes action.
+
+Day 36 moves to the final boundary before review:
+
+before the agent says done, check the handoff.
+
+## Agent-QC: catch the dumb failure before it becomes review work
+
+`agent-qc` is small by design.
+
+The current gate focuses on deterministic handoff quality, especially GitHub markdown body failures. One real example is `gh pr create --body "...\n..."`, where escaped newlines can render literally in the PR body instead of becoming real line breaks.
+
+That sounds tiny.
+
+It is exactly the kind of tiny failure that makes an agent workflow feel sloppy.
+
+The CLI exposes a few focused checks:
+
+```sh
+agent-qc ready
+agent-qc file-body --path /tmp/pr-body.md
+agent-qc github-pr-body --repo rogerchappel/agent-qc --pr 1
+agent-qc command-scan --command 'gh pr create --body "## Summary\n- Fix bug"'
+```
+
+`ready` gives an agent a one-command local handoff gate. It can call `atomcommit --json` when `atomcommit` is installed, but missing `atomcommit` is only a warning for now. The PR body checks fail empty bodies and literal escaped `\n` sequences in GitHub markdown bodies. `command-scan` catches dangerous command construction before the bad PR body is posted.
+
+That is the right level of ambition for a first quality gate.
+
+Not a giant agent supervisor.
+
+A deterministic tripwire for failures the model should not be trusted to remember every time.
+
+<Callout title="The practical rule">
+If a handoff failure can be detected without judgment, do not leave it for the reviewer. Put it in a local gate.
+</Callout>
+
+## AtomCommit: commit shape should be planned, not guessed
+
+`atomcommit` is early-stage, but the direction matters.
+
+It runs from a repo with local changes and prints a Markdown atomic commit plan:
+
+```sh
+atomcommit
+```
+
+That default is equivalent to `atomcommit plan`. `atomcommit --json` exists for another tool that needs machine-readable output. The repository validation script can also call `agent-qc ready` when `agent-qc` is installed, treating the missing tool as a skip rather than a hard failure.
+
+I like that relationship.
+
+The sprint is not trying to make every tool mandatory for every repo. It is building small pieces that can recognize each other when present and degrade cleanly when absent.
+
+The commit-plan problem is bigger than commit messages.
+
+Agents are very good at creating a diff. They are less reliable at preserving why the diff should be one commit, two commits, or no commit yet. When the reviewer has to infer the atomic shape from the final patch, the agent has moved work downstream.
+
+An atomic plan changes the handoff:
+
+- what changed
+- which files belong together
+- which checks support the change
+- where the branch still needs human judgment
+
+That does not replace review.
+
+It gives review a starting structure.
+
+<Highlight>
+The useful question is not "did the agent write a commit message?" It is "did the agent leave a commit plan that matches the actual shape of the work?"
+</Highlight>
+
+## HandoffPad: omissions belong in the artifact
+
+`handoffpad` keeps showing up because it attacks the part of handoffs most summaries avoid:
+
+what did not happen.
+
+It builds a local handoff bundle from a task brief, git changes, command results, notes, omissions, and safe next steps. It can validate the bundle and render it as Markdown.
+
+The command shape is intentionally direct:
+
+```sh
+handoffpad create \
+  --task docs/TASKS.md \
+  --since HEAD~3 \
+  --commands examples/command-log.txt \
+  --output handoff.json \
+  --note "Parser work is ready for review." \
+  --omission "No remote deploy was attempted." \
+  --next-step "Run tests after rebasing."
+
+handoffpad validate handoff.json
+handoffpad render handoff.json --format markdown --output handoff.md
+```
+
+The privacy posture is part of the product: local files and local git state only, no telemetry, no posting, common token redaction, and home paths replaced with `~`.
+
+That matters because a handoff is often closer to sensitive operational truth than a README. It can include command outputs, branch state, omissions, and internal task context. A handoff tool should help package that evidence without accidentally turning it into an external action.
+
+The deeper design choice is that omissions are explicit inputs.
+
+That is not just a nice field.
+
+It is a review contract.
+
+If no remote deploy was attempted, say it. If a smoke test was skipped because the fixture was missing, say it. If the branch needs a rebase before tests are meaningful, say it.
+
+Reviewers can work with honest gaps. They slow down when gaps are hidden.
+
+<CompareTable
+  left={{ title: "Ungated handoff", items: ["PR body can be malformed", "Commit shape is inferred late", "Verification gaps are buried", "Omissions disappear", "Reviewer reconstructs the run"] }}
+  right={{ title: "Gated handoff", items: ["PR markdown is checked", "Atomic plan is visible", "Command results are packaged", "Skipped work is named", "Reviewer starts from evidence"] }}
+/>
+
+## The deeper insight: quality gates should protect the reviewer
+
+A lot of agent tooling frames quality gates as a way to protect production.
+
+That is true, but incomplete.
+
+The first system the gate protects is the reviewer.
+
+The reviewer is the scarce resource in an agent workflow. Not because humans are slow by default, but because review requires judgment, and judgment should not be spent on preventable cleanup.
+
+Literal `\n` in a PR body should not take human attention. A missing handoff body should not take human attention. A giant diff with no atomic plan should not force the reviewer to discover the intended commit structure from scratch. A confident summary with hidden omissions should not be accepted as complete.
+
+Those are not model-quality problems alone.
+
+They are harness problems.
+
+The model can write the summary. The harness can check the shape. The model can propose the plan. The harness can make the plan visible. The model can explain what happened. The handoff bundle can force the omissions into the same artifact as the wins.
+
+That is where deterministic agents become practical:
+
+not because the model becomes deterministic, but because the workflow refuses to let non-deterministic language be the only evidence.
+
+## What this changes in the sprint
+
+Day 36 makes the handoff layer feel more enforceable.
+
+[Day 18](/blog/day-18-handoffs-are-where-speed-compounds/) was about preserving evidence so speed can compound. Day 36 adds a sharper rule: the handoff should pass a gate before it becomes someone else's problem.
+
+That gives the three tools a clean job:
+
+- `agent-qc` checks deterministic handoff failures
+- `atomcommit` gives the branch a commit plan
+- `handoffpad` packages evidence, omissions, and next steps
+
+Together, they make "done" a little more expensive in the right way.
+
+Not slower.
+
+More specific.
+
+<Callout title="Day 36 in one line">
+Agent work is not ready for review when the code exists. It is ready when the handoff has passed a small gate and the reviewer gets evidence, structure, and honest gaps.
+</Callout>
+
+That is the direction I want the sprint to keep taking.
+
+Less trust-by-summary.
+
+More local checks around the exact places where agent workflows leak reviewer time.
+
+---
+
+*Day 36. June 11, 2026. The lesson was simple: the final step before review is not a summary. It is a gate.*

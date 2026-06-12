@@ -1,0 +1,208 @@
+---
+title: "Day 37: Local Proof Has to Survive Scale"
+description: "Day 37 of the 60 Day OSS Sprint: airgapquery, policydiff, and Lockstep all point at the same operating rule - agent workflows need local proof that still holds when the repo count, policy surface, and private corpus grow."
+pubDate: 2026-06-12
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: local-first AI agent verification; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI agent verification, local-first developer tools */}
+
+Day 37 was about a rule that sounds simple until the surface area gets large:
+
+local proof has to survive scale.
+
+That thread showed up across `airgapquery`, `policydiff`, and `Lockstep`.
+
+`airgapquery` proves a private document inspection path can run without hidden network calls. `policydiff` turns noisy JSON and YAML policy changes into a reviewer-ready risk summary. `Lockstep` scans folders full of JavaScript and TypeScript packages for script and toolchain drift.
+
+Different surfaces. Same pressure.
+
+<Highlight>
+Agent workflows do not get safer just because the proof is local. The proof has to stay readable when there are more files, more policies, more packages, and more ways for the agent to guess.
+</Highlight>
+
+That is the Day 37 theme.
+
+## The challenge: local evidence can still become noise
+
+I keep coming back to local-first tooling because it gives agent workflows a better default.
+
+No telemetry. No SaaS dependency. No surprise network call. No private corpus sent somewhere just because the agent needed an answer. No hosted policy engine required before a reviewer can understand what changed.
+
+That is the right posture.
+
+But local-first is not enough by itself.
+
+Local output can still be useless. A folder scan can produce a wall of text. A config diff can technically be correct while hiding the one permission change that matters. A document query can answer from private files without showing which files, which lines, and which scoring path supported the answer. A workspace check can say "drift" without telling the operator where release confidence actually broke.
+
+That is the trap.
+
+The goal is not local output.
+
+The goal is local proof a human can review and an agent can carry forward.
+
+Earlier sprint days kept pushing toward gates, receipts, and handoffs. [Day 31](/blog/day-31-readiness-needs-a-public-surface/) was about release readiness needing a visible surface. [Day 32](/blog/day-32-agent-operational-contracts/) was about commands and runtime facts becoming operational contracts. [Day 36](/blog/day-36-handoff-needs-a-gate/) was about the final handoff needing a deterministic gate.
+
+Day 37 extends that into scale:
+
+the evidence has to remain legible when the workflow is no longer one repo, one file, or one narrow check.
+
+## AirgapQuery: local retrieval needs citations, not vibes
+
+`airgapquery` asks a practical question before trusting a document-QA path with private files:
+
+can local ingestion and retrieval run with no hidden network calls?
+
+The MVP is deliberately narrow. It does deterministic token scoring over local text fixtures. It does not call model APIs, embeddings, telemetry, credential discovery, or publishing paths. It reads a directory, chunks supported files, scores a question against local chunks, and emits JSON or Markdown evidence.
+
+The command shape is plain:
+
+```sh
+airgapquery inspect fixtures/sample --format markdown
+airgapquery query fixtures/sample \
+  --question "How do agents prove there are no hidden network calls?" \
+  --format markdown \
+  --top 3
+```
+
+The important part is not that the retrieval is fancy.
+
+It is not trying to be.
+
+The important part is that the answer includes cited file paths, line ranges, matched terms, scores, and excerpts. That gives the reviewer something better than "the agent found this in the docs."
+
+Private document workflows are exactly where agent confidence can become dangerous. The model can sound certain while the local corpus path is unclear. The operator can believe the data stayed local while the tool quietly reached for a network-backed embedding service. The answer can be useful while the evidence is missing.
+
+`airgapquery` keeps the first layer boring enough to inspect.
+
+<Callout title="The practical rule">
+If an agent answers from private documents, the local proof should show what was read, what was skipped, and which citations supported the answer.
+</Callout>
+
+That does not prove the whole machine is air-gapped. The README says that plainly. Host controls still matter when hard egress guarantees matter.
+
+But the tool gives the workflow a reviewable local checkpoint before the agent starts treating private retrieval as trusted context.
+
+## PolicyDiff: config risk needs a reviewer path
+
+`policydiff` lives on a different surface: JSON and YAML policy or config changes.
+
+The problem is familiar. A pull request changes a policy file. The raw diff is noisy. The reviewer sees nested objects, renamed keys, new allowlists, changed scopes, package scripts, GitHub Actions permissions, network exposure, or secret-adjacent paths.
+
+Some of those changes are harmless.
+
+Some are the whole review.
+
+`policydiff` compares files or directories and summarizes the risk:
+
+```sh
+policydiff compare fixtures/before fixtures/after
+policydiff compare policy.before.yml policy.after.yml --format markdown
+policydiff compare before after --format json --output policydiff.json
+policydiff explain policydiff.json --format markdown
+```
+
+It looks for generic additions, removals, and changes, but the useful part is the opinionated risk layer:
+
+- permission, scope, role, allowlist, and tool access widening
+- removed or disabled approvals, enforcement, branch protection, and guardrails
+- GitHub Actions permission changes such as `contents: read` to `write`
+- package lifecycle or executable script changes
+- network exposure, CORS changes, and secret-adjacent paths
+
+This is not formal verification.
+
+That is fine.
+
+It is a local reviewer assistant that tells the agent and the human where to look first.
+
+<Highlight>
+The agent should not summarize a policy diff like prose. It should preserve the risk path: which key changed, why it matters, and whether a guardrail widened or vanished.
+</Highlight>
+
+That is what scales.
+
+Not a bigger prompt asking the model to be careful with policy files. A deterministic first pass that shapes the review before language gets involved.
+
+## Lockstep: workspace drift should be visible before release work
+
+`Lockstep` handles the scale problem at the workspace level.
+
+It walks folders full of JavaScript and TypeScript packages, reads each `package.json`, and reports where projects have drifted away from the expected scripts and toolchain policy.
+
+The commands are intentionally boring:
+
+```sh
+lockstep init --write-policy
+lockstep scan . --format markdown --output DRIFT.md
+lockstep scan . --fail-on-drift
+lockstep scan . --fail-on-warnings
+```
+
+It checks things like required scripts, validation commands that reference missing scripts, `engines.node` consistency, `packageManager` presence, lockfiles beside manifests, and ignored directory names.
+
+That may sound like housekeeping.
+
+In an agent-heavy workspace, it is infrastructure.
+
+Agents need to know whether `npm test` exists before they claim it passed. They need to know whether `npm run smoke` is part of the repo contract or just a pattern from another repo. They need to know whether a package is missing a lockfile before release work begins. They need a map of drift before they start copying a verification rhythm across projects that do not actually share one.
+
+`Lockstep` does not execute scripts. It scans and reports. It writes only when asked.
+
+That is the right boundary for this layer.
+
+<CompareTable
+  left={{ title: "Proof that collapses", items: ["Private answers without citations", "Config diffs summarized as prose", "Workspace scripts guessed by convention", "Policy widening buried in noise", "Release checks discovered late"] }}
+  right={{ title: "Proof that scales", items: ["Local retrieval cites files and lines", "Risky policy paths are highlighted", "Package drift is mapped before release", "Outputs can be diffed in review", "Agents inherit a clearer contract"] }}
+/>
+
+## The deeper insight: local-first needs a shape
+
+The pattern across these tools is not just "run locally."
+
+It is "run locally and leave an artifact with shape."
+
+That shape matters because agent workflows are full of handoffs. One agent inspects docs. Another changes policy. Another prepares release work across packages. A reviewer comes in later. The final PR body tries to compress everything into a few paragraphs.
+
+If the proof has no shape, the reviewer inherits a story.
+
+If the proof has shape, the reviewer inherits evidence.
+
+That difference is most obvious when the system grows. One package can be inspected manually. One policy file can be read line by line. One private doc answer can be traced by opening the file.
+
+At twenty packages, ten config files, and a private corpus, manual confidence starts to decay.
+
+The agent will still move fast.
+
+The question is whether the proof keeps up.
+
+## What this changes in the sprint
+
+Day 37 makes the verification layer feel more operational.
+
+`airgapquery` says private retrieval should prove its local path with citations. `policydiff` says policy changes should show risk paths before the reviewer reads the whole diff. `Lockstep` says workspace release confidence starts with knowing which package contracts drifted.
+
+Together they point at the same design rule:
+
+make proof local, structured, and portable.
+
+That is what an agent can carry into a handoff. That is what a reviewer can scan without rebuilding the whole run from memory. That is what lets speed survive contact with a larger surface area.
+
+<Callout title="Day 37 in one line">
+Local-first agent tooling only compounds when its evidence stays structured enough to review across private docs, risky policy changes, and multi-package workspaces.
+</Callout>
+
+That is where the sprint keeps getting more specific.
+
+Not bigger automation for its own sake.
+
+Smaller proof artifacts that survive the scale agents create.
+
+---
+
+*Day 37. June 12, 2026. The lesson was simple: local proof is only useful if it stays legible when the workflow gets bigger.*

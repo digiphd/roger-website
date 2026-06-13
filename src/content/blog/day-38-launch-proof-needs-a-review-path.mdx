@@ -1,0 +1,199 @@
+---
+title: "Day 38: Launch Proof Needs a Review Path"
+description: "Day 38 of the 60 Day OSS Sprint: launchclip, skillbrief, and skillrisk show why agent-generated launch material needs repo-grounded proof, explicit risk checks, and a human review path before public claims escape."
+pubDate: 2026-06-13
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "content"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent launch workflow; supporting phrases: agentic engineering tools, OSS founder journey, AI coding agents workflow, AI agent verification, local-first developer tools */}
+
+Day 38 was about a surface that gets treated like marketing, but behaves like infrastructure:
+
+launch proof needs a review path.
+
+That thread showed up across `launchclip`, `skillbrief`, and `skillrisk`.
+
+`launchclip` turns a local OSS repo into a dry-run promotion packet with demo evidence, captions, video plans, and review artifacts. `skillbrief` turns supplied repo facts into a traceable content brief. `skillrisk` checks reusable agent skill instructions for missing boundaries before they get used in a workflow.
+
+Different outputs. Same pressure.
+
+<Highlight>
+When agents help with public launch material, the dangerous failure is not only bad copy. It is unsupported confidence escaping before the evidence and risk boundaries have been reviewed.
+</Highlight>
+
+That is the Day 38 theme.
+
+## The challenge: distribution can outrun proof
+
+I keep building tools for agentic engineering because the bottleneck is rarely just code generation.
+
+It is the system around the code.
+
+Can the agent prove what it changed? Can it show what it ran? Can it avoid guessing the repo contract? Can it package the handoff without hiding omissions? Can it keep private context local? Can it turn work into something a human can review without making the human reconstruct the whole run from memory?
+
+The same problem shows up when the work becomes public.
+
+An OSS repo needs a README, a demo, a launch post, maybe a short video, maybe platform captions, maybe a review item for a content pipeline. An agent can draft all of that quickly. That is useful. It is also how unsupported claims multiply.
+
+The agent sees a package description and turns it into a big promise. It sees a smoke test and calls the tool production-ready. It sees a demo command and writes as if every edge case is handled. It writes social copy that sounds sharper than the proof.
+
+That is not a copywriting problem.
+
+It is a proof-chain problem.
+
+Earlier sprint days kept tightening review around agent work. [Day 31](/blog/day-31-readiness-needs-a-public-surface/) was about readiness needing a visible surface. [Day 36](/blog/day-36-handoff-needs-a-gate/) was about the final handoff needing a deterministic gate. [Day 37](/blog/day-37-local-proof-has-to-survive-scale/) was about local proof staying legible as the workflow grows.
+
+Day 38 applies that lesson to launch work:
+
+if the content is going public, the evidence path has to be visible before publication.
+
+## LaunchClip: promotion should start as a packet, not a post
+
+`launchclip` is the biggest piece in this set.
+
+Its job is not to post. That boundary matters.
+
+The README is explicit: V1 is local-first and dry-run-first. It does not post to social platforms, queue Clutch Cut items directly, publish packages, or submit live product-videogen requests without future explicit integration and human approval.
+
+The core command shape is a good summary of the product:
+
+```sh
+launchclip run ./my-oss-tool \
+  --out .launchclip/my-oss-tool \
+  --demo-cmd "npm run smoke" \
+  --demo-media "demo/screenshot.png" \
+  --angle "turns demo proof into launch content" \
+  --audience "developers shipping small OSS tools"
+```
+
+That creates a reviewable packet, not a live campaign.
+
+The packet can include the repo manifest, terminal demo evidence, copied demo media, command receipts, a video plan, captions for platforms like X, LinkedIn, TikTok, and Bluesky, product-videogen dry-run payloads, social readiness checks, and a final `REVIEW.md`.
+
+That shape is the product insight.
+
+Most launch automation wants to jump from "repo exists" to "publish a thread." `launchclip` inserts a review layer. It makes the agent collect evidence, generate artifacts, validate the packet, and leave a human-readable review file before anything external happens.
+
+<Callout title="The practical rule">
+For OSS launch workflows, the first artifact should be a local review packet. Public copy should be downstream of proof, not the place where proof is invented.
+</Callout>
+
+The recent work also pushed into richer video planning. The `ugc-demo-punchy` style uses a deterministic script, script-to-visual alignment, storyboard beats, Remotion props, thumbnails, and review-safe CTA language. It still does not pretend to generate real presenter footage. It produces a local preview and a renderer handoff plan from grounded repo facts.
+
+That is the right kind of ambition.
+
+Not "the agent posts better."
+
+"The agent prepares more of the launch surface while preserving a review path."
+
+## SkillBrief: a brief should show what it knows
+
+`skillbrief` is much smaller, but it sits on the same line.
+
+It takes structured JSON and builds a content brief from supplied facts:
+
+```sh
+npm run smoke
+```
+
+The library normalizes repo name, audience, recent commits, files, tests, risks, and goals. Then it writes a brief with positioning, proof points, suggested angles, verification, safety notes, and gaps.
+
+The useful detail is the gap behavior.
+
+If the supplied facts include commits and files, the brief can point to those proof points. If not, it says the gap plainly: add commits or files before drafting public copy.
+
+That is a small thing, but it is the part I care about.
+
+Agents are very comfortable writing around missing evidence. They can infer, smooth over, and make the copy sound complete. `skillbrief` forces the opposite habit: public-facing content starts with supplied facts, and missing proof stays visible.
+
+<Highlight>
+The best content brief for an agent is not the most persuasive one. It is the one that makes unsupported claims harder to smuggle into the next step.
+</Highlight>
+
+That is especially important for founder/operator content.
+
+The temptation is to turn every tool into a thesis and every README into a launch angle. Sometimes that is right. Sometimes the repo only supports a narrower claim. The brief needs to know the difference.
+
+`skillbrief` is not trying to replace judgment. It is trying to give judgment a cleaner starting point.
+
+## SkillRisk: reusable instructions need boundaries too
+
+`skillrisk` points at another public-ish surface: reusable agent skill instructions.
+
+A skill is not just documentation. It is operational text an agent may follow later. If that text omits side-effect boundaries, approval requirements, validation steps, or required inputs, the failure can show up much later as bad behavior.
+
+The current checker is intentionally direct. It looks for missing when-to-use guidance, required inputs, side-effect boundaries, approval requirements, and validation workflow. Some findings are warnings. Missing side-effect boundaries or approval requirements can block the report.
+
+The output is plain:
+
+```sh
+npm run smoke
+```
+
+That runs the CLI against a fixture and produces a skill risk report with status, findings, and next step.
+
+This is not a deep semantic auditor.
+
+It is a deterministic first gate for instructions that agents might reuse.
+
+That matters because launch workflows increasingly depend on reusable instructions. A promotion skill, video skill, demo-prep skill, or repo-to-content skill can quietly become part of the operating system. If the skill does not state when to ask, what actions are local-only, what validation is required, or where external side effects begin, the agent inherits ambiguity.
+
+And ambiguity compounds.
+
+<CompareTable
+  left={{ title: "Launch work without a review path", items: ["Copy written before evidence is gathered", "Demos treated as broad product claims", "Captions generated without claim status", "Video plans detached from repo facts", "Reusable skills missing approval boundaries"] }}
+  right={{ title: "Launch work with proof", items: ["Local packets preserve demo evidence", "Briefs expose proof points and gaps", "Captions stay downstream of supplied facts", "Dry-run payloads wait for review", "Skill instructions name side effects and validation"] }}
+/>
+
+## The deeper insight: public output is still an agent handoff
+
+The pattern across these tools is simple:
+
+public output is still an agent handoff.
+
+A PR handoff goes to a reviewer. A release handoff goes to a maintainer. A launch handoff goes to the outside world. The audience changes, but the risk is the same: language compresses evidence, and the reader has to decide whether to trust it.
+
+That is why I do not want launch automation that optimizes only for volume.
+
+Volume without proof creates cleanup work. It creates overstated posts, vague videos, captions that drift from the repo, and skills that automate behavior without naming boundaries. The agent looks productive because artifacts appear quickly. The operator pays later when the claims need to be unwound.
+
+The better system makes the review layer unavoidable:
+
+- `launchclip` packages the repo, demo, captions, video plan, and dry-run review artifacts
+- `skillbrief` turns supplied facts into a brief that keeps proof and gaps visible
+- `skillrisk` checks whether reusable instructions state the boundaries agents need before acting
+
+That stack does not make launch work automatic.
+
+It makes launch work inspectable.
+
+That is the trade I keep wanting from agent tools.
+
+## What this changes in the sprint
+
+Day 38 makes the distribution layer feel less separate from the engineering layer.
+
+I used to think of OSS launch work as the thing that happens after the tool exists. The sprint keeps proving that is too late. Distribution needs the same harness discipline as coding: local artifacts, dry-run payloads, explicit omissions, validation checks, and human review before external action.
+
+That is where `launchclip`, `skillbrief`, and `skillrisk` line up.
+
+They make the path from repo to public story slower in the right place. Not slower at the keyboard. Slower at the boundary where unsupported claims would otherwise leave the system.
+
+<Callout title="Day 38 in one line">
+Agent-generated launch work should not jump from repo facts to public claims. It should pass through a local proof packet, a traceable brief, and a reviewable risk boundary first.
+</Callout>
+
+That is the operating rule I want to keep carrying forward.
+
+Not less distribution.
+
+Distribution with receipts.
+
+---
+
+*Day 38. June 13, 2026. The lesson was simple: public launch work needs the same proof path as code handoff work.*

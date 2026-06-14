@@ -1,0 +1,245 @@
+---
+title: "Day 39: Operators Need Readable Agent State"
+description: "Day 39 of the 60 Day OSS Sprint: AgentGlow, agenthandoff, and SnapDiff show why agentic workflows need visible state before, during, and after the work if operators are going to trust the speed."
+pubDate: 2026-06-14
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: readable AI agent state; supporting phrases: AI coding agents workflow, agentic engineering tools, deterministic AI agents, AI agent verification, local-first developer tools */}
+
+Day 39 was about a problem that keeps showing up once agents move from demos into real work:
+
+operators need readable agent state.
+
+That thread showed up across `AgentGlow`, `agenthandoff`, and `SnapDiff`.
+
+`AgentGlow` gives agent-mode interfaces a visual presence layer for states like listening, thinking, speaking, tool-running, waiting, blocked, and done. `agenthandoff` turns a work session into a local takeover packet with repo facts, logs, risks, and next steps. `SnapDiff` checks terminal output snapshots without dragging a full test framework into the repo.
+
+Different layers. Same pressure.
+
+<Highlight>
+An agent workflow is only trustworthy if the operator can tell what state it is in, what evidence it will leave behind, and whether the output changed in a way worth reviewing.
+</Highlight>
+
+That is the Day 39 theme.
+
+## The challenge: agent speed hides state
+
+The more I use agents, the less I think the hard part is "make the agent smarter."
+
+Smarter helps.
+
+But the operator problem is usually more basic. What is the agent doing right now? Is it listening, thinking, calling a tool, waiting for approval, blocked on missing input, or done? Did it leave a handoff that another agent can resume? Did the command output change, or did the agent just say it looked fine?
+
+When those states are invisible, speed turns into stress.
+
+The agent may be working correctly, but the human has to infer the system state from a spinner, a partial message, a noisy terminal, or a PR body written after the fact. That is not enough for serious work. It is especially not enough when the agent can edit code, run commands, prepare launch material, or hand work to another agent.
+
+Earlier sprint days kept pushing on proof and review. [Day 36](/blog/day-36-handoff-needs-a-gate/) was about the final handoff needing a deterministic gate. [Day 37](/blog/day-37-local-proof-has-to-survive-scale/) was about local evidence staying legible as the workflow grows. [Day 38](/blog/day-38-launch-proof-needs-a-review-path/) was about public launch work needing a proof packet before claims escape.
+
+Day 39 pulls that lesson closer to the operator:
+
+the agent's state has to be readable while the work is happening, not only after something goes wrong.
+
+## AgentGlow: presence is an operational surface
+
+`AgentGlow` sounds visual first because it is a design-led SDK.
+
+But the useful idea is not decoration.
+
+The README is explicit: AgentGlow is not chat UI and not a basic audio waveform. It is a presence layer for agent-mode interfaces. The canonical states include `idle`, `listening`, `thinking`, `speaking`, `tool-running`, `waiting`, `blocked`, `error`, `success`, and `interrupted`.
+
+That state list is the product.
+
+An agent interface needs more than a text box. It needs to show when the agent is ready for input, when it is doing work, when it needs approval, when it hit a boundary, and when it finished cleanly. Without that, the user is left interpreting silence.
+
+The quickstart is intentionally small:
+
+```tsx
+import { AgentGlow } from 'agentglow/react';
+
+export function AssistantPresence() {
+  return (
+    <AgentGlow
+      state="speaking"
+      preset="orb"
+      input={{ speechLevel: 0.62 }}
+      agent={{ name: 'Neo', persona: 'calm-operator' }}
+      ariaLabel="Neo is speaking"
+    />
+  );
+}
+```
+
+The core controller is the part I keep thinking about for agentic engineering systems:
+
+```ts
+import { createAgentGlowController, renderAgentGlowToSvg } from 'agentglow/core';
+
+const glow = createAgentGlowController({ preset: 'console-pulse' });
+glow.send({ type: 'presence.tool.started', toolName: 'github.createPullRequest' });
+glow.setInput({ progress: 0.35, activityLevel: 0.8 });
+
+const frame = renderAgentGlowToSvg(glow.getSnapshot());
+```
+
+That is not just polish. It is a state contract.
+
+The interface can map agent events into visible, accessible presence. It can render a quiet idle state, a focused tool-running state, a clear blocked state, or a reduced-motion fallback. It can do that locally without turning the whole product into a chat skin.
+
+<Callout title="The practical rule">
+If an agent can take action on behalf of a user, its interface should expose state as a first-class product surface, not as incidental copy around a spinner.
+</Callout>
+
+That matters because agent UX has a failure mode where everything looks the same until it fails.
+
+Listening looks like thinking. Thinking looks like tool use. Tool use looks like waiting. Waiting looks like a hang. Blocked looks like slow. Done looks like "maybe done."
+
+AgentGlow is a small answer to that bigger problem. Give the state a contract. Give it semantics. Give it visual restraint. Make it obvious when the agent is working, waiting, blocked, or finished.
+
+## agenthandoff: state has to survive the session
+
+Readable state during the run is not enough.
+
+The state also has to survive the moment where the session ends, another agent takes over, or the human comes back later.
+
+That is where `agenthandoff` sits.
+
+It is local-first handoff infrastructure for humans and coding agents. It captures repository facts, changed files, package scripts, command logs, stale refs, risks, and next steps into a Markdown takeover brief plus JSON for orchestration.
+
+The workflow is direct:
+
+```sh
+agenthandoff start --title "Finish auth refactor" --note "Parser tests are the current blocker"
+npm test 2>&1 | tee .agenthandoff/npm-test.log
+agenthandoff capture --log .agenthandoff/npm-test.log
+agenthandoff finish \
+  --log .agenthandoff/npm-test.log \
+  --summary "Auth parser refactor is partially complete" \
+  --risk "Session start ref may be stale after new commits" \
+  --next "Run npm run check and inspect parser.test.ts"
+agenthandoff validate HANDOFF.md
+```
+
+The important detail is what it treats as handoff state.
+
+Not vibes. Not "I made some progress." Not a chat transcript pasted into a PR.
+
+It records branch, HEAD, upstream, ahead/behind state, dirty files, recent commits, start-ref staleness, package manager, package scripts, explicit command logs, human-supplied summary, tests, risks, and next steps.
+
+That is the right shape for a takeover packet.
+
+Agents are good at continuing a thread when the thread is clean. They are much worse when they have to reconstruct state from partial messages and stale assumptions. Humans are the same. Coming back to a repo after a long agent run should not mean rereading every diff and guessing which test failed last.
+
+`agenthandoff` turns the end of a run into a product surface.
+
+<Highlight>
+The handoff is not admin work. It is the state object that lets the next operator decide whether the workflow can continue.
+</Highlight>
+
+That connects directly to the sprint's bigger thesis. I do not want agents that only move fast while the original session is alive. I want workflows where state can be passed between agents, tools, terminals, PRs, and humans without losing the risk context.
+
+The local-first promise matters too. The CLI makes no network calls. It reads the current working tree, local git metadata, package files, and command logs explicitly provided by the operator.
+
+That boundary keeps the handoff boring in the best way.
+
+It is not trying to become the system of record for every project. It is trying to create the smallest local packet that makes takeover safer.
+
+## SnapDiff: output state needs a baseline
+
+`SnapDiff` handles another kind of state: command output.
+
+A lot of agent-built tools produce text. CLIs, code generators, formatters, repo scanners, LLM wrappers, release helpers, content tools. They emit Markdown, JSON, terminal tables, review summaries, or dry-run packets.
+
+The agent can say the output still looks right.
+
+I want a baseline.
+
+SnapDiff is a standalone snapshot testing CLI for command output. It is built for the places where pulling in Jest, Vitest, or a large framework is the wrong trade. Capture output once. Verify it later. Diff it when it changes. Update it when the change is intentional.
+
+The core commands are simple:
+
+```sh
+snapdiff capture --from cmd --cmd "mytool --input fixture.json" --name mytool-output
+snapdiff verify --name mytool-output
+snapdiff diff --name mytool-output
+snapdiff update --name mytool-output
+```
+
+It supports exact matching, normalized whitespace, and JSON equivalence. It stores snapshots as readable files under `snapshots/`, with metadata beside the captured output.
+
+That matters for agent workflows because output regressions are easy to miss.
+
+The agent changes a formatter and one heading disappears. It updates a repo scanner and the risk section quietly changes order. It touches a launch packet generator and the review checklist loses the evidence path. A human may not notice in a long diff. A model may confidently summarize the output without comparing it to the old contract.
+
+SnapDiff gives the workflow a small deterministic gate.
+
+<CompareTable
+  left={{ title: "Unreadable agent state", items: ["Interface hides whether the agent is waiting or blocked", "Session ends without repo facts or command logs", "Next operator reconstructs state from chat", "CLI output changes without a baseline", "Review depends on confidence instead of comparison"] }}
+  right={{ title: "Readable agent state", items: ["Presence states are explicit and accessible", "Handoffs include refs, risks, logs, and next steps", "Takeover packets can be validated", "Text output has snapshots and diffs", "Operators review changed evidence instead of guessing"] }}
+/>
+
+This is one of the reasons I keep building small local tools instead of one giant agent platform.
+
+The failure modes are often specific. Presence state is a UI contract. Handoff state is a repo packet. Output state is a snapshot. Each one deserves a narrow tool with a clear boundary.
+
+## The deeper insight: state is part of the product
+
+The pattern across these tools is not "make agents more observable" in the abstract.
+
+It is more practical:
+
+state is part of the product.
+
+AgentGlow makes live state visible. agenthandoff makes session state portable. SnapDiff makes output state comparable.
+
+Together they answer a simple operator question:
+
+what is true right now, and what changed?
+
+That question is the center of agentic engineering. The agent can generate code, run tools, prepare content, inspect policies, or build release packets. Fine. But the operator still needs to know whether the system is listening, working, blocked, finished, stale, risky, or different from the last known-good output.
+
+If that state is hidden, the human becomes the runtime.
+
+They hold context in memory. They remember which command failed. They infer whether silence means progress. They compare output by eye. They decide whether the next agent can continue. That does not scale, and it wastes the speed agents create.
+
+If the state is explicit, the workflow gets calmer.
+
+The UI can show the agent is waiting for approval. The handoff can show the branch, logs, risks, and next command. The snapshot can show exactly which terminal output changed. The reviewer can focus on judgment instead of reconstruction.
+
+That is the kind of speed I trust.
+
+Not the fastest possible generation loop.
+
+A loop where state is visible enough that the human can stay in control without babysitting every token.
+
+## What this changes in the sprint
+
+Day 39 makes the interface layer feel less cosmetic.
+
+For a long time, I treated agent UI as the wrapper around the real engineering problem. The sprint keeps proving that is too shallow. The wrapper is where the operator learns the system state. The handoff is where that state survives. The snapshot is where output drift becomes reviewable.
+
+`AgentGlow`, `agenthandoff`, and `SnapDiff` point at the same design rule:
+
+make agent state explicit before you ask for trust.
+
+That applies to visual presence, repo handoffs, and CLI output. It applies while the agent is running and after the session is over. It applies to product UX and local developer tooling.
+
+<Callout title="Day 39 in one line">
+Agents do not become trustworthy just by moving faster. They become trustworthy when their live state, handoff state, and output state are readable enough for an operator to review.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+State first.
+
+Then speed.
+
+---
+
+*Day 39. June 14, 2026. The lesson was simple: agent workflows need readable state before operators can trust the pace.*

@@ -1,0 +1,219 @@
+---
+title: "Day 40: Video Needs Proof Before Polish"
+description: "Day 40 of the 60 Day OSS Sprint: viral-scripts, video-prep-skill, and video-skillkit show why AI video workflows need grounded briefs, reusable structure, and asset validation before the polish layer takes over."
+pubDate: 2026-06-15
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "content"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI video workflow for developers; supporting phrases: agentic engineering tools, OSS founder journey, AI coding agents workflow, AI agent verification, local-first developer tools */}
+
+Day 40 was about a part of the agent stack that looks like marketing from the outside, but behaves like verification infrastructure once you actually use it:
+
+video needs proof before polish.
+
+That thread showed up across `viral-scripts`, `video-prep-skill`, and `video-skillkit`.
+
+`viral-scripts` is a reference corpus for studying short-form AI-tool explainer structure. `video-prep-skill` turns local repo facts into a grounded video preparation brief. `video-skillkit` creates and validates product demo video briefs before any rendering tool is involved.
+
+Different artifacts. Same pressure.
+
+<Highlight>
+The dangerous part of AI video is not that the output can look too good. It is that polished output can make weak proof feel finished.
+</Highlight>
+
+That is the Day 40 theme.
+
+## The challenge: video compresses trust too quickly
+
+A blog post gives the reader room to inspect an argument.
+
+A README gives a developer room to run the tool.
+
+A PR gives a reviewer a diff, a thread, and checks.
+
+Video does something else. It compresses the claim into a hook, a few visual beats, a quick demo, and a payoff. That is powerful. It is also risky when agents are involved.
+
+An agent can draft a punchy hook before it understands the repo. It can turn "reads README and package metadata" into "automates your launch workflow." It can invent a smoother demo path than the tool actually supports. It can write a 45-second script that sounds credible because the pacing is good, not because the evidence is strong.
+
+That is not a video problem in isolation.
+
+It is the same proof-chain problem that keeps showing up in the sprint.
+
+[Day 38](/blog/day-38-launch-proof-needs-a-review-path/) was about public launch material needing a review path. [Day 39](/blog/day-39-readable-agent-state/) was about operators needing readable state before they can trust agent speed. Day 40 moves that pressure into short-form video:
+
+if the artifact is going to become visual and compressed, the proof has to be upstream of the script.
+
+## Viral-scripts: structure is useful only when facts survive it
+
+`viral-scripts` started as a study corpus, not a product.
+
+That matters.
+
+The repo contains a small set of high-performing AI-tool explainer Shorts, with transcripts, annotations, and an `INSIGHTS.md` synthesis. The useful output is not "copy these scripts." It is a structural map for how short-form scripts work: hook, turn, body, payoff, optional CTA.
+
+The notes are practical. Target roughly 40 to 55 seconds. Keep the script around 130 to 165 words. Open with one clear hook. Use sequential steps. Name real tools and files. Make every line specific enough that the motion layer has something to render.
+
+The most important rule is also the most operational:
+
+do not invent metrics.
+
+That one rule is where the corpus connects back to agentic engineering.
+
+Short-form content rewards specificity. Numbers, file names, tools, timelines, concrete examples. But an LLM can manufacture that specificity if the workflow does not force it back to source material. A fake number gives the edit energy. It also breaks trust.
+
+So the corpus becomes a constraint system:
+
+- use the shape of good scripts
+- keep the pacing tight
+- name real things
+- map beats to visual scenes
+- preserve the boundary between source facts and copy
+
+That is exactly the kind of pattern I want in agent workflows. The agent should learn the shape of a good artifact without being given permission to invent the evidence that makes it good.
+
+<Callout title="The practical rule">
+Style references are safe when they teach structure. They become dangerous when they let the agent borrow authority from examples instead of grounding the new claim in the current repo.
+</Callout>
+
+The motion mapping in `viral-scripts` is also useful because it makes the script less mystical.
+
+A hook becomes a talking-head or typography beat. A command becomes a prompt card. Numbered steps become cards or a funnel. Real proof becomes screenshots or a magnifier scene. A payoff becomes a closing beat.
+
+That gives the downstream tool a clean interface.
+
+But it also gives the reviewer a way to ask sharper questions. Which source fact supports this hook? Which command can appear on screen? Which screenshot exists? Which number came from the repo? Which beat is just rhetoric?
+
+That is the right posture.
+
+## Video-prep-skill: start with local evidence
+
+`video-prep-skill` is closer to the recurring sprint theme because it starts from a repo.
+
+The README is direct: it is a local-first agent skill for turning a repository into a grounded short-form video preparation brief. It scans repo files, package scripts, and documentation cues, then produces hooks, scene beats, demo commands, proof points, risks, and a narration draft.
+
+The command shape is deliberately small:
+
+```sh
+node bin/video-prep-skill.js /path/to/repo \
+  --audience "agent builders" \
+  --outcome "try the CLI locally"
+```
+
+The output is not a finished video.
+
+Good.
+
+It is a preparation brief. It includes a positioning summary grounded in README and package metadata, a confidence score based on local evidence, hook options, scene outline, likely smoke, test, and build commands, risk notes, side-effect boundaries, and a deterministic narration draft.
+
+That boundary is important because agent-generated video copy has a habit of skipping the boring middle.
+
+It jumps from repo to script.
+
+But the useful workflow has another step: repo to evidence brief, then evidence brief to script, then script to render plan, then review.
+
+`video-prep-skill` keeps the first step honest. It does not call external services. It does not mutate the target repo. It does not publish media. It does not write to social platforms. The generated copy is explicitly a draft and the claims need review before publishing.
+
+That might sound conservative.
+
+It is actually the part that makes the workflow usable.
+
+If the agent can only read local files and produce a bounded brief, I can run it earlier. I can run it on a half-finished repo. I can compare the proof points against the README. I can see where the confidence score is thin. I can decide that the video should be narrower than the initial hook.
+
+<Highlight>
+The best video prep artifact is not the most exciting script. It is the one that tells the editor what is true, what is missing, and what should not be claimed yet.
+</Highlight>
+
+That is founder/operator work.
+
+The instinct is to move fast because distribution matters. But speed in distribution is expensive when it creates unsupported claims. A grounded brief makes the next step faster because it removes ambiguity. The editor does not have to rediscover the repo. The script writer does not have to guess. The reviewer can inspect the proof path.
+
+## Video-skillkit: validate the brief before the renderer
+
+`video-skillkit` sits one layer downstream.
+
+It is a local-first agent skill for preparing product demo videos before any rendering tool is used. It reads repo facts, writes a grounded video brief, and validates that referenced assets exist.
+
+The CLI has two verbs that explain the product:
+
+```sh
+video-skillkit brief ./repo --out video-plan/
+video-skillkit validate video-plan/video.json
+```
+
+The `brief` command emits `video.json` for downstream tools and `brief.md` for human review. The `validate` command checks the saved manifest.
+
+That sounds small, but it is the exact gap that matters.
+
+Video workflows are full of handoffs. A repo becomes a brief. A brief becomes a script. A script becomes a storyboard. A storyboard becomes a render manifest. A render manifest becomes a generated video, edited video, or human production task.
+
+Every handoff can smuggle in assumptions.
+
+The logo exists. The screenshot path is real. The demo command is plausible. The claim is conservative. The CTA does not imply a hosted product when the repo is a local CLI. The tool does not upload files. The video generator will receive the assets it expects.
+
+If those assumptions are wrong, the failure often appears late, after the artifact already looks polished.
+
+`video-skillkit` pushes validation earlier. It does not render video, upload files, or post to external services. Generated claims are conservative. External video generation or posting requires a separate approval step. V1 inspects top-level README and package metadata, which is a clear limitation, not a hidden promise.
+
+That kind of limitation is useful because it gives the operator a clean mental model.
+
+This is not the whole video machine. It is the local planning and validation layer.
+
+<CompareTable
+  left={{ title: "Video workflow without proof", items: ["Script starts before repo facts are collected", "Hooks borrow confidence from style examples", "Metrics and screenshots drift into the plan", "Assets are discovered during rendering", "Public claims get reviewed after polish"] }}
+  right={{ title: "Video workflow with proof", items: ["Repo facts become a bounded brief first", "Style references shape pacing without inventing facts", "Proof points and risks stay visible", "Manifests validate local assets", "Rendering stays downstream of review"] }}
+/>
+
+This is the same pattern as the rest of the sprint:
+
+put a small deterministic gate before the expensive or public step.
+
+For code, that might be a test, snapshot, handoff, or proof bundle.
+
+For video, it is a brief, manifest, asset check, claim boundary, and review note.
+
+Different medium. Same control surface.
+
+## The deeper insight: polish should be downstream of evidence
+
+The pattern across these tools is not "make better videos with AI."
+
+That is too broad, and honestly not the interesting part.
+
+The better thesis is:
+
+polish should be downstream of evidence.
+
+`viral-scripts` studies structure and pacing without pretending examples are a source of truth for new claims. `video-prep-skill` turns local repo evidence into a preparation brief with hooks, scenes, proof points, risks, and a draft narration. `video-skillkit` creates and validates a video plan before a renderer enters the workflow.
+
+Together they make the video layer less magical.
+
+The agent is not asked to be a creative director with unlimited license. It is asked to move through a chain:
+
+source facts, brief, script structure, manifest, validation, review, then maybe rendering.
+
+That chain matters because video is persuasive by default. Motion, pacing, and a confident voice can make a weak claim feel resolved. If the proof is not already in the system, polish hides the gap.
+
+I want the opposite.
+
+I want polish to make strong evidence easier to understand. I do not want polish to compensate for missing evidence.
+
+That is why these tools belong in the OSS sprint even though they look adjacent to engineering at first glance. Distribution is not separate from the product anymore. For small OSS tools, the README, demo, launch packet, video brief, and proof path are all part of the same operating system.
+
+The work is not just building the tool.
+
+It is building the path that lets someone else understand what the tool is, why it exists, what it can actually do, and what still needs review.
+
+Day 40 is a reminder that the agent content stack needs the same discipline as the coding stack.
+
+Make the source visible.
+
+Name the limits.
+
+Validate the handoff.
+
+Then make it look good.

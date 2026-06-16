@@ -1,0 +1,233 @@
+---
+title: "Day 41: Local Context Before Agent Action"
+description: "Day 41 of the 60 Day OSS Sprint: repoctx, Lockstep, and airgapquery show why AI coding agents need local workspace maps, drift checks, and offline evidence before they start changing things."
+pubDate: 2026-06-16
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "local-first"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: local-first AI agent context; supporting phrases: AI coding agents workflow, agentic engineering tools, deterministic AI agents, local-first developer tools, AI agent verification */}
+
+Day 41 was about the part of agent work that should happen before the agent touches the keyboard:
+
+local context has to be collected, checked, and made reviewable.
+
+That thread showed up across `repoctx`, `Lockstep`, and `airgapquery`.
+
+`repoctx` is an agent-readable workspace map for multi-repo development. `Lockstep` scans JavaScript and TypeScript workspaces for script and toolchain drift. `airgapquery` runs offline document inspection and retrieval smoke tests over local files.
+
+Different tools. Same pressure.
+
+<Highlight>
+The agent should not begin with confidence. It should begin with a local map, a drift report, and evidence that the sources it is about to use are actually inside the boundary.
+</Highlight>
+
+That is the Day 41 theme.
+
+## The challenge: agents are too willing to start from vibes
+
+The fastest way to make an agent look useful is to give it a task and let it start immediately.
+
+That is also one of the fastest ways to make the work fragile.
+
+Multi-repo work has hidden state everywhere. The useful repo may not be the repo in the current terminal. The verification command may be different from the one the agent remembers. A package may be missing the scripts that another package has. A README may describe the happy path, while the local tree has release docs, security files, or generated outputs that tell a more complete story.
+
+Then there is the document problem.
+
+Agents love context. But context is not automatically trustworthy just because it came from a folder. Which files were read? Which files were skipped? Were hidden paths excluded? Did the retrieval result cite local lines? Could the smoke test run without network calls?
+
+Those questions sound boring until the agent uses the wrong answer to write code, summarize risk, prepare a release, or draft public claims.
+
+[Day 39](/blog/day-39-readable-agent-state/) was about making agent state visible while work is happening. [Day 40](/blog/day-40-video-proof-before-video/) was about putting evidence before polished video. Day 41 pulls the same lesson to the start of the workflow:
+
+before action, collect local context in a form the agent and reviewer can inspect.
+
+## Repoctx: give the agent a map before a task
+
+`repoctx` exists because multi-repo work gets expensive when every tool has to rediscover the same facts.
+
+Where are the repositories? Which remotes do they map to? What is the default branch? What package manager is in use? Which docs exist? Which verification commands are likely relevant? Are there agent instructions or policy files that should change the way the task is handled?
+
+That should not live only in the agent's short-term memory.
+
+The README describes `repoctx` as an agent-readable workspace map for tools like `taskbrief`, `branchbrief`, CrewCMD, Codex, OpenClaw, Claude Code, and GitHub Copilot. The current repository is still taking shape, with a placeholder CLI, compiled build output, scanning modules, and a product definition in the docs. That status matters because the important idea is not pretending the map is finished. It is making the map a first-class artifact.
+
+An agent operating in a workspace without a map has to infer too much.
+
+It asks the shell for the current directory and starts from there. It reads a README and assumes that is the whole product. It runs the most common command instead of the local one. It edits a package without noticing the neighboring packages that enforce the same policy. It treats workspace discovery as a side quest instead of the opening move.
+
+That is backwards.
+
+The map is not optional decoration. It is the thing that lets downstream tools start from shared facts instead of rediscovering the same surface area every run.
+
+<Callout title="The practical rule">
+An agent task should not begin with "look around until you feel oriented." It should begin from a workspace map that names repos, commands, docs, policies, and risky edges.
+</Callout>
+
+This is especially important for an OSS stack that is intentionally made of many small tools.
+
+Small tools are easier to reason about, test, package, and review. But the operator still needs a way to understand the portfolio. Without a map, every task pays the discovery tax again. With a map, the agent can ask sharper questions:
+
+- which repo owns this workflow?
+- which verification commands are standard here?
+- which docs should constrain the change?
+- which package is likely drifting from the rest?
+- which context can be handed to another agent without dumping the whole filesystem?
+
+That is the kind of context layer I want before orchestration gets ambitious.
+
+## Lockstep: context is not enough if the workspace has drifted
+
+`Lockstep` takes the map problem and makes it more concrete for JavaScript and TypeScript packages.
+
+It walks a workspace, reads `package.json` files, and tells you which projects have drifted away from the scripts and toolchain policy you expect. It does not execute package scripts. It does not install dependencies. It does not mutate packages. It scans and reports.
+
+That is the right boundary.
+
+The checks are practical:
+
+- required scripts such as `test`, `check`, `build`, and `smoke`
+- validation commands that reference scripts that do not exist
+- `engines.node` consistency
+- package manager hints
+- lockfile presence beside each manifest
+- ignored directory policy
+
+The CLI shape is also deliberately direct:
+
+```sh
+lockstep init --write-policy
+lockstep scan /Users/me/Developer --policy lockstep.config.json
+lockstep scan . --format markdown --output DRIFT.md
+lockstep scan . --fail-on-drift
+```
+
+That might look like release hygiene, and it is. But for agents, it is also a quality gate before work starts.
+
+If an agent is asked to update ten related packages, it needs to know which ones have the same script contract and which ones do not. If a release run expects `npm run smoke`, the agent should not discover halfway through that three packages never had a smoke script. If a package has no lockfile beside the manifest, that is not trivia. It changes how confidently you can reproduce the check.
+
+<Highlight>
+Agent context should include drift, not just structure. A workspace map tells the agent what exists. A drift report tells it where assumptions are already weak.
+</Highlight>
+
+This is the same reason I keep preferring small deterministic tools over broad agent memory.
+
+The model can notice drift if you ask it to inspect enough files. But that turns a repeatable policy question into a bespoke reading exercise. `Lockstep` makes the policy explicit and lets the agent consume the result.
+
+It also gives the human reviewer a better artifact. A Markdown drift report is easier to inspect than a paragraph where the agent says, "Most packages appear consistent." Most is not a control surface. A report is.
+
+## Airgapquery: prove the context stayed local
+
+`airgapquery` handles another trust problem: local documents.
+
+The README is blunt about the scope. It is a privacy-first offline document inspection and retrieval smoke test for developers and agents. It answers one practical question before you trust a document-QA stack with private files:
+
+can the local ingestion and retrieval path run with no hidden network calls?
+
+The MVP is intentionally small. It does not call LLM APIs, run embeddings, send telemetry, crawl credentials, or publish anything. It uses deterministic token scoring over local text fixtures so the path is easy to inspect, test, and replace.
+
+The commands are exactly the kind I want in an agent workflow:
+
+```sh
+node dist/src/cli.js inspect fixtures/sample --format markdown
+
+node dist/src/cli.js query fixtures/sample \
+  --question "How do agents prove there are no hidden network calls?" \
+  --format markdown \
+  --top 3
+```
+
+The output includes cited file paths, line ranges, matched terms, scores, and excerpts.
+
+That combination matters.
+
+A lot of "private RAG" work jumps straight to the glamorous part: embeddings, chat, summarization, synthetic answers, and nice UI. But the operator problem starts earlier. What documents did the system read? What did it skip? Can I diff the evidence? Can I run it after egress is blocked? Can I see which line supported the answer?
+
+`airgapquery` does not claim to prove the whole machine is air-gapped. The README explicitly says host controls are still required for hard egress guarantees. That limitation is useful because it keeps the promise honest.
+
+The tool proves a narrower thing:
+
+local ingestion and retrieval can produce inspectable evidence without depending on hidden network behavior.
+
+<Callout title="The practical rule">
+If an agent is going to reason over private documents, the first useful artifact is not a clever answer. It is an inspectable local evidence report with citations and clear boundaries.
+</Callout>
+
+This connects directly to coding agents.
+
+The agent's answer is only as trustworthy as the context path that produced it. If the retrieval layer is opaque, the agent inherits that opacity. If the retrieval layer emits local citations, scores, skipped-file rules, and deterministic output, the agent has something to show the reviewer.
+
+That is the posture I want more of:
+
+not "trust me, I read the docs."
+
+"Here is the local evidence I read, here is what matched, here is what was skipped, and here is the boundary I did not cross."
+
+## The deeper insight: context should be an artifact, not a feeling
+
+The pattern across these tools is not "make agents better at reading."
+
+It is more specific:
+
+context should be an artifact, not a feeling.
+
+`repoctx` turns workspace discovery into a reusable map. `Lockstep` turns package policy drift into a report. `airgapquery` turns local document retrieval into inspectable evidence with citations and boundaries.
+
+Together they make the start of an agent workflow less magical.
+
+The agent does not have to pretend it understands the workspace because it skimmed a few files. It can consume a map. It does not have to discover script drift halfway through a release task. It can read a drift report. It does not have to summarize private documents from an opaque retrieval path. It can cite local evidence.
+
+That changes the operator relationship.
+
+Instead of watching the agent improvise its way into context, the human can review the context layer directly. Are these the repos that matter? Are these the commands we trust? Is this drift acceptable? Are these citations enough? Did the tool stay inside the local boundary?
+
+Those are better questions than "does the agent sound confident?"
+
+<CompareTable
+  left={{ title: "Agent starts from vibes", items: ["Current directory becomes the whole world", "Verification commands are guessed", "Package drift is discovered late", "Private documents become opaque summaries", "Reviewer has to reconstruct what the agent read"] }}
+  right={{ title: "Agent starts from local proof", items: ["Workspace map names repos, docs, and commands", "Script and toolchain drift is reported up front", "Policies are explicit before release work", "Document answers cite local evidence", "Reviewer can inspect the context path"] }}
+/>
+
+This is one of the main reasons the sprint keeps circling local-first tools.
+
+Local-first is not nostalgia. It is control.
+
+When the tool reads local files, emits local reports, avoids surprise network calls, and makes its output diffable, the agent gets a stronger starting point. The human gets a clearer review surface. The workflow can move faster because the evidence is not hidden inside the model's confidence.
+
+## What this changes in the sprint
+
+Day 41 made the pre-action layer feel more important.
+
+I do not want agents that are merely fast at changing code. I want agents that are disciplined about what they know before they act.
+
+That means the workflow should make room for boring artifacts:
+
+- a workspace map
+- a drift report
+- an offline retrieval smoke
+- citations
+- skipped-file rules
+- package policy checks
+- verification commands that are found rather than guessed
+
+Those are not side quests. They are the operating surface that makes the agent useful in a real workspace.
+
+<Callout title="Day 41 in one line">
+Agents become more trustworthy when local context is collected as evidence before action, not reconstructed as a story after the change.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Map first.
+
+Drift second.
+
+Then let the agent move.
+
+---
+
+*Day 41. June 16, 2026. The lesson was simple: local context should be proof before it becomes agent action.*

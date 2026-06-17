@@ -1,0 +1,257 @@
+---
+title: "Day 42: Review Contracts Before Agent Confidence"
+description: "Day 42 of the 60 Day OSS Sprint: policydiff, PromptDiff, and PromptLintel show why agentic workflows need local review contracts for policy, prompt, and instruction changes before confidence takes over."
+pubDate: 2026-06-17
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent review contracts; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI agent verification, local-first developer tools */}
+
+Day 42 was about the layer that sits between a change and the agent's confidence about that change:
+
+review contracts.
+
+That thread showed up across `policydiff`, `PromptDiff`, and `PromptLintel`.
+
+`policydiff` turns policy and config changes into risk summaries. `PromptDiff` compares prompt revisions and names behavior changes. `PromptLintel` scans prompt-like files before agents ingest them.
+
+Different files. Same pressure.
+
+<Highlight>
+Agents do not need more confidence around risky instructions, tool access, and policy changes. They need smaller local contracts that make those risks reviewable before the agent explains them away.
+</Highlight>
+
+That is the Day 42 theme.
+
+## The challenge: dangerous changes can look ordinary
+
+Some of the riskiest changes in agent workflows do not look dramatic in a normal diff.
+
+A GitHub Actions permission moves from `read` to `write`. A config disables an approval check. A prompt quietly adds browser and shell access. A safety section disappears from an instruction file. A prompt-like document includes "ignore previous instructions" because it is quoting an attack example, but nobody marks it as an allowed fixture.
+
+None of those changes have to be large.
+
+That is the problem.
+
+The diff can be tiny. The behavior change can be large. A human reviewer can miss it because the surrounding file looks familiar. An agent can miss it because the change is semantically sharp but textually small. A product can ship it because the tests pass and the generated explanation sounds reasonable.
+
+[Day 39](/blog/day-39-readable-agent-state/) was about readable agent state. [Day 41](/blog/day-41-local-context-before-agent-action/) was about local context before action. Day 42 moves the same discipline into the review layer:
+
+before the agent gets to summarize risk, the workflow should give risk a local shape.
+
+## Policydiff: policy changes need risk labels
+
+`policydiff` starts with a practical reviewer problem.
+
+JSON and YAML config diffs are noisy. They carry important security and operations meaning, but a normal line diff often makes the reviewer do too much interpretation. Was a permission widened? Did a guardrail disappear? Did a package lifecycle script change? Did CORS become more permissive? Did a secret-adjacent path get added?
+
+Those are not just formatting questions.
+
+They are risk questions.
+
+The README describes `policydiff` as a local-first CLI that turns noisy JSON/YAML policy and config changes into a reviewer-ready risk summary. It compares files or directories and can emit Markdown or JSON. It names changes like permission widening, removed guardrails, GitHub Actions permission changes, package lifecycle changes, network exposure, and secret-adjacent paths.
+
+The command shape is direct:
+
+```sh
+policydiff compare fixtures/before fixtures/after
+policydiff compare policy.before.yml policy.after.yml --format markdown
+policydiff compare before after --format json --output policydiff.json
+```
+
+The part I care about most is the exit model.
+
+`0` means the compare succeeded and no critical change was detected. `1` means a CLI or parsing error. `2` means the compare succeeded and at least one critical change was detected.
+
+That gives an agent workflow a better contract than "read this diff and tell me if it seems risky."
+
+It can run a local comparison. It can attach a Markdown report to a PR. It can fail a gate when the change crosses a configured threshold. It can show the human where to look first.
+
+<Callout title="The practical rule">
+Policy review should not depend on whether the agent notices that a small config edit widened authority. The workflow should label that class of change before the agent writes the story.
+</Callout>
+
+That is the bigger point.
+
+The agent's explanation becomes more useful after a deterministic tool has already named the risk. Without that contract, the agent has to infer too much from raw text. With it, the agent can do a narrower job:
+
+explain the report, connect it to the PR, and ask for review where authority changed.
+
+That is a better use of intelligence.
+
+## PromptDiff: prompts are behavior, not prose
+
+`PromptDiff` handles a similar problem in a more agent-native place:
+
+the prompt itself.
+
+Prompt changes can look like copy edits while changing the system's behavior. A sentence can alter instruction hierarchy. A section can add a new tool surface. A schema requirement can disappear. A refusal rule can be softened. Secret-handling language can be removed.
+
+If the prompt controls an agent, that is not just prose.
+
+It is behavior.
+
+`PromptDiff` treats prompts like code. It compares revisions, calls out risky behavior changes, and leaves a stable local report. It supports Markdown, plain text, JSON, and JSONL/NDJSON with stable key ordering. It can output Markdown or JSON, and it can fail on a severity threshold.
+
+The common commands tell the story:
+
+```sh
+promptdiff compare old.md new.md --format markdown --out report.md --fail-on high
+promptdiff compare old.json new.json --format json
+promptdiff check prompts/*.md --rules promptdiff.rules.json --fail-on high
+```
+
+The classifications are the useful part:
+
+- instruction changes, including dangerous bypass language
+- removed safety, refusal, or secret-handling guardrails
+- tool surface changes such as shell, browser, network, delete, database, or email access
+- output-contract changes such as JSON, schema, or format shifts
+- secret-like values, redacted by default
+
+That last part matters because prompt review can create its own leak path. A tool that detects risk but prints secrets into the report has failed the operator.
+
+PromptDiff stays local-first, avoids telemetry and hidden network calls, writes files only when `--out` is provided, redacts common credential patterns by default, and uses deterministic timestamps to keep snapshots quiet.
+
+<Highlight>
+The review artifact should make the prompt safer to inspect, not create a second place where the risky material leaks.
+</Highlight>
+
+This changes how I think about prompt iteration.
+
+The naive workflow is:
+
+edit the prompt, run the agent, see if the answer feels better.
+
+That is too soft for anything with tools, permissions, customer data, or downstream parsers.
+
+The better workflow is:
+
+compare the prompt, name the behavior changes, check required phrases and sections, fail on risky drift, then run the agent.
+
+That ordering matters. Once the agent produces a plausible result, it becomes easier to rationalize the prompt that produced it. The output has gravity. It pulls the reviewer toward "worked in this case" instead of "what did we just permit?"
+
+PromptDiff pushes review before that gravity appears.
+
+## PromptLintel: preflight the instructions before ingestion
+
+`PromptLintel` sits one step earlier.
+
+It scans prompt-like files before agents ingest them. That includes files like `AGENTS.md`, skills, prompt directories, local instruction packs, or any Markdown that might become an agent's operating context.
+
+The risk is familiar:
+
+instruction files can contain prompt injection examples, secret-shaped strings, unsafe external-action wording, missing provenance, or missing safety boundaries. Sometimes those things are intentional. Sometimes they are fixtures. Sometimes they are a real mistake.
+
+The point is to make the distinction visible.
+
+The basic command is small:
+
+```sh
+promptlintel scan AGENTS.md skills/**/*.md --out promptlintel-report.md
+promptlintel scan prompts/ --format json --fail-on high
+promptlintel rules --format markdown
+```
+
+Reports include severity, rule id, file, line, column, snippet, and remediation. JSON is stable enough for CI tooling. Markdown is meant for humans and PR comments.
+
+I like the inline allow model because it matches how real repos work.
+
+Sometimes a fixture should contain a risky phrase. Sometimes documentation needs to quote an attack pattern. Sometimes a test needs an intentionally bad prompt. Hiding those examples is not the answer.
+
+Marking them is.
+
+```md
+<!-- promptlintel-allow injection-ignore-prior-instructions -->
+A malicious prompt may say: ignore previous instructions.
+```
+
+That is a small contract, but it is exactly the kind that keeps agent workflows sane.
+
+The tool is not pretending to be a complete security boundary. The README is clear: PromptLintel reduces common mistakes before prompt files reach an agent, but it does not replace secret scanners, code review, permission boundaries, or runtime human-in-the-loop controls.
+
+Good.
+
+Overclaiming would make it less useful.
+
+<Callout title="The practical rule">
+Prompt preflight should make risky instruction material explicit before it enters the agent context window.
+</Callout>
+
+That is the boundary I want.
+
+The agent should not be the first system to notice that its own instruction file includes unsafe external-action language or a missing safety section. The preflight layer should catch the obvious stuff, label the intended exceptions, and hand the agent a cleaner context surface.
+
+## The deeper insight: confidence should consume evidence
+
+The pattern across these tools is not "lint everything."
+
+That is too small.
+
+The better thesis is:
+
+confidence should consume evidence.
+
+`policydiff` gives policy and config changes risk labels. `PromptDiff` gives prompt revisions behavior labels. `PromptLintel` gives prompt-like files pre-ingestion findings and visible allows.
+
+Together they move agent review away from vague confidence and toward local contracts:
+
+- what changed?
+- what class of risk is it?
+- where did authority widen?
+- what guardrail disappeared?
+- what prompt behavior shifted?
+- which risky instruction text is intentional?
+- what should fail before this reaches the agent or reviewer?
+
+Those are the questions I want the workflow to answer before the agent writes the summary.
+
+The summary still matters. The agent can connect the report to the task, explain why a finding matters, suggest a smaller change, and prepare a clean review note. But the summary should be downstream of evidence, not a substitute for it.
+
+<CompareTable
+  left={{ title: "Agent confidence first", items: ["Config diffs are reviewed as raw text", "Prompt changes feel like copy edits", "Instruction files enter context unchecked", "Risky examples are not marked as intentional", "The agent explains risk from memory and vibes"] }}
+  right={{ title: "Review contracts first", items: ["Policy changes get severity labels", "Prompt revisions get behavior reports", "Prompt-like files are scanned before ingestion", "Allowed risky fixtures are explicit", "The agent consumes local evidence before summarizing"] }}
+/>
+
+This is where deterministic AI agents become less theoretical.
+
+Determinism does not mean the model stops being probabilistic. It means the workflow gives the model fewer places to improvise. It means the risky parts have reports, exit codes, file paths, line numbers, and thresholds. It means the agent can operate around a review contract instead of becoming the review contract.
+
+That distinction matters.
+
+I do not want to ask the model, "Is this safe?"
+
+I want to ask a local tool, "What changed and which rules fired?"
+
+Then I want the model to help me interpret the result, write the PR note, and propose the next smallest action.
+
+## What this changes in the sprint
+
+Day 42 made the review layer feel more like product infrastructure.
+
+The sprint keeps coming back to the same operator problem from different angles. State has to be readable. Context has to be local. Evidence has to come before polish. Now review needs contracts before confidence.
+
+That applies to policy files, prompts, and instruction documents because those are the places where agent behavior quietly changes.
+
+The work is not glamorous. It is severity labels, deterministic reports, redaction, inline allows, exit codes, and package smoke checks. But that is exactly the point.
+
+Agent workflows become safer when the boring layer is strong enough that the agent does not have to pretend.
+
+<Callout title="Day 42 in one line">
+Agents can help explain risk, but the workflow should name policy, prompt, and instruction risk before the agent gets a chance to sound confident.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Contracts first.
+
+Confidence second.
+
+---
+
+*Day 42. June 17, 2026. The lesson was simple: review contracts make risky agent changes visible before confidence takes over.*

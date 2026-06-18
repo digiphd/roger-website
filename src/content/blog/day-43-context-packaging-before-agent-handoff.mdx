@@ -1,0 +1,245 @@
+---
+title: "Day 43: Package Context Before the Handoff"
+description: "Day 43 of the 60 Day OSS Sprint: contextloom, prooftrace, and ReviewBundle show why AI coding agents need cited memory, classified verification, and deterministic review folders before work gets handed off."
+pubDate: 2026-06-18
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "context"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent handoff evidence; supporting phrases: AI coding agents workflow, agentic engineering tools, deterministic AI agents, AI agent verification, local-first developer tools */}
+
+Day 43 was about a part of agent work that usually gets treated as admin:
+
+packaging context before it moves.
+
+That thread showed up across `contextloom`, `prooftrace`, and `ReviewBundle`.
+
+`contextloom` turns transcripts, notes, and tool traces into cited chunks. `prooftrace` classifies verification commands and hashes evidence strings. `ReviewBundle` turns local git changes into a deterministic review folder.
+
+Different handoff shapes. Same pressure.
+
+<Highlight>
+The handoff is not just a message to the next agent. It is a package of citations, command labels, hashes, redactions, and review boundaries.
+</Highlight>
+
+That is the Day 43 theme.
+
+## The challenge: handoffs quietly lose the proof
+
+Agents are getting better at doing longer tasks.
+
+That makes handoffs more important, not less important.
+
+The failure mode is familiar. One agent reads a bunch of files, runs a few commands, makes a decision, and leaves behind a confident summary. Another agent, reviewer, or future version of you picks up that summary and treats it as context.
+
+But what actually traveled?
+
+Did the exact source line travel? Was the verification command named clearly? Were secrets redacted? Did the output include hashes so the recipient can verify that the evidence still matches? Did the patch travel with snapshots, or did the reviewer only get a narrative?
+
+When those details are missing, the next agent inherits a story instead of a reviewable artifact.
+
+[Day 41](/blog/day-41-local-context-before-agent-action/) was about collecting local context before action. [Day 42](/blog/day-42-review-contracts-before-agent-confidence/) was about naming risky review changes before confidence takes over. Day 43 moves the same discipline into the handoff layer:
+
+context has to be packaged before it is trusted.
+
+## Contextloom: memory needs citations, not vibes
+
+`contextloom` exists for the part of agent work that lives in transcripts, notes, and tool traces.
+
+That is where a lot of real decisions happen.
+
+A command failed and changed the plan. A reviewer clarified a constraint. A tool trace proved which files were inspected. A note captured why a feature was deliberately not built. Those details often live in long logs, not clean docs.
+
+The problem is that long logs are hard to reuse.
+
+A summary helps, but it can flatten the exact thing that matters. It can remember that there was "a deployment concern" while losing the line that proved which command failed. It can say "the user preferred the conservative option" while dropping the turn where that preference was stated. It can create a useful story and still break the proof chain.
+
+`contextloom` takes a smaller, more useful position. It inspects local `.jsonl`, `.json`, Markdown, and text inputs, then writes a manifest of retrievable chunks with citations back to exact files, line ranges, byte offsets, and hashes.
+
+The CLI shape is intentionally direct:
+
+```sh
+node dist/src/cli.js inspect fixtures/sample --output out/sample
+node dist/src/cli.js search out/sample/manifest.json "deployment decision"
+node dist/src/cli.js show out/sample/manifest.json chunk-0001
+node dist/src/cli.js verify out/sample/manifest.json
+```
+
+That is not glamorous. It is much more useful than glamour.
+
+It means the next agent does not have to trust a memory blob. It can search a local manifest, inspect a chunk, and verify that the cited source still matches the recorded hash. The human reviewer can do the same thing.
+
+<Callout title="The practical rule">
+If agent memory cannot point back to a file, line range, offset, or hash, treat it as a note, not proof.
+</Callout>
+
+This matters because context windows make memory feel cheap.
+
+It is tempting to paste the whole thread into the next run and let the model sort it out. Sometimes that is fine. But once the workflow becomes repeated, shared, or review-sensitive, pasted context is not enough. You need a manifest. You need stable chunk ids. You need citations. You need a verify command.
+
+The deeper pattern is that memory should become a local artifact before it becomes agent input.
+
+## Prooftrace: verification needs a label before it travels
+
+`prooftrace` handles a smaller but important part of the same handoff problem:
+
+the proof claim itself.
+
+Agent-built changes often end with a line like "tests passed" or "ran build." That is better than nothing, but it is still too soft for a workflow that another agent or reviewer has to inherit.
+
+Which command was it? Was it a test, build, lint, smoke check, typecheck, or packaging check? Was the result a security decision or just metadata? Can the evidence string be identified later without pasting the whole output into every handoff?
+
+`prooftrace` is early, and that matters. The current CLI exposes small proof utilities instead of pretending the full proof bundle format is finished. It can classify a verification command and hash a short evidence string:
+
+```sh
+node dist/cli.js kind "npm test"
+node dist/cli.js hash "npm test passed"
+node dist/cli.js --help
+```
+
+That surface is deliberately narrow.
+
+Good.
+
+The useful insight is not that command classification is magic. The README is clear that classification is heuristic and should be treated as metadata, not a security decision. Hashes prove byte identity only for the exact input string or file content.
+
+That limitation is the point.
+
+<Highlight>
+The proof layer should not overclaim. It should give the next reviewer a stable label, a stable fingerprint, and a clear boundary around what has actually been proven.
+</Highlight>
+
+This is the kind of boring primitive that becomes important once agents start handing work to other agents.
+
+An agent can say it ran `npm run release:check`. A proof layer can label that command as a release or package check, record the exact string, hash the relevant evidence, and make the handoff easier to inspect later. The human still decides whether the evidence is enough. The workflow just stops treating the verification note as disposable prose.
+
+That is especially useful because verification language gets fuzzy fast.
+
+One agent says "checked." Another says "validated." A third says "smoke passed." A reviewer has to translate all of that back into commands and risk. If the workflow can attach a command kind and hash up front, the next step starts from a smaller ambiguity.
+
+<Callout title="The practical rule">
+Verification should travel as classified evidence, not just a sentence that the agent wrote after the work felt finished.
+</Callout>
+
+This is not the whole proof system yet.
+
+It is a good primitive for one.
+
+## ReviewBundle: the patch needs a folder, not just a summary
+
+`ReviewBundle` takes the handoff problem to the review stage.
+
+Once an agent has changed code, the reviewer needs more than "I updated the parser and tests pass."
+
+They need the shape of the change.
+
+What files changed? What does the patch look like? Which snapshots are included? Was anything refused because it looked secret-adjacent? Is there a manifest that another tool can inspect? Can the reviewer get the evidence without receiving the whole repo, the build output, or private junk?
+
+That is the niche `ReviewBundle` serves.
+
+It turns local git changes into a deterministic review folder with:
+
+- `summary.md`
+- `diff.patch`
+- `changed-files/`
+- `manifest.json`
+- `redaction-report.json`
+
+The command surface matches real review workflows:
+
+```sh
+reviewbundle --output ./reviewbundle-output
+reviewbundle --check --json
+reviewbundle --mode staged --output ./reviewbundle-output --force
+reviewbundle --mode branch --base main --output ./reviewbundle-output
+```
+
+The safety posture is conservative. It refuses secret-looking paths such as env files, private keys, credential folders, `.ssh`, `.git`, `node_modules`, `dist`, `build`, and `coverage`. It refuses to overwrite an existing output directory unless `--force` is set.
+
+That matters because review handoffs are one of the easiest places to leak too much.
+
+The agent wants to be helpful. The reviewer wants enough context. The shortcut is to hand over the entire working tree or paste a long diff with no boundary. That can expose secrets, generated noise, or irrelevant state. It also makes the review harder.
+
+`ReviewBundle` gives the handoff a shape.
+
+The reviewer gets the patch, selected snapshots, a manifest, and a redaction report. The agent gets a concrete artifact it can attach to a PR or summarize. The workflow gets a boundary that exists before anyone starts narrating the change.
+
+<Callout title="The practical rule">
+A review handoff should be generated before it is explained. The explanation should point to a patch, snapshots, manifest, and redaction report.
+</Callout>
+
+This connects directly to the rest of the sprint.
+
+Agents are useful when they can move work forward. They are dangerous when the proof of that work only exists as a convincing paragraph. A review bundle does not solve every review problem, but it turns "trust my summary" into "inspect this folder."
+
+That is a much better primitive.
+
+## The deeper insight: handoff quality is product quality
+
+The pattern across these tools is not "make better summaries."
+
+The better thesis is:
+
+handoff quality is product quality.
+
+`contextloom` packages long-context memory with citations and hashes. `prooftrace` gives verification notes command labels and evidence fingerprints. `ReviewBundle` packages code changes with patches, snapshots, manifests, and redaction reports.
+
+Together they make agent work easier to continue without asking the next person or model to accept a story on faith.
+
+<CompareTable
+  left={{ title: "Handoff as a story", items: ["Agent summary replaces source evidence", "Verification notes become vague prose", "Command meaning is reconstructed later", "Patch review depends on narration", "Secrets and generated noise are handled by hope"] }}
+  right={{ title: "Handoff as a package", items: ["Memory chunks cite files, lines, offsets, and hashes", "Verification commands get stable labels", "Evidence strings can be fingerprinted", "Review folders include patches and snapshots", "Boundaries exist before the agent explains the work"] }}
+/>
+
+This is where deterministic AI agents become more than a model choice.
+
+The determinism is in the surrounding artifacts. Stable manifests. Command labels. Hash verification. Conservative redaction. Review folders that can be inspected by humans and consumed by tools.
+
+The model still matters. But the model should not be carrying the whole trust burden.
+
+I want agents to be good at interpreting evidence, planning next steps, and doing the boring work quickly. I do not want the agent to be the only place where the evidence lives.
+
+That is the difference.
+
+## What this changes in the sprint
+
+Day 43 made the handoff layer feel like a first-class part of the agent stack.
+
+The sprint has already spent a lot of time on preflight, review contracts, local context, and proof before polish. Packaging is the connective tissue between those ideas.
+
+If the context cannot travel, the workflow resets.
+
+If the memory cannot cite its source, the next agent inherits fuzz.
+
+If the verification note loses the command and evidence, the result looks more complete than it is.
+
+If the review folder does not exist, the summary becomes the product.
+
+That is not good enough for the kind of agentic engineering I want to build.
+
+The better path is smaller and more mechanical:
+
+- cite the memory
+- classify the verification
+- fingerprint the evidence
+- redact before sharing
+- bundle the patch
+- make the handoff inspectable
+
+<Callout title="Day 43 in one line">
+Agent handoffs become trustworthy when context travels as a local package of evidence, limits, and review artifacts instead of a confident summary.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Package first.
+
+Then hand off.
+
+---
+
+*Day 43. June 18, 2026. The lesson was simple: context has to be packaged before another agent can safely inherit it.*

@@ -1,0 +1,243 @@
+---
+title: "Day 44: The First Task Needs a Contract"
+description: "Day 44 of the 60 Day OSS Sprint: agentprimer, EnvSentinel, and sessiondiff show why AI coding agents need onboarding packets, environment-contract checks, and run comparisons before the first task gets trusted."
+pubDate: 2026-06-19
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agent first task workflow; supporting phrases: deterministic AI agents, AI agent verification, agentic engineering tools, local-first developer tools */}
+
+Day 44 was about the part of agent work that happens before the first useful commit:
+
+the first task needs a contract.
+
+That thread showed up across `agentprimer`, `EnvSentinel`, and `sessiondiff`.
+
+`agentprimer` turns a repo into a compact onboarding packet and suggests a conservative first task. `EnvSentinel` audits environment variable contracts before missing or fake values reach runtime. `sessiondiff` compares coding-agent session logs so commands, files, commits, tests, and final claims can be reviewed across runs.
+
+Different surfaces. Same pressure.
+
+<Highlight>
+The first agent task should not begin with a heroic guess. It should begin with a repo packet, an environment contract, and a way to compare what happened after the run.
+</Highlight>
+
+That is the Day 44 theme.
+
+## The challenge: first contact is where trust gets overdrawn
+
+The first few minutes of an agent run are deceptively important.
+
+That is when the agent decides what kind of repo it is in. It decides which commands matter. It notices or misses conventions. It decides whether the README is enough. It infers risk from filenames. It chooses a first edit.
+
+If that first read is wrong, the rest of the work inherits the mistake.
+
+The usual agent workflow makes this too casual. Ask the agent to "look around." Let it scan files until it feels oriented. Hope it finds the right scripts. Hope it notices deployment files, release workflows, missing tests, or environment variables. Hope the final summary is honest about what was actually checked.
+
+Hope is not a workflow.
+
+[Day 41](/blog/day-41-local-context-before-agent-action/) was about collecting local context before action. [Day 43](/blog/day-43-context-packaging-before-agent-handoff/) was about packaging proof before another agent inherits the work. Day 44 sits between those ideas:
+
+the first task needs enough structure that the agent can start small, verify locally, and leave behind a run that can be compared later.
+
+## Agentprimer: onboarding should be a packet, not a vibe
+
+`agentprimer` exists because the first agent run in a repo is usually too open-ended.
+
+The README describes it as a tool that turns a repository into a compact onboarding packet for a coding agent: commands, conventions, risks, likely entry points, and a first safe task. It is a briefing, not a lore dump.
+
+That phrase matters.
+
+A lore dump gives the model a lot of text and asks it to sort the important parts from the noise. A briefing gives the model a smaller operating surface. It says: here are the stack signals, here are the scripts, here are the likely entry points, here are the risky surfaces, here are the missing onboarding gaps, and here is a conservative task you might safely start with.
+
+The CLI shape is deliberately plain:
+
+```sh
+agentprimer scan . --out docs/AGENT_PRIMER.md
+agentprimer scan fixtures/node-cli --format json
+agentprimer suggest-task . --max-risk low
+```
+
+That is the right boundary for a first-contact tool.
+
+It does not call an LLM. It does not upload repository contents. It reads local files, reports evidence, and keeps the output deterministic in spirit. The point is not to replace the agent's judgment. The point is to stop wasting that judgment on rediscovering the same repo facts every run.
+
+<Callout title="The practical rule">
+Before an agent changes a repo, it should receive a compact packet that names commands, conventions, risky surfaces, and a first task small enough to verify.
+</Callout>
+
+The first safe task idea is the most interesting part.
+
+Agent productivity is often framed around bigger autonomy: longer runs, more files, more cross-repo orchestration, fewer check-ins. But a lot of trust is earned in the opposite direction. Give the agent a task that is intentionally small. Make the risk low. Make the verification obvious. Let the run prove that the onboarding packet was good enough.
+
+That changes the emotional shape of the workflow.
+
+Instead of asking, "Can this agent understand the whole repo?", I can ask, "Can this agent make one conservative change using the packet it was given?"
+
+That is a better first question.
+
+It also gives the repo a feedback loop. If `agentprimer` cannot detect a useful script, maybe the package metadata is thin. If it flags missing onboarding gaps, maybe the repo needs an `AGENTS.md` or a clearer README. If it cannot suggest a low-risk task, maybe the system is too tangled for agent onboarding to be casual.
+
+The agent is not the only thing being evaluated.
+
+The repo is.
+
+## EnvSentinel: environment variables are part of the contract
+
+The first task can still fail if the environment contract is invisible.
+
+That is where `EnvSentinel` fits.
+
+It is a local-first CLI that audits environment variable contracts before missing variables reach runtime. It compares `.env.example`, `.env.sample`, README and docs mentions, TypeScript and JavaScript code references, Docker Compose environment blocks, and GitHub Actions `env` entries.
+
+The checks are practical:
+
+- code-used variables missing from docs or examples
+- documented variables that no scanned source uses
+- required variables absent from the project
+- conflicting example defaults
+- secret-looking example values
+- public or client variable names that do not use approved prefixes
+
+The command surface matches the kind of preflight I want agents to run before touching behavior:
+
+```sh
+npx envsentinel scan . --out env-report.md
+npx envsentinel scan fixtures/drift --format json --fail-on medium
+npx envsentinel init
+```
+
+This sounds like runtime hygiene, and it is. But for agents, it is also a context problem.
+
+Environment variables are often where the real product boundary lives. Which values are required? Which values are public? Which values are examples? Which ones are secret-shaped and should not be copied into docs, tests, or generated config?
+
+An agent can easily miss that boundary.
+
+It might add `OPENAI_API_KEY` to code but forget the example file. It might document `API_TOKEN` with a value that looks too real. It might reference `NEXT_PUBLIC_ANALYTICS_ID` without understanding why the prefix matters. It might update a GitHub Actions env block and leave the README contract stale.
+
+None of that requires malice. It just requires a first task that starts without a contract.
+
+<Highlight>
+Environment drift is agent drift. If the repo cannot say which variables exist, which are public, and which are safe examples, the agent will eventually guess.
+</Highlight>
+
+I like that EnvSentinel does not load `.env` secrets, call cloud secret managers, or send project data over the network. It scans checked-in contract surfaces and reports evidence locations only.
+
+That is exactly the kind of tool that belongs before an agent run.
+
+The agent does not need access to real secrets to understand the contract. It needs the public surface: examples, docs, code references, compose files, and workflow env blocks. It needs a deterministic report. It needs an exit code when drift crosses a threshold.
+
+This is one of those boring layers that makes agents feel much less mysterious.
+
+The model can still help fix the drift. It can update docs, example files, config, or tests. But the tool should name the drift first.
+
+## Sessiondiff: compare the run, not just the result
+
+`sessiondiff` handles the other end of first-contact work.
+
+After the agent runs, what changed about the run itself?
+
+Not just the diff. Not just the final answer. The session.
+
+The README describes `sessiondiff` as a tool that compares coding-agent session logs and renders the commands, files, commits, tests, and final claims that changed between two runs. It can summarize one captured session log or compare two logs and emit Markdown or JSON.
+
+The current commands are small:
+
+```sh
+sessiondiff summarize <run.log> --format json
+sessiondiff compare <before.log> <after.log> --format markdown
+```
+
+That might sound like an after-action report.
+
+It is more than that.
+
+If the first task is how trust gets introduced, session comparison is how trust gets calibrated. Did the agent run more commands this time? Did it stop running the smoke check? Did it touch different files for the same task? Did the final claim become stronger even though the verification was weaker? Did it mention tests that were not actually present in the command trail?
+
+Those are the questions I want visible.
+
+<Callout title="The practical rule">
+Review the agent run as an artifact. Commands, file touches, commits, tests, and final claims should be comparable across attempts.
+</Callout>
+
+This is especially useful when improving prompts, skills, repo instructions, or onboarding packets.
+
+Without a comparison, it is easy to judge an agent by the latest output. The latest output may look cleaner because the final answer is better written. But the run may have become worse. Maybe it skipped discovery. Maybe it stopped validating. Maybe it edited more files. Maybe it made a broader claim with less evidence.
+
+`sessiondiff` gives that regression a surface.
+
+It does not need to be a perfect judge. The README is scoped around comparing logs and rendering changed commands, files, commits, tests, and claims. That is enough to make the review sharper.
+
+The human can decide whether the change is good. The agent can help interpret the diff. But the workflow should not depend on memory or vibes to know how the run changed.
+
+## The deeper insight: first tasks are system tests
+
+The pattern across these tools is not "make agents onboard faster."
+
+That is useful, but too small.
+
+The better thesis is:
+
+first tasks are system tests.
+
+`agentprimer` tests whether the repo can produce a useful onboarding packet. `EnvSentinel` tests whether the environment contract is visible and safe to reason about. `sessiondiff` tests whether the agent run behaved differently from a prior run in ways the reviewer can inspect.
+
+Together they turn "give the agent a task" into a smaller system:
+
+- brief the agent from local evidence
+- choose a conservative first task
+- check environment contracts before runtime
+- run the work
+- compare the session, commands, files, tests, and claims
+- use the result to improve the repo and the agent workflow
+
+That loop is the important part.
+
+<CompareTable
+  left={{ title: "First task as a guess", items: ["Agent explores until it feels oriented", "Scripts and conventions are rediscovered each run", "Environment variables are inferred from scattered files", "The final answer becomes the main record", "Prompt quality is judged by how polished the output feels"] }}
+  right={{ title: "First task as a contract", items: ["Repo packet names commands, risks, and entry points", "A conservative first task is selected", "Env surfaces are scanned before runtime", "The session log becomes reviewable", "Agent changes are judged against commands, files, tests, and claims"] }}
+/>
+
+This is where deterministic AI agents get more practical.
+
+The model is still probabilistic. The task may still require judgment. But the surrounding workflow can make the first move less fragile. It can tell the agent what kind of repo it is in. It can mark the environment boundary. It can compare the session after the fact.
+
+That is enough to change the trust curve.
+
+You do not need to believe the agent is generally reliable. You need to see whether this repo, this packet, this contract, this first task, and this run produced something small and reviewable.
+
+That is a much better standard.
+
+## What this changes in the sprint
+
+Day 44 made the beginning of agent work feel less like a blank prompt and more like a product surface.
+
+That matters because the sprint keeps proving the same thing from different angles:
+
+agents become more useful when the surrounding tools remove ambiguity before the model has to improvise.
+
+Local context helps. Review contracts help. Handoff packages help. But the first task is where those ideas need to become muscle memory.
+
+The workflow I want is simple:
+
+generate the primer, scan the env contract, choose a small task, run the agent, compare the session.
+
+Then decide what to trust.
+
+<Callout title="Day 44 in one line">
+An agent's first task is trustworthy when the repo, environment contract, and session record can all be inspected before the summary asks for belief.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Contract first.
+
+Then first task.
+
+---
+
+*Day 44. June 19, 2026. The lesson was simple: the first task is where an agent workflow proves whether its context is real.*

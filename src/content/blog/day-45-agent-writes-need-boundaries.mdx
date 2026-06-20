@@ -1,0 +1,265 @@
+---
+title: "Day 45: Agent Writes Need Boundaries"
+description: "Day 45 of the 60 Day OSS Sprint: pathsafe, secretshape, and LogVeil show why AI coding agents need deterministic path checks, documented secret shapes, and redacted repro bundles before write access feels safe."
+pubDate: 2026-06-20
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "security"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: safe AI agent file writes; supporting phrases: deterministic AI agents, AI agent verification, local-first developer tools, agentic engineering tools */}
+
+Day 45 was about the part of agent work that gets dangerous when it becomes invisible:
+
+write access.
+
+That thread showed up across `pathsafe`, `secretshape`, and `LogVeil`.
+
+`pathsafe` answers whether a path is allowed inside a root, and why. `secretshape` describes required secrets without exposing their values. `LogVeil` turns logs and transcripts into redacted repro bundles that can be reviewed or shared.
+
+Different tools. Same pressure.
+
+<Highlight>
+An agent should not get write access because the prompt sounds careful. It should get write access through boundaries the repo can explain, secret contracts that do not leak values, and logs that can be shared without dragging private evidence along for the ride.
+</Highlight>
+
+That is the Day 45 theme.
+
+## The challenge: write access makes ambiguity expensive
+
+Read-only agent work is easy to underestimate.
+
+It can still be wrong. It can still miss context. It can still waste time. But the blast radius is usually limited to a bad answer or a weak plan.
+
+Write access changes the deal.
+
+Now the agent can put files in the wrong directory. It can follow a symlink into a place it should not touch. It can create docs that accidentally teach the next person the wrong secret shape. It can paste a home path, token-looking value, or private host into a repro note. It can make a change that looks harmless until the review reveals the boundary was never real.
+
+The hard part is that none of this requires the agent to be reckless.
+
+It just requires the workflow to be vague.
+
+[Day 44](/blog/day-44-first-task-needs-a-contract/) was about the first task needing a repo packet, environment contract, and session comparison. Day 45 pushes the same idea one step closer to the filesystem:
+
+before agents write, the boundary has to be inspectable.
+
+## Pathsafe: path checks need reasons, not guesses
+
+`pathsafe` exists for one of the most basic questions a file-writing tool can ask:
+
+is this path allowed inside this root, and why?
+
+That sounds small. It is not.
+
+A lot of agent tooling eventually becomes file tooling. Generate a patch. Write a fixture. Update a doc. Save a bundle. Create a report. Copy an artifact. The moment a tool accepts a path from an agent, prompt, config file, issue body, or generated plan, the repo needs a deterministic boundary check.
+
+The `pathsafe` README is intentionally plain about the scope. It supports explicit root containment checks, allow and deny globs with deny precedence, symlink policies, config loading, JSONL batch checks, and explainable decision objects with reason codes.
+
+The CLI shape is the right kind of boring:
+
+```sh
+pathsafe check ./src/index.ts --root . --allow 'src/**' --deny '**/*.secret'
+pathsafe check ./src/index.ts --root . --allow 'src/**' --json
+pathsafe batch --root . --input batch.jsonl --json
+```
+
+The reason codes matter as much as the allow or deny result:
+
+- `ALLOW_MATCH`
+- `DENY_MATCH`
+- `NO_ALLOW_MATCH`
+- `OUTSIDE_ROOT`
+- `SYMLINK_REFUSED`
+- `INPUT_MISSING`
+- `ROOT_MISSING`
+- `CONFIG_ERROR`
+
+That is what turns a guardrail into a review surface.
+
+If an agent says it refused to write a file, the human should not have to infer whether the path was outside the root, denied by a pattern, blocked by symlink policy, or missing from the allow list. The tool should say it.
+
+<Callout title="The practical rule">
+Every agent file write should pass through a local path decision that records the root, allow patterns, deny patterns, symlink policy, and reason code.
+</Callout>
+
+I also like that `pathsafe` is honest about what it is not. It is a local validation helper, not an OS sandbox. It does not pretend to provide kernel isolation, ACL management, or race-free filesystem authorization.
+
+That honesty is useful.
+
+Agent tooling gets worse when small safety tools overclaim. The point is not to turn a TypeScript helper into a complete security boundary. The point is to make the common write decision explicit, deterministic, and easy to review.
+
+For conservative file-write tools, `symlinkPolicy: "refuse"` is the interesting default. It says the workflow is not going to get clever around symlinks just because the agent found a path that looks normal in text.
+
+That is the posture I want more agent tools to take.
+
+## Secretshape: secrets need shape, not exposure
+
+`secretshape` handles the adjacent problem:
+
+agents need to understand secrets without seeing secrets.
+
+Most repos already have some kind of secret contract. It may live in `.env.example`, a README, deployment docs, CI config, or tribal memory. The agent sees fragments of that contract and tries to infer the rest.
+
+That is where mistakes happen.
+
+The agent adds a new environment variable but forgets the example file. It documents a required value as optional. It gives a fake example that looks too real. It checks a local `.env` to understand the app and now has private values in its context. It writes docs that are technically helpful and operationally unsafe.
+
+`secretshape` takes a narrower route.
+
+It validates project secret documentation such as `.env.example` against a small `secretshape.yaml` schema. It reports missing, stale, and invalid entries by name and category only. The README is clear about the principle: describe the shape of required secrets without exposing their values.
+
+The current workflow is simple:
+
+```sh
+npx secretshape init
+npx secretshape check --schema secretshape.yaml --example .env.example
+npx secretshape check --schema secretshape.yaml --example .env.example --local .env.local
+npx secretshape docs --schema secretshape.yaml --out docs/secrets.md
+```
+
+The schema can describe required flags, patterns, enums, and descriptions:
+
+```yaml
+secrets:
+  API_KEY:
+    required: true
+    pattern: "^sk_[A-Za-z0-9]+$"
+    description: API token used by the app
+  NODE_ENV:
+    required: false
+    enum: [development, test, production]
+    description: Runtime environment
+```
+
+That is enough to change the agent workflow.
+
+Instead of asking the model to reverse-engineer the environment contract from scattered files, the repo can give it a shape. Instead of exposing values, it can expose constraints. Instead of trusting generated docs, it can regenerate them from the schema.
+
+<Highlight>
+The agent does not need secret values to reason about secret contracts. It needs names, categories, required status, allowed shapes, and docs that can be checked.
+</Highlight>
+
+This connects back to [Day 44](/blog/day-44-first-task-needs-a-contract/) and `EnvSentinel`, but from a different angle.
+
+`EnvSentinel` audits drift across environment surfaces. `secretshape` makes the expected secret shape explicit. One finds mismatch. The other gives the repo a source of truth that can be used without leaking the thing being described.
+
+That distinction matters when agents are involved.
+
+The safest agent workflow is not "give the model the secret and hope it behaves." It is "give the model the schema, block value exposure, and verify the documentation."
+
+## LogVeil: repro evidence should be useful after redaction
+
+`LogVeil` covers the moment after something goes wrong.
+
+An agent run fails. A CLI crashes. A test output includes the clue. A JSONL transcript has the command that matters. The easiest thing to do is paste the log into the next issue, PR, prompt, or chat.
+
+That is also one of the easiest ways to leak private context.
+
+The README frames `LogVeil` around that awkward moment: the log has useful evidence, but it may also contain home paths, API keys, tokens, emails, prompts, or private infrastructure details. The tool keeps the workflow local, deterministic, and scriptable.
+
+The command surface is split between redaction and audit:
+
+```sh
+logveil redact ./session.log --out repro-safe.md
+logveil redact ./logs --out repro-safe.md --json-out redaction-evidence.json
+logveil audit ./session.log --format json
+logveil audit ./session.log --format json --fail-on secret
+```
+
+The current detection coverage is practical:
+
+- OpenAI-style API keys
+- GitHub tokens
+- AWS access key ids
+- secret-looking key/value assignments
+- email addresses
+- Unix home-directory paths
+- private IPv4 addresses
+
+The safety posture is the important part.
+
+Offline by default. Redaction enabled by default. Deterministic outputs. Raw evidence masked in reports. Source files never mutated.
+
+That is exactly the kind of default agent workflows need.
+
+<Callout title="The practical rule">
+If a failed agent run needs to travel, sanitize the log first and keep the redaction evidence next to the repro bundle.
+</Callout>
+
+This is not just about external sharing.
+
+Even inside a local workflow, agents often hand logs to other agents. One agent captures a failure. Another diagnoses it. A third writes the fix. A fourth opens the PR. If the raw transcript becomes the handoff object, private context travels farther than it needed to.
+
+`LogVeil` creates a better default artifact: a repro bundle that preserves useful evidence while masking the obvious private material.
+
+That is the kind of plumbing that makes agent teams less brittle.
+
+## The deeper insight: boundaries have to leave receipts
+
+The pattern across these tools is not "make agents safer" in the vague sense.
+
+The better thesis is:
+
+boundaries have to leave receipts.
+
+`pathsafe` leaves a path decision with reason codes. `secretshape` leaves a schema and generated documentation for secret contracts. `LogVeil` leaves a sanitized repro bundle and redaction evidence.
+
+In all three cases, the boundary is not only enforced. It is explained.
+
+<CompareTable
+  left={{ title: "Boundary as a prompt", items: ["Agent is told to write only in safe places", "Secret expectations live in scattered docs", "Logs are pasted raw or summarized by memory", "Symlink and root behavior are implicit", "Review depends on whether the final answer sounds careful"] }}
+  right={{ title: "Boundary as a receipt", items: ["Path decisions include root, patterns, policy, and reason codes", "Secret contracts are described by schema without values", "Repro bundles are redacted before they travel", "Safety limits are local and scriptable", "Review starts from artifacts instead of assurances"] }}
+/>
+
+That is the piece I keep coming back to in this sprint.
+
+Agents do not become trustworthy because the model got a longer instruction. They become easier to trust when the workflow produces artifacts that constrain, verify, and explain the agent's options.
+
+The prompt can still say "be careful."
+
+But the repo should also say:
+
+- these paths are allowed
+- these paths are denied
+- symlinks are refused
+- these secret names exist
+- these secret values should not appear
+- this log was redacted
+- this bundle is safe enough to review
+
+That is a much stronger setup.
+
+## What this changes in the sprint
+
+Day 45 made write access feel less like a permission and more like a product surface.
+
+That matters because a lot of agentic engineering eventually comes down to file operations. Agents read, write, move, generate, summarize, redact, and package. If those operations do not have explicit boundaries, every successful run is partly luck.
+
+The better workflow is smaller and more mechanical:
+
+- check the path before writing
+- describe secret shapes without values
+- redact logs before handoff
+- keep the evidence local
+- make the boundary reason visible in review
+
+That does not make agents magical.
+
+It makes them governable.
+
+<Callout title="Day 45 in one line">
+Agent write access becomes reviewable when every boundary produces a local receipt the human can inspect before trusting the result.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Boundary first.
+
+Then write.
+
+---
+
+*Day 45. June 20, 2026. The lesson was simple: an agent write is only as safe as the boundary receipt it leaves behind.*

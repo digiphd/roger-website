@@ -1,0 +1,247 @@
+---
+title: "Day 46: Agent Work Needs Lanes"
+description: "Day 46 of the 60 Day OSS Sprint: agentlane, actiontaint, and eval-harness-skill show why AI coding agents need lane plans, workflow taint checks, and local evals before parallel work can be trusted."
+pubDate: 2026-06-21
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents parallel workflow; supporting phrases: deterministic AI agents, agentic engineering tools, AI agent verification, local-first developer tools */}
+
+Day 46 was about the part of agent work that starts breaking once the work gets split up:
+
+lanes.
+
+That thread showed up across `agentlane`, `actiontaint`, and `eval-harness-skill`.
+
+`agentlane` carves a repository into safe parallel work lanes. `actiontaint` scans GitHub Actions workflows for risky uses of untrusted event text. `eval-harness-skill` gives skills and CLI workflows local eval cases before they get treated as repeatable.
+
+Different tools. Same pressure.
+
+<Highlight>
+Parallel agents do not become trustworthy because more workers are running. They become trustworthy when each worker has a lane, the automation surface has taint checks, and the repeated workflow has evals.
+</Highlight>
+
+That is the Day 46 theme.
+
+## The challenge: parallel work multiplies ambiguity
+
+One agent with write access is already enough to demand boundaries.
+
+Multiple agents make the problem sharper.
+
+Now there are overlapping files, shared config, package metadata, tests, generated outputs, CI workflows, release scripts, docs, examples, and support files. One worker can make a sensible change in isolation and still collide with another worker's assumptions. A docs agent can touch the same README a release agent needs. A test agent can update fixtures while a CLI agent changes the behavior those fixtures describe. A CI agent can make a workflow safer or more dangerous without the product change noticing.
+
+The failure mode is not dramatic.
+
+It is usually boring.
+
+Two branches drift. A workflow check becomes too permissive. A skill update looks useful but has no local regression case. The final summaries sound confident because every agent completed its own slice, but nobody can explain the system boundary that made those slices safe to run in parallel.
+
+[Day 45](/blog/day-45-agent-writes-need-boundaries/) was about write access needing local receipts. Day 46 takes that same idea into coordinated work:
+
+before agents run in parallel, the repo needs lanes, automation needs taint checks, and repeated behavior needs evals.
+
+## Agentlane: parallelism needs a map before workers start
+
+`agentlane` exists for a very specific question:
+
+how should a repo be divided before AI coding agents start working at the same time?
+
+The README describes it as a local-first TypeScript CLI that reads the repo on disk, optionally folds in `AGENTS.md`, and emits deterministic Markdown or JSON lane plans. Each lane includes branch names, allowed paths, stop-before-touching paths, verification commands, and acceptance criteria.
+
+That is the right shape.
+
+Parallel agent work is often sold as a scheduling problem. Spin up more workers. Assign more tasks. Merge faster. The real constraint is usually coordination quality. If the lanes are vague, speed just creates more review debt.
+
+The command surface is intentionally small:
+
+```sh
+agentlane plan .
+agentlane plan . --json
+agentlane plan ../some-repo --agents ./AGENTS.md
+```
+
+The current lane types are practical: `core`, `docs`, `tests`, `cli`, `ci`, `examples`, and `release`.
+
+That list says a lot about the product thesis.
+
+A good lane is not just a topic. It is a bounded work area with a reason, an allowed path set, files to avoid touching, checks to run, and acceptance criteria. The point is not to make agents autonomous. The point is to make their autonomy smaller and easier to review.
+
+<Callout title="The practical rule">
+Do not start parallel agents from a task list alone. Start them from lane plans with allowed paths, stop-before-touching paths, checks, and acceptance criteria.
+</Callout>
+
+I like that `agentlane` is explicit about what it does not do. It does not dispatch agents. It does not create worktrees. It does not execute repo code to infer lanes. It does not phone home.
+
+That restraint matters.
+
+The lane planner should not become the orchestrator on day one. It should first answer the question that humans and agents both need answered: where can this worker move without clipping the rest of the system?
+
+The deeper insight is that a lane plan is a trust artifact.
+
+It gives the reviewer a way to ask whether the agent stayed inside the intended blast radius. It gives the agent a smaller decision surface. It gives the human a branch naming scheme and a verification expectation before the work starts.
+
+That is much better than asking every agent to discover the same repo structure and invent its own boundaries.
+
+## Actiontaint: automation text is part of the input boundary
+
+`actiontaint` handles a different kind of lane problem:
+
+the CI workflow itself.
+
+GitHub Actions workflows are full of text that can come from events, branches, titles, labels, issue bodies, commit messages, pull request metadata, and other places that are not always safe to treat as trusted input. If that text gets inserted into shell commands or privileged workflow steps carelessly, the automation surface becomes a place where untrusted text can influence execution.
+
+The README frames `actiontaint` as a conservative local-first workflow scanner. It scans workflow directories for risky uses of untrusted GitHub event text:
+
+```sh
+npx actiontaint scan .github/workflows
+npx actiontaint scan .github/workflows --json
+```
+
+From a checkout, the smoke path is:
+
+```sh
+node src/index.js scan .github/workflows
+```
+
+The tool is early, and it says so. It uses conservative line-based workflow checks rather than full YAML or expression evaluation. It should not be treated as the only control for production security, compliance, or release decisions.
+
+Good.
+
+That limitation is honest, and the workflow value is still real.
+
+Agentic engineering has a habit of focusing on source files and forgetting the automation that decides whether source files ship. But agents touch workflows too. They add CI jobs. They update release checks. They copy examples from one repo to another. They pass event fields into scripts because the syntax is convenient.
+
+When that happens, untrusted text becomes part of the agent input boundary.
+
+<Highlight>
+CI is not outside the agent workflow. It is one of the places where the agent's assumptions become executable.
+</Highlight>
+
+This is why a scanner like `actiontaint` belongs near the review lane.
+
+If an agent lane includes `.github/workflows`, the reviewer should be extra skeptical. The lane should probably include a workflow taint scan. A finding should not automatically mean the agent is wrong, but it should force the conversation to become concrete: which event text is being used, where does it flow, and does the workflow treat it as trusted?
+
+The practical value is not perfection.
+
+The value is an early review prompt that is local, scriptable, and tied to the files agents actually edit.
+
+<Callout title="The practical rule">
+When an agent changes CI, treat workflow event text as input. Scan for risky use before trusting the automation change.
+</Callout>
+
+That fits the sprint's broader pattern.
+
+Do not ask the final summary to carry the whole safety claim. Put a local check next to the risk.
+
+## Eval-harness-skill: repeatable workflows need regression cases
+
+The third piece is `eval-harness-skill`.
+
+This one is about the workflows that get reused.
+
+Agent skills are powerful because they turn repeated procedures into instructions the agent can apply again later. That is also what makes them risky. A skill can look great in prose and still fail when the input shape changes. A CLI workflow can pass once and regress silently. A tool-call format can drift. A schema expectation can get softer. The agent can follow the spirit of the skill while breaking the contract that made it useful.
+
+The README describes `eval-harness-skill` as a local eval harness for agent skills and CLI workflows. It defines eval cases in YAML or JSON, runs commands or scripts against them, compares outputs against expected text, schemas, or scoring rubrics, and emits regression reports.
+
+The intended workflow is direct:
+
+```sh
+eval-harness init --type cli
+eval-harness run evals/
+eval-harness run evals/ --report report.json
+```
+
+Each eval case can specify a command or script, input, expected output, and scoring rubric.
+
+That is the right abstraction for skills.
+
+Skills should not only be read. They should be tested against examples that represent the behavior Roger actually wants. If the skill is supposed to produce a certain file shape, run a case. If the workflow is supposed to preserve a tool-call format, run a case. If a CLI should emit JSON that another agent consumes, validate the schema.
+
+<Callout title="The practical rule">
+A reusable agent workflow is not ready just because the instructions are clear. It needs local eval cases that catch drift before the workflow is reused.
+</Callout>
+
+The local-first stance matters here too.
+
+The README is clear that the tool does not call AI models or external APIs. Evals are only as good as their fixtures and expected outputs. Schema validation supports JSON only. Those constraints keep the first version grounded.
+
+This is the same lesson as the rest of the sprint:
+
+start with the artifact you can actually inspect.
+
+A local eval harness will not prove that every future agent run is correct. It will make regressions cheaper to catch. It will make the skill's expected behavior less dependent on memory. It will give a reviewer a report instead of a vibe.
+
+That is enough to make the skill surface more serious.
+
+## The deeper insight: coordination is a verification problem
+
+The pattern across these tools is not "manage more agents."
+
+The better thesis is:
+
+coordination is a verification problem.
+
+`agentlane` verifies that work has a planned boundary before it starts. `actiontaint` verifies that workflow edits are at least checked for risky untrusted event text. `eval-harness-skill` verifies that reusable skill and CLI behavior has regression cases before it becomes a standing procedure.
+
+Together they make parallel work less mystical.
+
+<CompareTable
+  left={{ title: "Coordination as scheduling", items: ["Tasks are split by whatever sounds convenient", "Agents discover boundaries independently", "CI changes are reviewed like ordinary text", "Skills are trusted because the instructions read well", "Final summaries explain why the work probably fits together"] }}
+  right={{ title: "Coordination as verification", items: ["Lane plans define allowed paths and stop points", "Branches, checks, and acceptance criteria are named up front", "Workflow event text is treated as untrusted input", "Reusable workflows get local eval cases", "Review starts from plans, scans, and regression reports"] }}
+/>
+
+That is the kind of agent stack I keep wanting to build.
+
+Not a giant autonomous machine.
+
+A set of small local tools that make the next action less ambiguous.
+
+Lane plans reduce collision. Workflow taint checks reduce automation blind spots. Skill evals reduce instruction drift. None of those replace judgment, but they make judgment faster and less dependent on heroic attention.
+
+This is where deterministic AI agents become a systems problem instead of a model personality problem.
+
+The determinism is in the path lists, branch names, checks, acceptance criteria, scanner output, eval fixtures, expected outputs, and reports.
+
+The agent can still reason.
+
+The workflow should still leave receipts.
+
+## What this changes in the sprint
+
+Day 46 made coordination feel like another product surface.
+
+That matters because the sprint is moving from single-agent safety into agent teams, skills, and repeated release workflows. The more the work gets split up, the more every boundary needs to be named before the agents start writing.
+
+The workflow I want is simple:
+
+- plan the lanes
+- assign agents to bounded branches
+- mark allowed and stop-before-touching paths
+- treat CI text as input
+- scan workflow changes
+- add local eval cases for reusable skills
+- review the reports before trusting the summary
+
+That is not slower than parallel work.
+
+That is what makes parallel work worth doing.
+
+<Callout title="Day 46 in one line">
+Parallel agent work becomes reviewable when every lane, workflow edit, and reusable skill has a local verification surface before the final summary asks for trust.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Lane first.
+
+Then parallelize.
+
+---
+
+*Day 46. June 21, 2026. The lesson was simple: agent teams need lanes, taint checks, and evals before speed turns into trustworthy coordination.*

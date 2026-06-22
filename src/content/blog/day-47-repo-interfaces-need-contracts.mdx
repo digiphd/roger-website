@@ -1,0 +1,254 @@
+---
+title: "Day 47: Repo Interfaces Need Contracts"
+description: "Day 47 of the 60 Day OSS Sprint: manifestmark, configdiff, and LicenseLens show why AI coding agents need package metadata scans, configuration drift checks, and license policy evidence before repo instructions can be trusted."
+pubDate: 2026-06-22
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent repo contracts; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI agent verification */}
+
+Day 47 was about the part of agent work that looks boring until it lies:
+
+the repo interface.
+
+That thread showed up across `manifestmark`, `configdiff`, and `LicenseLens`.
+
+`manifestmark` scans package manifests for scripts, metadata, and workspace consistency. `configdiff` compares environment and configuration files for drift. `LicenseLens` inventories dependency licenses against a small readable policy.
+
+Different tools. Same pressure.
+
+<Highlight>
+Agents do not read a repository the way maintainers do. They read the interfaces we leave behind: manifests, config files, lockfiles, reports, smoke scripts, and policies. If those interfaces drift, the agent's plan starts from bad evidence.
+</Highlight>
+
+That is the Day 47 theme.
+
+## The challenge: agents trust repo signals quickly
+
+An agent dropped into a repo has to form a model fast.
+
+It scans `package.json`. It looks for scripts. It checks the workspace shape. It reads README examples. It searches for tests. It infers what "smoke" means. It reads environment and config files. It looks at lockfiles and metadata to understand release risk.
+
+That is useful.
+
+It is also fragile.
+
+A stale script can send the agent down the wrong path. A missing package field can make release readiness look better than it is. A staging config can drift from production in a way the agent never notices. A dependency license can be unknown or denied, but invisible until somebody asks the right question. A workspace can look ordinary to a human who knows the history and confusing to an agent that only sees files.
+
+The failure mode is not that the agent is lazy.
+
+The failure mode is that the repo interface was never made explicit.
+
+[Day 46](/blog/day-46-agent-work-needs-lanes/) was about defining lanes before parallel workers start. Day 47 moves one layer lower:
+
+before an agent trusts a repo, the repo's own signals need contracts.
+
+## Manifestmark: package manifests are agent instructions
+
+`manifestmark` exists for the package metadata layer.
+
+The README describes it as a local-first package manifest scanner for scripts, metadata, and workspace consistency. It is early-stage and explicit about that. The point is not to pretend package metadata is the whole product. The point is to make the metadata visible enough that a maintainer or agent can review it before depending on it.
+
+That matters because `package.json` is not just admin paperwork in an agent workflow.
+
+It is an instruction surface.
+
+The scripts tell the agent how the project expects to build, test, smoke, package, and release. The metadata tells the agent whether the package looks ready to publish. The workspace shape tells the agent what boundaries exist between packages. If those fields are wrong, the agent may still produce a plausible answer, but the answer is grounded in stale operating instructions.
+
+The quick path is intentionally small:
+
+```sh
+node dist/cli.js --help
+npm run smoke
+```
+
+The maintained smoke command currently expands to:
+
+```sh
+npm run build && node dist/cli.js scan fixtures/single-package && node dist/cli.js scan fixtures/workspace --format json
+```
+
+That is the kind of check I want near agent preflight.
+
+Not because every package needs a dramatic metadata audit.
+
+Because agents lean on these signals constantly.
+
+<Callout title="The practical rule">
+Treat package manifests as agent input contracts. Scan scripts, metadata, and workspace shape before asking agents to trust the repo's instructions.
+</Callout>
+
+The local-first posture matters here too. `manifestmark` keeps generated reports inspectable on disk instead of sending repository data to a service. That is the right default for repo introspection tools. The maintainer gets a report. The agent gets less ambiguity. The review starts from a file instead of a guess.
+
+This is a recurring sprint lesson:
+
+make the thing the agent already depends on explicit enough to verify.
+
+## Configdiff: environment drift should be visible before release
+
+`configdiff` handles a different part of the same problem:
+
+the repo settings that quietly change behavior between environments.
+
+The README describes it as a tool for finding configuration drift across environments. It compares `.env`, JSON, YAML, and INI-style files, then reports missing keys, changed values, and severity-ranked differences for release and operations review.
+
+That belongs in the agent workflow.
+
+Agents are good at reading config files and bad at knowing which differences are intentional unless the repo tells them. A key missing from production can look like a harmless omission. A changed flag can look like local noise. A JSON or YAML setting can drift across environments while the code still builds.
+
+If the workflow only checks source code, configuration drift becomes invisible evidence.
+
+The command surface is direct:
+
+```sh
+configdiff fixtures/env-base.env fixtures/env-missing.prod.env
+configdiff --base fixtures/env-base.env --compare fixtures/env-missing.dev.env,fixtures/env-missing.prod.env
+configdiff fixtures/config-dev.yaml fixtures/config-prod.yaml --format markdown
+configdiff fixtures/config-dev.json fixtures/config-prod.json --format json
+```
+
+There is also a useful automation shape:
+
+```sh
+configdiff .env .env.prod --json-patch
+```
+
+That gives the repo more than a warning.
+
+It gives a structured description of the drift that a maintainer can review, paste into a release note, or hand to another agent without asking it to rediscover the mismatch from raw files.
+
+<Highlight>
+Configuration is not outside the product. It is one of the interfaces that decides what the product does in each environment.
+</Highlight>
+
+The supported formats are the practical ones: `.env`, JSON, YAML, and INI-style files. Nested JSON and YAML keys are flattened to dot paths. Exit codes distinguish no drift, drift found, and invalid input.
+
+That exit-code shape matters. It lets a release workflow decide whether drift should stop the run, prompt a reviewer, or produce a report.
+
+<Callout title="The practical rule">
+When an agent touches release or environment-sensitive code, compare the relevant configs before trusting a green build.
+</Callout>
+
+This is not about pretending config drift is always wrong.
+
+Sometimes staging should differ from production. Sometimes local should differ from CI. The point is to make the difference named, ranked, and reviewable before the agent treats the repo as understood.
+
+## LicenseLens: release risk should be policy-shaped
+
+The third piece is `LicenseLens`.
+
+This one asks a release-readiness question that agents can easily skip:
+
+is anything in the dependency license inventory worth stopping the release for?
+
+The README describes `LicenseLens` as a local-first TypeScript CLI that inventories dependency licenses and checks them against a small readable policy. It does not call package registries, send telemetry, or pretend to be legal advice.
+
+That last sentence matters.
+
+The point is not to replace a lawyer. The point is to stop a release workflow from treating unknown or denied license metadata as invisible.
+
+The CLI shape is plain:
+
+```sh
+licenselens scan --cwd . --format human
+licenselens check --cwd . --format json
+licenselens report --cwd . --output LICENSELENS.md
+```
+
+The policy is readable:
+
+```json
+{
+  "allow": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"],
+  "warn": ["MPL-2.0", "LGPL-3.0-only"],
+  "deny": ["GPL-3.0-only", "AGPL-3.0-only", "UNLICENSED"],
+  "missing": "warn",
+  "unknown": "deny"
+}
+```
+
+That is the right abstraction for agentic release flows.
+
+An agent should not have to invent license policy from taste. The repo should define the policy, run the inventory, and produce a report. Deny and warn results should become human review prompts, not hidden uncertainty.
+
+<Callout title="The practical rule">
+License checks should return policy-shaped evidence: allow, warn, deny, missing, unknown, and a report a maintainer can review before release.
+</Callout>
+
+I also like that `LicenseLens` stays offline. If lock metadata is incomplete, it reports uncertainty instead of hiding it. That is the right behavior for agent workflows because uncertainty is itself a signal.
+
+An agent summary that says "release checks passed" is weaker than a release report that says exactly which dependency licenses were allowed, warned, denied, missing, or unknown.
+
+That is the difference between confidence and evidence.
+
+## The deeper insight: repo interfaces are part of verification
+
+The pattern across these tools is not "more preflight."
+
+The better thesis is:
+
+repo interfaces are part of verification.
+
+`manifestmark` checks the package manifest interface. `configdiff` checks the configuration interface. `LicenseLens` checks the dependency license interface.
+
+Together they make the repository less dependent on maintainer memory and more legible to agents.
+
+<CompareTable
+  left={{ title: "Repo as vibes", items: ["Scripts are trusted because they exist", "Configuration drift is noticed late", "License metadata is handled late or manually", "Workspace shape is inferred from convention", "Agent summaries carry the release claim"] }}
+  right={{ title: "Repo as contract", items: ["Manifests are scanned for scripts, metadata, and workspace consistency", "Configuration drift is compared across environments", "License policy produces allow, warn, deny, missing, and unknown evidence", "Reports stay local and inspectable", "Review starts from checks instead of assumptions"] }}
+/>
+
+This is where agentic engineering gets less mystical.
+
+The model can still reason. The agent can still explore. The human can still make judgment calls.
+
+But the repo should not force everyone to rediscover its operating contract every time.
+
+It should say:
+
+- these scripts are the intended workflow
+- this workspace shape is what the package expects
+- these configs differ in named and reviewable ways
+- this drift is expected or needs action
+- this license policy is the release boundary
+- these warnings need human review
+
+That is a better interface for agents and maintainers.
+
+## What this changes in the sprint
+
+Day 47 made repo metadata feel less like background noise.
+
+That matters because the sprint is increasingly about agent teams, repeated workflows, and release evidence. The more work gets delegated, the more the repo's boring files become instruction surfaces.
+
+The workflow I want is:
+
+- scan package manifests before trusting scripts
+- compare environment and config drift before release-sensitive changes
+- turn config differences into reviewable evidence
+- make license policy explicit
+- turn unknowns into review prompts
+- keep the evidence local and reviewable
+
+That does not make agents slower.
+
+It gives them better ground.
+
+<Callout title="Day 47 in one line">
+AI coding agents become easier to trust when the repo interfaces they depend on are scanned, drift-checked, policy-shaped, and reviewable before the final summary asks for belief.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Contract first.
+
+Then trust the repo.
+
+---
+
+*Day 47. June 22, 2026. The lesson was simple: agents can only reason from the repo they can see, so the repo's own interfaces need receipts.*

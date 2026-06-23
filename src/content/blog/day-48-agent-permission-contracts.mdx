@@ -1,0 +1,259 @@
+---
+title: "Day 48: Agents Need Permission Contracts"
+description: "Day 48 of the 60 Day OSS Sprint: modelpermit, skill-contract-lab, and repoctx show why AI coding agents need model policy, skill contracts, and workspace maps before capabilities become safe to use."
+pubDate: 2026-06-23
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent permission contracts; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI agent verification */}
+
+Day 48 was about the layer that sits before an agent acts:
+
+permission.
+
+That thread showed up across `modelpermit`, `skill-contract-lab`, and `repoctx`.
+
+`modelpermit` checks model and provider permission policy for agent workflows. `skill-contract-lab` checks whether a `SKILL.md` declares the operational contract an agent needs before applying it. `repoctx` maps local repositories into agent-readable workspace context.
+
+Different tools. Same pressure.
+
+<Highlight>
+An agent should not infer its operating permissions from vibes. It should know which models are allowed, which skills have contracts, and which repository context is safe to use before it starts changing the work.
+</Highlight>
+
+That is the Day 48 theme.
+
+## The challenge: capability is not permission
+
+Modern agent tools make it easy to give the model more reach.
+
+Let it choose a model. Let it call a provider. Let it apply a skill. Let it inspect a workspace. Let it write files. Let it run checks. Let it coordinate with other agents.
+
+That reach is useful.
+
+It is also where agent workflows get sloppy.
+
+A capable agent can still use the wrong model for the job. A useful skill can still omit the side-effect boundary. A workspace scanner can still hand downstream tools a pile of context without enough policy shape around what matters. The final answer can sound confident while the permission layer underneath it was mostly guessed.
+
+[Day 47](/blog/day-47-repo-interfaces-need-contracts/) was about repo interfaces needing scans, drift checks, and policy-shaped evidence before an agent trusts the repository. Day 48 moves that idea one level outward:
+
+before an agent uses a capability, the capability needs a contract.
+
+## Modelpermit: model choice is an operating policy
+
+`modelpermit` exists for a small but important question:
+
+which models, providers, network modes, and write scopes are allowed for this agent workflow?
+
+The README describes it as an early `v0.1.0` local-first policy checker. It validates a compact JSON policy with fields like `allowedModels`, `deniedModels`, `approvalMode`, `network`, and `writePaths`.
+
+The basic usage is direct:
+
+```sh
+modelpermit check modelpermit.json
+modelpermit check modelpermit.json --json
+```
+
+From a checkout, the fixture-backed path is:
+
+```sh
+node src/cli.js check fixtures/strict.json
+node src/cli.js check fixtures/dangerous.json --json
+```
+
+The current policy shape is intentionally small:
+
+```json
+{
+  "allowedModels": ["gpt-5-mini"],
+  "deniedModels": ["legacy-unsafe-model"],
+  "approvalMode": "manual",
+  "network": "none",
+  "writePaths": ["./reports", "./tmp"]
+}
+```
+
+That is enough to make the workflow sharper.
+
+Model choice is not just a quality setting. It can affect cost, latency, privacy posture, capability boundaries, and the kind of approval a workflow should require. Network access is not just a runtime detail. Write paths are not just implementation trivia.
+
+They are operating permissions.
+
+<Callout title="The practical rule">
+Put model, network, approval, and write-scope policy in a file the repo can check before an agent workflow runs.
+</Callout>
+
+I like that `modelpermit` warns on release-review risks like `network: "any"` and root write access. That is the kind of conservative signal agent tooling needs more of.
+
+The tool is also honest about scope. It validates a portable JSON shape. It does not enforce permissions at runtime. It is not the only control for production security, compliance, or release decisions.
+
+Good.
+
+The first useful layer is not always enforcement. Sometimes it is a deterministic report that says the policy is missing, malformed, permissive, or worth human review.
+
+That report changes the conversation from "the agent picked a model" to "the workflow declared the allowed models and the check passed."
+
+## Skill-contract-lab: skills need operational contracts
+
+`skill-contract-lab` handles the next permission boundary:
+
+reusable agent instructions.
+
+Skills are powerful because they package judgment. They tell an agent when to use a workflow, what inputs to expect, which tools are involved, what side effects are allowed, how approvals work, which examples matter, and how the result should be validated.
+
+That is exactly why they need contracts.
+
+A `SKILL.md` that reads well can still be unsafe to apply. It might describe the happy path but skip the approval boundary. It might name tools but not explain side effects. It might provide examples but no validation workflow. It might be useful for one repo and risky in another.
+
+The README describes `skill-contract-lab` as a deterministic local checker for those operational pieces. It reports missing required sections as errors and very short sections as warnings.
+
+The quick path is plain:
+
+```sh
+npm run smoke
+node bin/skill-contract.js fixtures/good-skill/SKILL.md --format json
+```
+
+The release path is also explicit:
+
+```sh
+npm run release:check
+```
+
+That matters because skill quality should not depend only on prose review.
+
+<Highlight>
+A reusable agent skill is not just documentation. It is a permissioned workflow. The agent needs to know when to apply it, what it can touch, what requires approval, and how success is checked.
+</Highlight>
+
+The limitation is also useful: the first version uses section-based heuristics. It does not judge factual quality. It intentionally avoids LLM scoring so reports stay stable in CI.
+
+That is the right trade.
+
+For agent workflows, stable partial checks often beat magical complete checks. A deterministic section report will not prove the skill is wise. It will catch missing operational structure before the skill becomes a standing instruction.
+
+<Callout title="The practical rule">
+Before a skill becomes reusable, check that it declares trigger conditions, inputs, tools, side-effect boundaries, approvals, examples, and validation.
+</Callout>
+
+That gives the reviewer something concrete to inspect.
+
+Not "this skill feels clear."
+
+"This skill declares the contract an agent needs before applying it."
+
+## Repoctx: workspace context should be reusable and policy-aware
+
+The third piece is `repoctx`.
+
+This one is about the context agents use before they choose what to do.
+
+The README frames `repoctx` as an agent-readable workspace map for multi-repo development. It is meant to scan local repositories, detect useful metadata, and export context that tools like `taskbrief`, `branchbrief`, CrewCMD, Codex, OpenClaw, Claude Code, and GitHub Copilot can use to understand what exists, how a repo is verified, and where the risky edges are.
+
+That problem gets expensive fast.
+
+Every agent tool wants the same facts:
+
+- where repositories live
+- which remotes and default branches they use
+- what project type they are
+- which package manager they use
+- whether docs and agent instructions exist
+- which verification commands matter
+- which policy files and risk metadata should change behavior
+
+If every agent rediscovers those facts independently, the workflow pays the same tax again and again. Worse, each agent may build a slightly different map.
+
+`repoctx` points at a better shape: make the workspace map explicit, machine-readable, and reusable.
+
+The current status is still early. The README says the repo has a placeholder CLI, compiled build output, and repository-scanning modules, while the full command set is not finished yet. You can inspect the scaffolded CLI help locally:
+
+```sh
+node dist/cli.js --help
+```
+
+That status matters. I do not want to pretend the product is more finished than it is.
+
+But the direction is important.
+
+Multi-repo agent work needs a context layer that is not trapped inside one chat transcript. The map should survive handoffs. It should be inspectable. It should tell downstream tools what the workspace looks like before they invent their own picture.
+
+<Callout title="The practical rule">
+Do not make every agent rediscover the workspace. Export the repo map, verification commands, docs, instructions, and risk metadata as a shared context artifact.
+</Callout>
+
+This connects directly to [Day 46](/blog/day-46-agent-work-needs-lanes/).
+
+Lane planning gets stronger when the workspace context is reusable. Skill application gets safer when the repo surface is known. Model policy gets less abstract when it is attached to the actual repos and workflows the agent is about to touch.
+
+The permission layer is not one file.
+
+It is the relationship between policy, skill contracts, and workspace context.
+
+## The deeper insight: permissions have to be legible before action
+
+The pattern across these tools is not "lock agents down."
+
+The better thesis is:
+
+permissions have to be legible before action.
+
+`modelpermit` makes model, network, approval, and write-scope policy checkable. `skill-contract-lab` makes reusable agent instructions declare their operational boundary. `repoctx` makes the workspace map available as shared context instead of repeated guesswork.
+
+Together they make capability less vague.
+
+<CompareTable
+  left={{ title: "Capability as assumption", items: ["Agents pick models from availability or habit", "Network and write scope live in prompts", "Skills are trusted because the prose sounds useful", "Every tool rediscovers workspace context", "Review starts after the agent has already acted"] }}
+  right={{ title: "Capability as contract", items: ["Allowed and denied models are declared in policy", "Approval, network, and write scopes are checkable", "Skills declare inputs, tools, side effects, approvals, and validation", "Workspace context is exported for reuse", "Review starts before the capability is applied"] }}
+/>
+
+That is the direction I keep seeing in the sprint.
+
+Agents do not need one giant permission system on day one. They need small local contracts that make each capability easier to inspect before it gets used.
+
+The model policy says what is allowed.
+
+The skill contract says when and how the workflow can be applied.
+
+The workspace map says what the agent is looking at.
+
+The reviewer gets artifacts instead of a story.
+
+## What this changes in the sprint
+
+Day 48 made the permission layer feel like product work.
+
+That matters because the sprint is no longer only about individual CLI checks. It is becoming a stack for agentic engineering: lanes, repo contracts, release evidence, skill workflows, and local-first context that other tools can trust.
+
+The workflow I want is simple:
+
+- declare model and provider policy before running agents
+- warn on permissive network or write scopes
+- check skill contracts before reuse
+- keep skill side effects and approvals explicit
+- export workspace context once
+- reuse that context across task briefs, branch briefs, and agent sessions
+- make permission visible before capability turns into action
+
+That does not make agents timid.
+
+It makes them easier to govern.
+
+<Callout title="Day 48 in one line">
+AI coding agents become safer to use when model choice, skill application, and workspace context are treated as permission contracts before the agent starts acting.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Permission first.
+
+Then capability.
+
+---
+
+*Day 48. June 23, 2026. The lesson was simple: agent capability only becomes useful at scale when the permission contract is visible before the work begins.*

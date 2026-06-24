@@ -1,0 +1,226 @@
+---
+title: "Day 49: Rehearse Before You Write"
+description: "Day 49 of the 60 Day OSS Sprint: connector-action-rehearsal and skill-redaction-audit show why AI agents need dry-run action plans and redaction gates before public or external writes."
+pubDate: 2026-06-24
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent dry run workflow; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI agent verification */}
+
+Day 49 was about the moment before an agent touches the outside world.
+
+That thread showed up across `connector-action-rehearsal` and `skill-redaction-audit`.
+
+`connector-action-rehearsal` turns connector write intentions into deterministic dry-run approval plans. `skill-redaction-audit` scans public skill bundles for sensitive content, real-looking personal data, and side-effect language that needs an approval boundary.
+
+Different tools. Same pressure.
+
+<Highlight>
+An agent should not jump from "I know what to do" to "I wrote to the external system." The missing step is rehearsal: show the proposed action, evidence, approval boundary, and redaction risk before anything leaves the local workflow.
+</Highlight>
+
+That is the Day 49 theme.
+
+## The challenge: agent writes cross trust boundaries
+
+Agent work feels safest while it is still local.
+
+A branch can be reviewed. A fixture can be inspected. A generated report can be deleted. A Markdown plan can be corrected. The blast radius is visible.
+
+The pressure changes when the agent is about to write somewhere else.
+
+That might be a CRM note. A project update. A meeting follow-up. An inbox draft. A public skill repo. A release note. A fixture that looks fake but contains a live-looking token. A runbook that tells a future agent to mutate an external system without pausing for approval.
+
+The failure mode is not always a dramatic secret leak or a bad production write.
+
+Often it is smaller and more corrosive.
+
+The agent did something plausible before the human had a reviewable artifact. The approval happened in prose instead of in a structured plan. The example looked harmless until it became public. The side-effect boundary was implied instead of checked.
+
+[Day 48](/blog/day-48-agent-permission-contracts/) was about model policy, skill contracts, and workspace context becoming legible before an agent acts. Day 49 moves that permission idea closer to the edge:
+
+before an agent writes outside the local repo, it should rehearse the action and audit the artifact.
+
+## Connector-action-rehearsal: external writes need a dry run
+
+`connector-action-rehearsal` exists for connector workflows where the agent knows the intended action but should not execute it yet.
+
+The README describes it as a local-first CLI and agent skill for rehearsing connector write actions before approval. It is designed around the boring systems agents increasingly touch: CRMs, project managers, inboxes, and publishing surfaces.
+
+The command shape is intentionally direct:
+
+```sh
+connector-action-rehearsal plan fixtures/meeting-followup.json --format markdown
+connector-action-rehearsal plan fixtures/crm-note.json --format json --fail-on forbidden
+```
+
+The fixture says what the agent wants to do:
+
+```json
+{
+  "id": "crm-note-001",
+  "connector": "hubspot-notes",
+  "action": "crm_note",
+  "actor": "agent",
+  "target": "ExampleCo opportunity",
+  "reason": "Record reviewed implementation blockers.",
+  "payload": {
+    "title": "Implementation blockers"
+  },
+  "evidence": ["notes/example.md"],
+  "approval": {
+    "required": true,
+    "approver": "sales operations"
+  }
+}
+```
+
+That shape matters because it forces the write to become inspectable before it becomes real.
+
+The tool classifies the action as `read-only`, `draft-only`, `write-after-approval`, or `forbidden`. It produces Markdown or JSON that can sit in a PR body, agent handoff, or review note. It does not execute connector actions. It does not validate credentials. It does not promise rollback.
+
+Good.
+
+That restraint is the product.
+
+<Callout title="The practical rule">
+Do not let an agent write to a connector from intent alone. Make it produce a dry-run plan with target, payload preview, evidence, approval requirement, risk level, and rollback notes first.
+</Callout>
+
+The important move is turning a connector write into an artifact.
+
+Instead of "the agent is going to update the CRM," the reviewer sees which connector, which action, which actor, which target, which reason, which payload, which evidence, and which approval boundary.
+
+That is much easier to trust.
+
+It is also much easier to stop.
+
+If the risk classification is `forbidden`, the CLI can fail before the workflow moves forward. If the action is `write-after-approval`, the plan can ask for explicit approval. If the action is `draft-only`, the review can focus on whether the draft is safe to send later.
+
+This is the same pattern that keeps showing up in the sprint:
+
+make the dangerous thing boring before it becomes powerful.
+
+## Skill-redaction-audit: public artifacts need a release gate
+
+`skill-redaction-audit` handles the other edge of the same problem:
+
+publishing reusable agent artifacts.
+
+Agent skills and runbooks are deceptively risky because they mix prose, examples, fixtures, commands, approval language, and side-effect instructions. They are meant to be reused. That means any private detail, live-looking credential, customer-shaped example, internal URL, or unsafe action language can travel farther than intended.
+
+The README frames `skill-redaction-audit` as a local-first CLI and reusable agent skill for checking public skill bundles before release. It scans for live-looking secrets, real-looking personal data, and side-effect language that needs an approval boundary.
+
+The CLI is small:
+
+```sh
+skill-redaction-audit scan ./skill-repo --format markdown
+skill-redaction-audit scan ./skill-repo --format json --fail-on warning
+skill-redaction-audit scan ./skill-repo --allowlist ./.redaction-allowlist.json
+```
+
+The output includes file, line, column, severity, rule id, message, and suggested replacement text.
+
+That is exactly the kind of report agents need before public release.
+
+Not because it is a full enterprise DLP system. It is not. The README says that plainly.
+
+Because public agent-skill repos need a focused pre-publication gate that catches the common ways examples and runbooks become too real.
+
+<Highlight>
+Examples are part of the product surface. If an example contains live-looking private detail or unbounded side-effect language, the agent workflow has already leaked risk into the next reuse.
+</Highlight>
+
+The allowlist is a useful detail. Intentional fake examples like `example.com`, `sk_test_*`, or known fixture files should not make every release noisy. But the allowlist should be explicit, not hidden inside reviewer memory.
+
+That gives the workflow a better posture:
+
+- scan the skill bundle locally
+- review warnings and errors
+- allowlist intentional fake examples
+- keep live connector instructions behind approval language
+- publish only after the public artifact has a redaction report
+
+<Callout title="The practical rule">
+Before publishing an agent skill or runbook, scan the bundle for sensitive content, real-looking examples, and side-effect instructions that forgot their approval boundary.
+</Callout>
+
+This is not paranoia.
+
+It is respecting the fact that skills are durable instructions. Once a skill is public, copied, installed, or used by another agent, its examples and action language become part of someone else's operating environment.
+
+That makes redaction a release check, not a cleanup chore.
+
+## The deeper insight: rehearsal is the missing middle
+
+The pattern across these tools is not "never let agents write."
+
+The better thesis is:
+
+rehearsal is the missing middle between intent and side effect.
+
+`connector-action-rehearsal` rehearses external connector writes. `skill-redaction-audit` rehearses public skill release by checking whether the artifact is safe enough to leave the local workflow.
+
+Together they define a more useful boundary than "agent can" or "agent cannot."
+
+<CompareTable
+  left={{ title: "Intent straight to write", items: ["Agent describes the action in prose", "Connector target and payload are implied", "Approval happens outside the artifact", "Public examples are trusted because they look fake", "Side-effect language is reviewed manually late"] }}
+  right={{ title: "Rehearsed side effects", items: ["Action fixture names connector, target, payload, reason, and evidence", "Risk is classified before execution", "Approval requirements are part of the plan", "Skill bundles get redaction findings before release", "Allowlists and suggested replacements make review concrete"] }}
+/>
+
+That distinction matters for agentic engineering.
+
+The future I want is not a pile of agents with unlimited connector access. It is also not a timid workflow where agents can only edit local text.
+
+The useful middle is structured:
+
+- intent becomes a fixture
+- fixture becomes a plan
+- plan names the side effect
+- approval is explicit
+- forbidden routes stop the run
+- public artifacts get scanned
+- findings become review evidence
+
+That gives humans more leverage without turning every agent action into ceremony.
+
+The agent still drafts the work. The workflow just makes the proposed side effect visible before it happens.
+
+## What this changes in the sprint
+
+Day 49 made the outside edge of the workflow feel more concrete.
+
+This matters because the sprint has been moving from local proof into reusable skills, connector workflows, release candidates, and multi-agent operations. Those systems all have the same weak point:
+
+the agent can sound ready before the workflow has produced the artifact that proves it is ready.
+
+The workflow I want is simple:
+
+- rehearse connector writes before live execution
+- classify connector actions as read-only, draft-only, write-after-approval, or forbidden
+- include evidence and rollback notes in the plan
+- scan public skill bundles before release
+- treat redaction warnings as review inputs
+- keep side-effect language tied to approval boundaries
+- make the review artifact exist before the action does
+
+That is how agent speed becomes safer at the edge.
+
+<Callout title="Day 49 in one line">
+AI agents become easier to trust when external writes and public skill releases are rehearsed locally, classified clearly, audited for redaction risk, and handed to humans as evidence before side effects happen.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Rehearse first.
+
+Then write.
+
+---
+
+*Day 49. June 24, 2026. The lesson was simple: side effects need a rehearsal artifact before an agent asks for trust.*

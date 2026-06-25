@@ -1,0 +1,234 @@
+---
+title: "Day 50: Evidence Has to Survive Handoff"
+description: "Day 50 of the 60 Day OSS Sprint: worktreeguard, tooltrace-skill, and tool-demo-script-skill show why AI agent work needs lane status, tool-call proof, and demo evidence that survive the handoff."
+pubDate: 2026-06-25
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent handoff evidence; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI agent verification */}
+
+Day 50 was about what remains after the agent stops talking.
+
+That thread showed up across `worktreeguard`, `tooltrace-skill`, and `tool-demo-script-skill`.
+
+`worktreeguard` leases and inspects Git worktrees so agents do not collide in the same checkout. `tooltrace-skill` turns tool-call JSONL logs into proof summaries. `tool-demo-script-skill` generates concise demo scripts from repo metadata, CLI examples, and safety notes.
+
+Different tools. Same pressure.
+
+<Highlight>
+Agent work is not done when the final message sounds confident. It is done when the lane, tool trace, and demo evidence can be handed to the next reviewer without forcing them to reconstruct the run from memory.
+</Highlight>
+
+That is the Day 50 theme.
+
+## The challenge: handoff destroys context
+
+Agents are getting better at doing the work.
+
+They can edit a repo. They can run tests. They can inspect fixtures. They can generate release notes. They can draft demo material. They can summarize what happened.
+
+The weak point is what happens next.
+
+A reviewer enters after the fact. Another agent resumes the task. A maintainer checks the branch tomorrow morning. A release candidate needs proof. A demo script needs to match the actual command surface. A worktree needs to be cleaned up without deleting uncommitted work.
+
+This is where agent workflows often get soft.
+
+The chat transcript knows too much. The checkout state is ambiguous. The final answer is too polished. The commands are buried in logs. The demo plan sounds good but is not tied to local evidence. The reviewer has to decide whether to trust the story or start over.
+
+[Day 49](/blog/day-49-rehearse-before-you-write/) was about rehearsing side effects before agents write outside the local workflow. Day 50 moves the same idea into handoff:
+
+before agent work can scale, its evidence has to survive the person or process that produced it.
+
+## Worktreeguard: lanes need status, not folklore
+
+`worktreeguard` exists for one of the most practical agent problems:
+
+multiple coding agents should not pile into the same checkout.
+
+The README describes it as a local-first CLI for leasing, inspecting, and releasing Git worktrees. It wraps `git worktree` with predictable lanes, JSON lock metadata, dirty/stale/missing/unsafe worktree detection, and stable reports for humans and orchestrators.
+
+The basic flow is direct:
+
+```sh
+node src/index.js lease ../demo-repo --task fix-login-timeout --base main
+node src/index.js status ../demo-repo --format markdown
+node src/index.js doctor ../demo-repo --json
+node src/index.js release ../demo-repo fix-login-timeout --force
+```
+
+That is not glamorous.
+
+It is exactly the layer agent teams need.
+
+When a lane is leased, the command writes lock metadata in both the source repo and the worktree. When status runs, it reports active lanes and risk flags. When doctor runs, it gives a gate before handoff or review. When release runs, it refuses to remove dirty worktrees unless the caller explicitly forces it.
+
+The risk flags are the kind of boring details that prevent expensive confusion:
+
+- `dirty`
+- `stale`
+- `missing-worktree`
+- `duplicate-branch`
+- `missing-upstream`
+
+<Callout title="The practical rule">
+If agents are working in parallel, every lane needs a lease, a status report, and a cleanup rule that refuses to erase dirty work by accident.
+</Callout>
+
+I like the safety model here because it is modest. Status, doctor, and release make no hidden network calls. There is no daemon, telemetry, hosted coordinator, autonomous merge, rebase, publish, or PR creation.
+
+That restraint matters.
+
+The tool is not trying to be the whole orchestration system. It is trying to make the local worktree state legible enough that orchestration can happen safely above it.
+
+That is the right shape for agent infrastructure.
+
+## Tooltrace-skill: proof should not live only in raw logs
+
+`tooltrace-skill` handles the next layer:
+
+what did the agent actually do?
+
+The README describes it as a local-first agent skill and CLI for turning tool-call JSONL logs into proof summaries. It helps reviewers see tools, commands, files, approvals, failures, and completion evidence without reading raw traces.
+
+The core commands are small:
+
+```sh
+node dist/src/cli.js summarize examples/tool-events.jsonl --out TOOLTRACE.md
+node dist/src/cli.js check examples/clean-events.jsonl --fail-on approval
+```
+
+That is a useful distinction.
+
+Raw traces are valuable, but they are not a review surface by themselves. They are usually too noisy, too long, and too tied to the tool runtime. A reviewer needs the condensed artifact: which tools were used, which commands ran, which files changed, where approvals appeared, where failures happened, and what evidence supports completion.
+
+<Highlight>
+The final agent summary should not be the only witness. Tool-call history needs a proof layer that is short enough to review and structured enough to gate.
+</Highlight>
+
+The safety model is also clear. `tooltrace-skill` does not execute tools. It makes no network calls. It makes no approval decisions. It writes only to `--out` when requested. Approval events become review findings, not permission.
+
+That last bit is important.
+
+A proof summary should not launder a risky action into approval. It should surface the approval-related event so a human or higher-level workflow can decide what to do next.
+
+<Callout title="The practical rule">
+Turn raw tool-call logs into a review artifact before treating an agent run as complete.
+</Callout>
+
+This is where agent verification gets more honest.
+
+The question changes from "did the agent say it ran the checks?" to "does the tool trace produce evidence that the right tools, commands, files, failures, and approvals were visible?"
+
+That is a better review primitive.
+
+## Tool-demo-script-skill: demos need evidence before polish
+
+The third piece is `tool-demo-script-skill`.
+
+This one seems lighter at first because it is about demo scripts. But demos are where a lot of agent-built tools quietly drift from reality.
+
+A demo can make a CLI look clearer than it is. A script can imply an approval gate that does not exist. A release note can claim evidence that was not generated. A video plan can skip the local artifact the reviewer should see before launch.
+
+The README describes `tool-demo-script-skill` as a deterministic CLI for generating concise tool-demo scripts from repo metadata, CLI examples, and safety notes.
+
+The command surface is simple:
+
+```sh
+tool-demo-script fixtures/repo-card.json
+tool-demo-script fixtures/connector-card.json --minutes=5 --format=markdown
+```
+
+The output shape is the important part:
+
+- `ok`: validation status for the source fixture
+- `beats`: timed run-of-show entries
+- `artifactPlan`: local evidence the demo should show before launch
+- `approvalGate`: actions that remain draft-only until explicitly approved
+
+That is exactly the kind of guardrail demo work needs.
+
+The demo should not be pure persuasion. It should be a short operating plan tied to the repo's real command examples, safety notes, and local evidence.
+
+<Callout title="The practical rule">
+Before polishing a demo, generate the run-of-show from repo metadata and require an artifact plan plus approval gate.
+</Callout>
+
+The MVP is intentionally scoped. It uses deterministic heuristics and fixture-backed tests. Adapter-specific execution, live API calls, generated media, and publishing workflows are out of scope.
+
+Good.
+
+The first job is not to automate the entire launch machine. The first job is to stop demo preparation from inventing a cleaner story than the tool can support.
+
+## The deeper insight: handoff is a product surface
+
+The pattern across these tools is not "write more reports."
+
+The better thesis is:
+
+handoff is a product surface.
+
+`worktreeguard` makes the branch lane inspectable. `tooltrace-skill` makes the agent run reviewable. `tool-demo-script-skill` makes the launch narrative evidence-shaped before it becomes public polish.
+
+Together they reduce the amount of trust trapped in the agent's final message.
+
+<CompareTable
+  left={{ title: "Handoff as story", items: ["Agent says which branch it used", "Reviewer infers worktree safety from Git state", "Tool calls live in raw logs or chat", "Approvals are summarized after the fact", "Demo scripts drift toward a cleaner narrative"] }}
+  right={{ title: "Handoff as evidence", items: ["Worktree lanes are leased and status-checked", "Dirty, stale, missing, duplicate, and upstream risks are reported", "Tool-call JSONL becomes a short proof summary", "Approval events become review findings", "Demo plans include local artifacts and approval gates"] }}
+/>
+
+This matters because agentic engineering is mostly coordination once the first draft exists.
+
+The hard part is not only getting an agent to make a change. It is making the change easy to review, resume, verify, demo, and clean up without trusting one fragile thread of context.
+
+That is why I keep coming back to local-first artifacts.
+
+Markdown status.
+
+JSON locks.
+
+Tool summaries.
+
+Fixture-backed demo plans.
+
+Validation scripts.
+
+These are not paperwork. They are how the work survives handoff.
+
+## What this changes in the sprint
+
+Day 50 made the handoff layer feel unavoidable.
+
+The sprint started with small tools and local checks. It has moved through release evidence, repo contracts, permission boundaries, dry-run side effects, and now the review artifacts that let agent work move between people and processes.
+
+The workflow I want is simple:
+
+- lease an isolated worktree lane before agent edits begin
+- attach lane status to handoff and review notes
+- run a doctor-style check before cleanup or release
+- summarize tool-call logs into proof artifacts
+- treat approval events as review findings
+- generate demo scripts from real repo metadata and examples
+- require local artifact plans before launch polish
+
+That does not make the agent slower.
+
+It makes the agent's work transferable.
+
+<Callout title="Day 50 in one line">
+AI agent work becomes easier to trust when worktree lanes, tool-call proof, and demo plans produce evidence that survives the handoff instead of depending on the agent's final summary.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Evidence first.
+
+Then handoff.
+
+---
+
+*Day 50. June 25, 2026. The lesson was simple: if the next reviewer cannot inspect the lane, trace, and demo evidence, the agent has not really finished the work.*

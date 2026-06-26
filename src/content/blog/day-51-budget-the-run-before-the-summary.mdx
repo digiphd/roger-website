@@ -1,0 +1,263 @@
+---
+title: "Day 51: Budget the Run Before the Summary"
+description: "Day 51 of the 60 Day OSS Sprint: tool-use-budget-skill, runledger-skill, and skill-output-gate show why AI agent work needs budgets, command evidence, and output gates before confidence."
+pubDate: 2026-06-26
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification workflow; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI software quality */}
+
+Day 51 was about putting pressure on the whole run, not just the final answer.
+
+That thread showed up across `tool-use-budget-skill`, `runledger-skill`, and `skill-output-gate`.
+
+`tool-use-budget-skill` turns an agent task brief into a practical plan for tool use, elapsed time, tokens, verification gates, and approval points. `runledger-skill` turns command-run ledgers into verification handoffs. `skill-output-gate` preflights completed agent outputs for evidence, verification, and handoff quality.
+
+Different tools. Same pressure.
+
+<Highlight>
+Agent confidence should have a lifecycle: budget the run before it starts, record the command evidence while it happens, and gate the final output before the next person has to trust it.
+</Highlight>
+
+That is the Day 51 theme.
+
+## The challenge: summaries arrive too late
+
+The final summary is where a lot of agent workflows pretend to become rigorous.
+
+The agent says what changed. It lists tests. It names files. It adds a caveat. It sounds responsible. Sometimes it is even accurate.
+
+But by then the workflow has already made the important choices.
+
+How much time should this task have consumed? Which tools were appropriate? Was an external write allowed? Which verification gates were required? Did the agent burn through context and start guessing? Did it actually run the commands it claimed? Did the final answer include enough evidence for review, or just enough prose to sound finished?
+
+If those questions only appear at the end, the review is weak.
+
+The reviewer is judging a finished story without seeing the operating budget, command ledger, or output gate that produced it.
+
+[Day 50](/blog/day-50-evidence-survives-handoff/) was about making worktree lanes, tool traces, and demo plans survive handoff. Day 51 moves one step wider:
+
+the run itself needs a contract from start to finish.
+
+## Tool-use-budget-skill: the task needs a budget before the run
+
+`tool-use-budget-skill` starts at the beginning of the agent loop.
+
+The README describes it as a dry-run CLI and library for turning an agent task brief into a practical budget for tools, elapsed time, tokens, verification gates, and approval points.
+
+The quickstart is intentionally simple:
+
+```sh
+npm test
+npm run smoke
+node bin/tool-use-budget.js --brief fixtures/task.md --profile fixtures/profile.json --format json
+```
+
+The more useful shape is the task-specific budget:
+
+```sh
+tool-use-budget \
+  --brief task.md \
+  --profile repo-profile.json \
+  --max-minutes 45 \
+  --max-external-writes 0
+```
+
+That command is not trying to do the work.
+
+It is trying to make the work measurable before the agent begins.
+
+The repo profile can name the language, package manager, test commands, and risk flags. A profile like this is small, but it changes the posture of the task:
+
+```json
+{
+  "language": "javascript",
+  "packageManager": "npm",
+  "testCommands": ["npm test", "npm run check"],
+  "riskFlags": ["public-repo", "github-pr"]
+}
+```
+
+Now the agent is not just improvising. It has a task brief, a repo profile, a time budget, a tool budget, verification expectations, and a side-effect boundary.
+
+<Callout title="The practical rule">
+Before an agent starts a real task, give the run a budget for time, tools, tokens, verification, and external writes.
+</Callout>
+
+The safety model is the point. The tool is planning-only. It does not run shell commands. It does not write files. It does not call connectors. It does not touch external accounts. It surfaces approval gates so the host agent can ask before side-effecting actions.
+
+That is the kind of restraint I keep wanting in agent infrastructure.
+
+The first useful artifact is not the patch.
+
+It is the run budget.
+
+## Runledger-skill: command evidence needs a shape
+
+`runledger-skill` sits in the middle of the workflow.
+
+It is for the part where "tests passed" needs to become evidence instead of atmosphere.
+
+The README frames it as a local-first agent skill and CLI for turning command-run ledgers into verification handoffs. It is meant for release candidates, PR summaries, and agent handoffs where a claim like "npm test passed" needs something more concrete behind it.
+
+The command surface is small:
+
+```sh
+node dist/src/cli.js summarize examples/runs.jsonl --out VERIFICATION.md
+node dist/src/cli.js check examples/clean-runs.jsonl --require "npm test" --require "npm run build" --fail-on warning
+```
+
+The JSONL schema is also deliberately boring:
+
+```json
+{"command":"npm test","exitCode":0,"durationMs":1240,"stdout":"ok","outputPath":"artifacts/test.log"}
+```
+
+Required fields are `command` and `exitCode`. Optional fields include `cwd`, `startedAt`, `endedAt`, `durationMs`, `stdout`, `stderr`, `outputPath`, and `notes`.
+
+That is enough to change the review conversation.
+
+Instead of asking whether the agent remembered to mention the checks, the workflow can ask whether the run ledger contains the required commands and whether the findings cross the failure threshold.
+
+<Highlight>
+"Tests passed" is a sentence. A command ledger is evidence. Agent workflows should prefer the second one whenever a review, release, or handoff depends on the claim.
+</Highlight>
+
+I also like the local-only safety model:
+
+- no network calls
+- no telemetry
+- no command execution
+- no source mutation
+- secret-like values redacted before reporting
+
+That is the right division of labor.
+
+`runledger-skill` should not become the thing that runs commands or decides whether to publish. It should summarize and check the ledger so another workflow can make an informed decision.
+
+<Callout title="The practical rule">
+Treat every important verification claim as a ledger entry with command, exit code, duration, output pointer, and reviewable findings.
+</Callout>
+
+This is where agent quality gets less performative.
+
+The agent can still write the summary. But the summary should be downstream of the ledger, not a substitute for it.
+
+## Skill-output-gate: the final answer needs preflight
+
+The third piece is `skill-output-gate`.
+
+This one looks small, but it points directly at a failure mode I see constantly:
+
+the agent did useful work, then handed over a weak final output.
+
+The README describes `skill-output-gate` as a preflight for completed agent outputs. It checks evidence, verification, and handoff quality.
+
+The quickstart is blunt:
+
+```sh
+npm install
+npm run smoke
+node src/cli.js fixtures/good-summary.md --format json
+```
+
+The CLI shape is:
+
+```sh
+skill-output-gate <summary.md|summary.json> [--format json|markdown] [--required-artifacts n]
+```
+
+The important detail is the exit behavior: the command exits with `2` when the output has blocking findings.
+
+That turns the final message into something gateable.
+
+Not perfect. Not magically truthful. But inspectable.
+
+Does the output mention verification? Does it include artifacts when artifacts are required? Does it leave enough handoff context for the next person? Does it fail when the summary is too thin?
+
+That is a useful primitive because final answers are part of the work product. In agent workflows, they are often the only thing the next person reads before deciding whether to review, continue, merge, or rerun.
+
+<Callout title="The practical rule">
+Do not treat an agent final answer as done until it passes an output gate for evidence, verification, and handoff quality.
+</Callout>
+
+The safety notes keep the boundary tight. The package is local-only. It does not send final messages. It does not touch GitHub. It does not publish packages. It does not mutate external systems.
+
+Again, good.
+
+The gate should judge the output, not become the orchestrator.
+
+## The deeper insight: confidence should be staged
+
+The pattern across these tools is not "add more process."
+
+The better thesis is:
+
+confidence should be staged.
+
+`tool-use-budget-skill` creates confidence before the run by setting a budget and approval boundary. `runledger-skill` creates confidence during or after the run by turning commands into a reviewable ledger. `skill-output-gate` creates confidence at handoff by refusing thin final outputs.
+
+<CompareTable
+  left={{ title: "Confidence as final prose", items: ["Agent estimates the task while doing it", "Tool use and elapsed time are discovered after the fact", "Verification claims live in the summary", "Missing artifacts depend on reviewer suspicion", "The final answer is accepted because it sounds complete"] }}
+  right={{ title: "Confidence as staged evidence", items: ["Run budget exists before work begins", "Time, tools, tokens, checks, and approvals are planned", "Command runs become ledger entries", "Required verification can be checked against the ledger", "Final output must pass an evidence and handoff gate"] }}
+/>
+
+This matters because agentic engineering is becoming less about one clever prompt and more about repeated operation.
+
+A real workflow needs to answer the same questions every day:
+
+- What was this agent allowed to spend?
+- What was it allowed to touch?
+- Which commands were required?
+- Which commands actually ran?
+- What evidence exists after the run?
+- Is the final output good enough for the next reviewer?
+
+Those questions are not bureaucracy.
+
+They are the shape of trust when the work is moving quickly.
+
+## What this changes in the sprint
+
+Day 51 made the full lifecycle feel clearer.
+
+Earlier in the sprint, I kept building tools around isolated work, proof, permissions, connector rehearsal, release evidence, and handoff. The pattern is getting more explicit now:
+
+agent work needs gates at multiple moments, not one giant review at the end.
+
+The workflow I want is simple:
+
+- create a task brief
+- attach a repo profile
+- budget tools, time, tokens, verification, and side effects
+- run the work inside that budget
+- record command runs as ledger entries
+- summarize and check the ledger
+- produce the final answer
+- run the output through an evidence and handoff gate
+- send the reviewer the budget, ledger, and gated summary
+
+That does not make the agent less capable.
+
+It makes the agent's capability easier to operate.
+
+<Callout title="Day 51 in one line">
+AI agent work becomes easier to trust when the run starts with a budget, produces command evidence, and cannot hand off a thin final summary without passing an output gate.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Budget first.
+
+Then ledger.
+
+Then summary.
+
+---
+
+*Day 51. June 26, 2026. The lesson was simple: confidence should be staged before, during, and after the agent run.*

@@ -1,0 +1,308 @@
+---
+title: "Day 53: Scaffolds Need Trust Boundaries"
+description: "Day 53 of the 60 Day OSS Sprint: StackForge, clawplug, routecard-skill, and postmaker-skill show why AI agent platforms need scaffolds, plugin contracts, route cards, and claim gates before scale."
+pubDate: 2026-06-28
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: agentic engineering platform; supporting phrases: deterministic AI agents, AI coding agents workflow, local-first developer tools, AI agent verification */}
+
+Day 53 was about the moment where agent tooling stops being a pile of helpful scripts and starts becoming a platform surface.
+
+That thread showed up across `StackForge`, `clawplug`, `routecard-skill`, and `postmaker-skill`.
+
+`StackForge` scaffolds agent-friendly projects with deterministic local commands. `clawplug` defines typed OpenClaw plugin tools, config schemas, lifecycle hooks, and test helpers. `routecard-skill` plans connector use before external action. `postmaker-skill` turns repository evidence into launch-ready drafts while warning on unsupported claims.
+
+Different tools. Same pressure.
+
+<Highlight>
+Agent platforms do not become safer by adding more power first. They become safer when scaffolds, plugins, connector routes, and public claims all have reviewable contracts before they scale.
+</Highlight>
+
+That is the Day 53 theme.
+
+## The challenge: scale multiplies vague boundaries
+
+Small agent tools are easy to reason about in isolation.
+
+A CLI reads a fixture. A skill emits Markdown. A release check runs locally. A reviewer can open the repo, read the README, and understand the blast radius.
+
+The pressure changes when the tools start composing.
+
+A scaffold creates a new project. A plugin exposes tools to a host. A connector route decides which external system an agent should use. A launch draft turns repo evidence into public language. None of those actions are necessarily dangerous by themselves, but each one can multiply vague assumptions.
+
+What does the generated repo include by default?
+
+Which config does the plugin require?
+
+Is this connector route blocked until approval, or did the agent infer permission from intent?
+
+Is the launch copy grounded in verification evidence, or did it smooth over the limitations?
+
+[Day 51](/blog/day-51-budget-the-run-before-the-summary/) was about budgeting the run before trusting the final summary. Day 53 moves the same idea into the platform layer:
+
+before agents create, extend, route, or announce work, the platform needs contracts that make those actions reviewable.
+
+## StackForge: scaffolds need deterministic defaults
+
+`StackForge` exists for a practical founder problem:
+
+new projects should not begin as a blank directory plus agent improvisation.
+
+The README describes it as an agent-friendly software project scaffolding CLI for apps, APIs, CLIs, and OSS packages. The important part is not that it can generate files. Plenty of tools can generate files.
+
+The important part is the command surface and safety model.
+
+The core flow is explicit:
+
+```sh
+stackforge --version
+stackforge templates
+stackforge init oss-cli demo --dry-run
+stackforge init oss-cli demo
+```
+
+The local development commands stay just as inspectable:
+
+```sh
+pnpm install
+pnpm build
+pnpm dev templates
+pnpm dev init oss-cli my-tool --dry-run
+pnpm dev init oss-cli my-tool
+```
+
+That dry-run path matters.
+
+If an agent is going to create a repo-shaped thing, the first artifact should be the plan, not the directory. The reviewer should be able to see which template was selected, which files are expected, which verification script will exist, and which release defaults are included before the scaffold becomes the next maintenance surface.
+
+The GitHub behavior is also a useful boundary. StackForge never creates a GitHub repository by default. `--github-create` requests creation, and the first run still prints the GitHub and git publish commands as a dry run. `--github-execute` is the explicit step that actually creates and pushes.
+
+That is the right posture.
+
+<Callout title="The practical rule">
+When an agent scaffolds a project, make generation deterministic, keep network creation opt-in, and require a dry-run artifact before any repository is created or pushed.
+</Callout>
+
+I also like the template expectations. Generated OSS CLI projects include a local `scripts/validate.sh` path, ReleaseBox configuration, reviewed/tag-gated GitHub release workflows, and package smoke scripts. npm and Homebrew publishing stay disabled until explicitly enabled.
+
+That is the platform idea in miniature:
+
+do not make every new project rediscover the release and verification boundary.
+
+Bake in the boring checks. Leave the irreversible actions off by default.
+
+## Clawplug: plugins need typed host contracts
+
+`clawplug` is a different kind of platform surface.
+
+It is an OpenClaw plugin SDK for typed plugin tools, config schemas, lifecycle hooks, and test helpers. It lets a plugin entry point be registered by a host while keeping tool parameters and plugin config typed in source.
+
+The small example is enough to show the shape:
+
+```ts
+import { Type } from "@sinclair/typebox";
+import { definePlugin } from "clawplug";
+
+export default definePlugin({
+  id: "hello-plugin",
+  name: "Hello Plugin",
+  description: "Returns a greeting for a supplied name.",
+  configSchema: {
+    auth: Type.Object({
+      apiKey: Type.String()
+    })
+  },
+  tools: (tool) => [
+    tool({
+      name: "hello",
+      description: "Create a greeting.",
+      parameters: Type.Object({
+        name: Type.String()
+      }),
+      execute: ({ name }) => ({ message: `Hello, ${name}` })
+    })
+  ]
+});
+```
+
+This is not just developer ergonomics.
+
+It is a trust boundary.
+
+Agent plugins are dangerous when the host has to infer too much. What config exists? Which parameters does a tool accept? What shape does a tool result have? How do you test the tool without loading the full host? Which lifecycle hooks might run around tool calls?
+
+`clawplug` makes those questions explicit in source.
+
+Tool results are normalized to the OpenClaw content shape. Config can be split into named sections or represented as a flat schema that normalizes to a default section for host manifests. `testPlugin` exercises tools without a full OpenClaw host.
+
+<Highlight>
+The plugin boundary should be typed before it is powerful. A host should not have to learn a tool's parameter contract by watching it fail at runtime.
+</Highlight>
+
+The limitations are just as important as the API.
+
+`clawplug` does not provide a standalone host, plugin registry, credential store, or deployment service. It does not validate secrets or enforce network policy for the host. It gives the plugin author and host a typed contract and a local testing path.
+
+Good.
+
+That is the layer it should own.
+
+<Callout title="The practical rule">
+Before an agent host loads third-party or local plugin tools, the plugin needs typed config, typed parameters, normalized results, and a test harness that works outside the full host.
+</Callout>
+
+Typed contracts are not enough by themselves. But without them, every later permission system starts on sand.
+
+## Routecard-skill: connector choice needs a planning artifact
+
+`routecard-skill` handles the connector layer.
+
+The README describes it as a local-first agent skill for planning connector use before any external action. It takes an action request and a connector catalog, then produces a dry-run route card with a selected route, rejected alternatives, approval gates, missing evidence, and safety notes.
+
+The basic command is direct:
+
+```sh
+node bin/routecard-skill.js fixtures/action-request.json fixtures/catalog.json --format markdown
+node bin/routecard-skill.js fixtures/action-request.json fixtures/catalog.json --format json
+```
+
+The action request names the intended action, capability, whether there is an external write, whether identity is required, available inputs, required evidence, and supplied evidence.
+
+The catalog names connectors, capabilities, required inputs, approval gates, and risk.
+
+That is exactly the right split.
+
+The agent should not pick a connector because it sounds plausible in chat. It should produce a route card that shows the selected route, the rejected alternatives, the missing inputs, and the approval state.
+
+If evidence, identity, or approval is missing, the tool defaults to `blocked`.
+
+That default is doing real work.
+
+<Callout title="The practical rule">
+Connector routing should produce a card before action: selected route, rejected alternatives, missing evidence, risk, and approval gates.
+</Callout>
+
+This connects directly to the sprint's recurring theme around external writes.
+
+The useful future is not "agents can call every connector." The useful future is "agents can propose connector routes in a way humans and policies can inspect before anything leaves the workspace."
+
+That means route choice becomes an artifact.
+
+The artifact can be reviewed, attached to a PR, handed to another agent, or used as a gate in a larger workflow. The route card does not need to call the connector. In fact, its restraint is the point.
+
+## Postmaker-skill: public claims need source pressure
+
+The fourth piece is `postmaker-skill`.
+
+At first it looks like a content tool. It turns repository evidence into launch-ready posts: a short launch post, technical post, demo caption, follow-up checklist, limitations, source references, and warnings for unsupported claims.
+
+But the deeper product shape is evidence pressure.
+
+The input is explicit JSON:
+
+- project
+- audience
+- changes
+- verification
+- limitations
+- sources
+- requested claims
+
+The command prints a Markdown or JSON launch pack:
+
+```sh
+postmaker-skill fixtures/release-evidence.json --format markdown
+postmaker-skill fixtures/release-evidence.json --format json
+```
+
+The key is what it does not do.
+
+It does not post to social networks. It does not send messages. It does not call APIs. It does not open browser sessions. It treats the output as a draft and expects approval before publishing or sending content outside the local workspace.
+
+That is more than a safety note.
+
+It is the right shape for agent-generated marketing.
+
+<Highlight>
+Launch copy should be downstream of repository evidence. If a requested claim cannot be supported by the supplied changes, verification, limitations, and sources, the draft should say so before the claim becomes public language.
+</Highlight>
+
+This matters because agent-written content can become too smooth too quickly.
+
+It can turn "there is a smoke test" into "battle-tested." It can turn "local-first" into "enterprise-ready." It can turn "MVP" into "platform." It can hide limitations because limitations sound less exciting than launch copy.
+
+`postmaker-skill` points in the better direction:
+
+make the launch artifact carry sources, limitations, follow-up work, and warnings for unsupported claims.
+
+<Callout title="The practical rule">
+Before an agent drafts public launch copy, require structured repo evidence and keep unsupported claims visible in the output.
+</Callout>
+
+That is how content becomes part of the verification system instead of a place where verification gets diluted.
+
+## The deeper insight: platform power needs small contracts
+
+The pattern across these tools is not "build a bigger agent platform."
+
+The better thesis is:
+
+platform power needs small contracts at every boundary.
+
+`StackForge` puts a contract around creating a project. `clawplug` puts a contract around loading tools into a host. `routecard-skill` puts a contract around connector selection. `postmaker-skill` puts a contract around public claims.
+
+<CompareTable
+  left={{ title: "Platform by momentum", items: ["Agent scaffolds from memory", "GitHub creation is implied by the task", "Plugin config and tool parameters are learned at runtime", "Connector choice happens in chat", "Launch copy smooths over evidence gaps"] }}
+  right={{ title: "Platform by contract", items: ["Scaffolds have templates, dry runs, and local validation paths", "Repository creation and push require explicit flags", "Plugins expose typed config, parameters, results, and test helpers", "Connector routes become blocked or reviewable cards", "Public posts carry sources, limitations, and unsupported-claim warnings"] }}
+/>
+
+This is what agentic engineering keeps teaching me.
+
+The first version of a tool can be small, but the boundary has to be serious.
+
+When agents create projects, the scaffold is a boundary.
+
+When agents load plugins, the schema is a boundary.
+
+When agents choose connectors, the route card is a boundary.
+
+When agents write launch copy, the evidence packet is a boundary.
+
+If those boundaries are missing, scale just makes the ambiguity faster.
+
+If those boundaries exist, scale starts to look less like autonomy theater and more like an operating system for reviewable work.
+
+## What this changes in the sprint
+
+Day 53 made the platform layer feel less abstract.
+
+The sprint has been building toward this for weeks: local-first tools, deterministic checks, release evidence, handoff artifacts, permission contracts, and run budgets. The new lesson is that those ideas have to survive the move from individual tools into the surfaces that generate, extend, route, and announce work.
+
+The workflow I want is simple:
+
+- scaffold projects from deterministic templates
+- dry-run project creation before writing or pushing
+- keep network creation and publishing explicit
+- define plugin config and tool parameters in typed source
+- test plugin tools without a full host
+- route connector actions through blocked-by-default cards
+- draft launch copy only from structured evidence
+- keep limitations and unsupported claims visible until review
+
+That does not slow down the platform.
+
+It makes the platform worth trusting.
+
+<Callout title="Day 53 in one line">
+AI agent platforms get safer when scaffolds, plugins, connector routes, and public claims are all forced through small, local-first contracts before they gain power.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Scale the contract first.

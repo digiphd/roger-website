@@ -1,0 +1,284 @@
+---
+title: "Day 52: State Before Control"
+description: "Day 52 of the 60 Day OSS Sprint: agentpulse, cmdmap, and actiontaint show why AI agent workflows need readable state, command maps, and taint checks before they earn more control."
+pubDate: 2026-06-27
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent control surface; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI agent verification */}
+
+Day 52 was about making the control surface visible before giving agents more control.
+
+That thread showed up across `agentpulse`, `cmdmap`, and `actiontaint`.
+
+`agentpulse` gives agent runtimes a vendor-neutral event contract and reducer for UI state. `cmdmap` turns a repo's scattered command surface into a risk-labeled command map. `actiontaint` scans GitHub workflow files for risky uses of untrusted event text in action prompts, scripts, and token-bearing contexts.
+
+Different tools. Same pressure.
+
+<Highlight>
+Agents do not become safer because we give them more buttons. They become safer when the workflow can show state, commands, and tainted inputs clearly before the next action is allowed to happen.
+</Highlight>
+
+That is the Day 52 theme.
+
+## The challenge: control arrives before understanding
+
+Agent systems are racing toward richer control.
+
+They can run tools. They can request approvals. They can open pull requests. They can call connectors. They can work in parallel. They can speak, pause, hand off, resume, and recover from interruptions.
+
+That sounds like progress because it is progress.
+
+But richer control also makes the old chat-shaped interface feel thin.
+
+What is the agent doing right now? Is it thinking, speaking, running a tool, blocked on approval, or handing off? Which command should it run first in this unfamiliar repository? Which command is a safe verification candidate and which one looks like a release or publish path? Is this GitHub workflow feeding issue or pull request text into a privileged script body?
+
+If those questions are answered only by the model's narration, the system is too soft.
+
+[Day 51](/blog/day-51-budget-the-run-before-the-summary/) was about budgeting the run, recording command evidence, and gating the final summary. Day 52 moves one layer closer to the operating surface:
+
+before the agent controls more of the workflow, the workflow needs a better representation of state.
+
+## Agentpulse: runtime state needs an event contract
+
+`agentpulse` starts with the part users feel immediately:
+
+the agent runtime UI.
+
+The README describes it as a small, vendor-neutral event contract and reducer for agent runtime UI state. That sounds like infrastructure language, but the product problem is very human.
+
+When an agent is working, people need to know what mode it is in.
+
+Is it thinking? Is it speaking? Is it running a tool? Is it waiting for approval? Is it blocked? Did it hand off? Was it interrupted? Which task is active? Which failure should be shown? What notifications matter?
+
+The package gives that state a shape:
+
+```js
+import { createEvent, reduceAgentState, selectUiSnapshot } from '@agentpulse/core';
+
+const events = [
+  createEvent({
+    eventId: 'evt_1',
+    type: 'tool.started',
+    occurredAt: '2026-05-01T07:20:31.942Z',
+    sessionId: 'sess_42',
+    taskId: 'task_plan_pr',
+    data: {
+      callId: 'tool_983',
+      toolName: 'github.createPullRequest',
+      summary: 'Creating pull request'
+    }
+  })
+];
+
+const state = reduceAgentState(events);
+const ui = selectUiSnapshot(state);
+```
+
+That reducer boundary matters.
+
+Instead of every app inventing its own interpretation of agent activity, events become the source of truth. The reducer produces current state. Selectors turn that state into UI-ready presence, approvals, notifications, and active work.
+
+The CLI keeps the same posture:
+
+```sh
+agentpulse validate ./fixtures/normal-run.jsonl
+agentpulse replay ./fixtures/normal-run.jsonl --format=timeline
+agentpulse replay ./fixtures/normal-run.jsonl --format=state
+agentpulse replay ./fixtures/normal-run.jsonl --format transitions --json
+```
+
+That is a useful primitive for debugging and product design.
+
+A UI should not have to guess whether an agent is busy, blocked, waiting, or ready. It should be able to replay the event stream, validate it, reduce it, and display the current mode.
+
+<Callout title="The practical rule">
+Before building a richer agent UI, define the event contract that turns sessions, tools, approvals, blockers, interruptions, tasks, handoffs, and failures into readable state.
+</Callout>
+
+The privacy metadata is important too. The contract includes fields like `visibility`, `redaction`, and `retention` so adapters can mark sensitive payloads before a UI or storage layer decides what to display or keep.
+
+That is the right direction.
+
+Agent state is not just a spinner. It is part of the trust boundary.
+
+## Cmdmap: command control needs a map
+
+`cmdmap` handles a different version of the same problem:
+
+the repo is full of commands, but the agent does not know which ones are safe.
+
+Every serious repository has a command surface. Some of it lives in `package.json`. Some of it lives in a `Makefile`. Some of it is hidden in a `Justfile`, `Taskfile.yml`, `pyproject.toml`, README snippets, or random scripts under `scripts/`.
+
+Humans learn that surface slowly.
+
+Agents often meet it all at once.
+
+The README frames `cmdmap` as a local-first CLI for those "new repo, no idea what is safe" moments:
+
+```sh
+cmdmap scan . --out docs/COMMANDS.md
+cmdmap scan . --format json --fail-on risky
+cmdmap explain "npm publish"
+cmdmap rules
+```
+
+The key is that it scans without executing project commands.
+
+It finds command candidates and attaches evidence: file, line, why it was found, how risky it looks, and what to run first.
+
+The risk model is intentionally conservative:
+
+- `test`, `build`, and `lint` commands are usually safe verification candidates
+- dev servers and unknown commands are caution because they may hang or have unclear side effects
+- release, publish, destructive, secret-related, and network-looking commands are risky by default
+- `--fail-on risky` exits with code `2` when risky commands are present
+
+That distinction is small but valuable.
+
+The agent does not need immediate permission to run everything. It needs a map.
+
+<Highlight>
+The first command in a new repo should not be a guess. It should come from a command map that names the evidence, risk level, and preferred smoke path.
+</Highlight>
+
+This is the difference between control and understanding.
+
+An agent with shell access can already run commands. The better question is whether the workflow can help it choose the right ones, avoid the dangerous ones, and explain its reasoning to the reviewer.
+
+`cmdmap` is not a sandbox. It is not pretending to prove command safety. The README says the output is a map, not permission.
+
+Good.
+
+That is the correct boundary.
+
+<Callout title="The practical rule">
+Before an agent runs commands in an unfamiliar repo, generate a local command map and treat risky findings as review input, not as background noise.
+</Callout>
+
+The deeper product move is documentation as control infrastructure.
+
+Markdown output gives maintainers a reviewable artifact. JSON output gives agents and CI something stable to consume. A `.cmdmaprc.json` lets the repo encode known allowances, ignored commands, labels, and a preferred smoke path.
+
+That turns repo familiarity into a checked-in contract instead of tribal knowledge.
+
+## Actiontaint: workflow automation needs input taint
+
+`actiontaint` moves the same idea into CI and GitHub workflow automation.
+
+This is where agent safety can get especially sharp.
+
+GitHub workflows often receive text from issues, pull requests, comments, titles, bodies, branches, labels, and actors. Some of that text is untrusted. Some workflows run with elevated permissions. Some scripts feed that text into action inputs, shell bodies, or agent prompts.
+
+That combination deserves a pre-review check.
+
+The README describes `actiontaint` as an early v0.1.0 local-first workflow scanner for risky uses of untrusted GitHub event text:
+
+```sh
+npx actiontaint scan .github/workflows
+npx actiontaint scan .github/workflows --json
+node src/index.js scan .github/workflows
+```
+
+It includes a demo tour:
+
+```sh
+bash demo/workflow-risk-tour.sh
+```
+
+The tour compares a metadata-only issue comment workflow with a risky `pull_request_target` workflow that feeds pull request title and body text into an agent prompt under write permissions.
+
+That is exactly the failure shape worth catching early.
+
+Not because every workflow with event text is bad.
+
+Because untrusted text plus privileged execution plus agent interpretation is a different risk class from ordinary automation.
+
+<Callout title="The practical rule">
+Before a GitHub workflow lets untrusted issue or pull request text influence a privileged script, action input, or agent prompt, scan the workflow and make the taint visible.
+</Callout>
+
+The release notes around `actiontaint` are also honest about scope. It is a conservative line-based scanner, not a full YAML or expression evaluator. The README says to treat the PRD as direction, not a guarantee, and not to use it as the only control for production security or compliance.
+
+That honesty matters.
+
+The useful first version is not perfect security. It is a pre-review signal that makes a risky pattern easier to see before the workflow ships.
+
+If `scan` exits with status `1` for high-severity findings, that is enough to make the problem operational:
+
+the workflow review has to stop and inspect the tainted path.
+
+## The deeper insight: state is the control layer
+
+The pattern across these tools is not "more dashboards" or "more scanners."
+
+The better thesis is:
+
+state is the control layer.
+
+`agentpulse` turns runtime behavior into an event stream, reducer, and UI snapshot. `cmdmap` turns repo commands into a risk-labeled map. `actiontaint` turns workflow input risk into scanner findings.
+
+Together they make control less magical.
+
+<CompareTable
+  left={{ title: "Control without state", items: ["UI infers agent status from chat prose", "Agent guesses commands from scattered repo files", "Risky release or publish commands are discovered by accident", "Workflow event text is trusted because the YAML looks familiar", "Reviewers reconstruct safety from memory"] }}
+  right={{ title: "Control through state", items: ["Runtime events reduce into current agent mode", "Selectors expose approvals, notifications, and active work", "Command maps label safe, caution, and risky paths with file evidence", "Workflow scans surface untrusted event text in privileged contexts", "Reviewers get artifacts before the next action"] }}
+/>
+
+This matters because agent products are becoming operating environments.
+
+The old interface was a box where you asked for output.
+
+The new interface is a system where agents act across repos, tools, workflows, connectors, sessions, and people. That system needs state representations good enough to support control.
+
+Not vibes.
+
+Not "the agent seems done."
+
+State.
+
+Events. Reducers. Command maps. Taint findings. Validation. Replay. Review artifacts.
+
+Those are the primitives that let the product become more capable without becoming harder to trust.
+
+## What this changes in the sprint
+
+Day 52 made the control surface feel like the next real frontier.
+
+Earlier days focused on budgets, ledgers, handoffs, approvals, dry runs, redaction, and release evidence. Those are all still necessary. But as the tools get closer to real operating surfaces, one more rule keeps showing up:
+
+you cannot safely automate what you cannot represent.
+
+The workflow I want is simple:
+
+- represent agent runtime activity as validated events
+- reduce events into current UI state
+- expose approvals, blockers, handoffs, and failures as first-class state
+- map repo commands before running them
+- mark risky commands before they become default agent behavior
+- scan workflow files for tainted untrusted input
+- stop high-severity automation risks before they leave review
+- hand reviewers the artifacts before granting more control
+
+That does not make the agent timid.
+
+It makes the agent easier to operate.
+
+<Callout title="Day 52 in one line">
+AI agents earn more control when runtime state, command surfaces, and workflow input risk are represented as reviewable artifacts before the next action runs.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+State first.
+
+Then control.
+
+---
+
+*Day 52. June 27, 2026. The lesson was simple: the agent control surface is only trustworthy when state is visible before action.*

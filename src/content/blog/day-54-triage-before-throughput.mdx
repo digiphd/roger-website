@@ -1,0 +1,279 @@
+---
+title: "Day 54: Triage Before Throughput"
+description: "Day 54 of the 60 Day OSS Sprint: agentcapsule, repobeacon, and 67speed show why AI agent workflows need context capsules, repo radar, and safe distribution surfaces before more throughput."
+pubDate: 2026-06-29
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: agentic engineering throughput; supporting phrases: AI coding agents workflow, local-first developer tools, deterministic AI agents, AI agent verification */}
+
+Day 54 was about the part of agent work that gets easy to ignore when everything is moving quickly:
+
+triage.
+
+That thread showed up across `agentcapsule`, `repobeacon`, and `67speed`.
+
+`agentcapsule` creates portable, reviewable context bundles for coding-agent handoffs. `repobeacon` scans local repositories and renders repo health as terminal, JSON, or static HTML output. `67speed` is a zero-login meme speed test with deterministic results, share cards, and explicit safety boundaries around content, privacy, and SEO.
+
+Different tools. Same pressure.
+
+<Highlight>
+Agent throughput only compounds when the system can package context, see repo health, and ship public surfaces without turning every fast move into cleanup work.
+</Highlight>
+
+That is the Day 54 theme.
+
+## The challenge: speed creates triage debt
+
+The sprint has been producing a lot of small tools.
+
+That is the point. Small, local-first, reviewable tools are the way I want to explore agentic engineering without waiting for a perfect platform to exist first.
+
+But a fast portfolio creates a second-order problem.
+
+Which repo needs attention? Which handoff has enough context for the next agent? Which public surface is safe to share? Which generated artifact could leak private paths, inflate claims, or create an SEO mess? Which branch is ready for review, and which one is just "probably fine" because the agent sounded confident?
+
+Those questions are not glamorous.
+
+They are the work.
+
+[Day 52](/blog/day-52-state-before-control/) was about making runtime state, command surfaces, and workflow input risk visible before granting more control. Day 54 moves that same principle into portfolio throughput:
+
+before scaling the number of repos, handoffs, and public experiments, the system needs better triage artifacts.
+
+## Agentcapsule: handoffs need portable evidence
+
+`agentcapsule` exists for a very specific failure mode:
+
+agent handoffs usually lose context.
+
+The PRD says it plainly. Agent handoffs are often a pasted summary plus "go look around." That loses evidence, misses files, and makes later review awkward.
+
+The V1 shape is a local-first CLI that packs selected files, command outputs, notes, and a manifest into a local archive. The supported commands are:
+
+```sh
+agentcapsule init
+agentcapsule pack
+agentcapsule inspect
+agentcapsule unpack
+```
+
+That command set is small in the right way.
+
+`init` creates a capsule config with include and exclude globs. `pack` writes a `.agentcapsule/<name>.tar.gz` archive plus manifest JSON. `inspect` lets the receiver look at an existing capsule without unpacking it. `unpack` extracts into a chosen directory with overwrite protection.
+
+The safety model matters as much as the archive.
+
+The PRD calls out default denials for common secret files like `.env`, private keys, and token stores. It shows skipped files in the manifest. It refuses path traversal entries while unpacking.
+
+That is the difference between a useful handoff bundle and a risky dump.
+
+<Callout title="The practical rule">
+Before handing work to another agent, package the evidence as a local capsule with a manifest, size limits, checksums, skipped-file visibility, and unpack safety.
+</Callout>
+
+This connects directly to [Day 50](/blog/day-50-evidence-survives-handoff/). Evidence does not survive because the agent writes a better paragraph at the end. It survives because the next worker receives a bounded artifact that says what was included, why it was included, and how to inspect it.
+
+The release readiness path reinforces the same idea:
+
+```sh
+npm run check
+npm test
+npm run smoke
+npm run package:smoke
+npm run release:check
+```
+
+The smoke path creates a capsule, inspects it, and unpacks it. That is the right verification target. The core promise is not "this library builds." The core promise is "this bundle can move across a handoff without becoming a mystery."
+
+<Highlight>
+The handoff artifact should be inspectable before it is trusted and unpackable without surprising the receiver.
+</Highlight>
+
+That is the agentcapsule lesson.
+
+## Repobeacon: a portfolio needs repo radar
+
+`repobeacon` handles the portfolio side of the same problem.
+
+When there are five repos, you can keep the state in your head.
+
+When there are fifty, that becomes theater.
+
+`repobeacon` is a terminal-first repo radar for people juggling lots of small repositories. It scans local git repos, blends in fixture-backed GitHub health, and can emit a static HTML dashboard for a profile page or weekly maintenance ritual.
+
+The core flow is direct:
+
+```sh
+repobeacon \
+  --root ~/Developer \
+  --github-fixture fixtures/github/sample.json \
+  --html ./artifacts/dashboard.html \
+  --json-out ./artifacts/report.json
+```
+
+It reports the details that matter for triage:
+
+- branch
+- dirty state
+- ahead and behind counts
+- last commit
+- worktree count
+- CI state
+- issue and release metadata from fixtures
+- health score
+
+The important design choice is fixture-backed GitHub metadata.
+
+V1 does not authenticate to GitHub. It does not refresh remote metadata by itself. It does not auto-pull, run background sync, or start an OAuth flow.
+
+That restraint makes it more useful for agent work, not less.
+
+Agents need deterministic inputs when they are deciding where to spend attention. A fixture-backed health layer can be reviewed, refreshed deliberately, and used offline. Live auth can come later, behind a documented boundary.
+
+<Callout title="The practical rule">
+Before agents start sweeping a portfolio, give them a local repo radar: dirty state, branch drift, worktrees, CI, release signals, and a reviewable fixture for any remote health.
+</Callout>
+
+The limitation is also important:
+
+scores are triage signals, not substitutes for reviewing CI logs, security alerts, or release notes. Generated dashboards can reveal repository names and branch state, so HTML and JSON artifacts need review before publishing.
+
+That is exactly the kind of warning a portfolio tool should carry.
+
+The point is not to automate judgment away.
+
+The point is to stop treating portfolio awareness as memory.
+
+## 67speed: public experiments need safety boundaries
+
+`67speed` looks different from the other two.
+
+It is not a coding-agent harness tool. It is a zero-login nonsense speed test for the `6-7` meme.
+
+That is why it was useful to think about on Day 54.
+
+Agentic engineering is not only about internal tools. It is also about the public surfaces those tools help ship. A fast founder workflow can produce toys, landing pages, launch assets, cards, explainers, and experiments very quickly.
+
+That speed is great until it creates avoidable mess.
+
+The `67speed` README shows a stronger pattern:
+
+- no login required
+- deterministic score and archetype output from a seed
+- deterministic daily challenge
+- short result URLs
+- SVG-based share card generation
+- parent and teacher explainers
+- result pages `noindex` by default
+- no copyrighted music or video clips
+- no celebrity or player likeness use
+- no fake global counters or fake live leaderboards
+
+That list is not incidental.
+
+It is the safety boundary for a viral surface.
+
+The local commands make the product shape testable:
+
+```sh
+npm run generate -- --date 2026-05-07 --seed 67
+npm run card -- --score 82 --archetype "Certified Hallway Menace" --out dist/cards/example.svg
+npm test
+npm run check
+npm run build
+npm run smoke
+bash scripts/validate.sh
+```
+
+The deeper lesson is not about this specific meme.
+
+It is about distribution discipline.
+
+<Highlight>
+Fast public experiments need product boundaries as much as code boundaries: privacy defaults, deterministic outputs, honest share mechanics, and explicit limits on what the page will not claim.
+</Highlight>
+
+That matters because AI-assisted shipping can make public surfaces cheap enough to create casually.
+
+Casual does not have to mean sloppy.
+
+If the result pages are for sharing, do not turn them into low-value SEO spam. If the score is deterministic, do not pretend it is a live global system. If the cultural reference depends on other people's likenesses or copyrighted media, do not build the product around borrowing them.
+
+<Callout title="The practical rule">
+Before shipping a fast public experiment, define the privacy, SEO, attribution, likeness, and fake-metric boundaries in the product itself.
+</Callout>
+
+That is a founder/operator lesson, not just an engineering lesson.
+
+Distribution is part of the system.
+
+## The deeper insight: triage is leverage
+
+The pattern across these tools is not "more process."
+
+The better thesis is:
+
+triage is leverage.
+
+`agentcapsule` triages handoff context into a portable archive. `repobeacon` triages repo health into a scan, report, and dashboard. `67speed` triages a public experiment into deterministic product mechanics and explicit safety boundaries.
+
+<CompareTable
+  left={{ title: "Throughput without triage", items: ["Handoffs depend on pasted summaries", "Receivers unpack context blindly", "Portfolio state lives in memory", "Agents choose repos by recency or vibes", "Public experiments inherit accidental SEO, privacy, or claim problems"] }}
+  right={{ title: "Throughput with triage", items: ["Context moves as inspectable capsules", "Archives carry manifests, checksums, and skipped-file evidence", "Repo health becomes terminal, JSON, and HTML artifacts", "Remote health is fixture-backed before it is live-auth backed", "Public surfaces define sharing, privacy, and claim boundaries up front"] }}
+/>
+
+This is what a lot of agent tooling gets wrong.
+
+It treats throughput as the number of actions an agent can take.
+
+That is the shallow metric.
+
+The better metric is how many actions can survive review, handoff, maintenance, and public exposure without creating hidden cleanup.
+
+That requires triage artifacts.
+
+A capsule. A repo radar. A deterministic share card. A skipped-file manifest. A fixture-backed dashboard. A noindex default. A release check that proves the artifact does what the README says it does.
+
+Small things.
+
+But they are the small things that keep speed from turning into drag.
+
+## What this changes in the sprint
+
+Day 54 made the portfolio layer feel more concrete.
+
+The sprint started with individual tools and has kept pushing outward: release evidence, review queues, handoff contracts, permission boundaries, platform scaffolds, plugin contracts, and public claims.
+
+The new lesson is that once the number of tools grows, the work needs triage primitives.
+
+The workflow I want is simple:
+
+- package handoff evidence into local capsules instead of loose summaries
+- inspect capsules before unpacking them
+- deny common secret paths by default
+- make skipped files and checksums visible in manifests
+- scan local repo portfolios before assigning agent work
+- keep remote health fixture-backed until live auth has a real boundary
+- review generated dashboards before publishing them
+- define privacy, SEO, likeness, and fake-metric boundaries for public experiments
+- verify the artifact the user will actually touch
+
+That does not make the portfolio slower.
+
+It makes the throughput worth keeping.
+
+<Callout title="Day 54 in one line">
+AI agent throughput compounds when handoffs, repo health, and public experiments are triaged into reviewable artifacts before the next wave of work begins.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Triage first.
+
+Then throughput.

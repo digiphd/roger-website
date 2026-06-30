@@ -1,0 +1,203 @@
+---
+title: "Day 55: Workspace Maps Before Dispatch"
+description: "Day 55 of the 60 Day OSS Sprint: taskbrief, repoctx, and lockstep show why AI coding agents need structured task queues, workspace maps, and drift checks before dispatch."
+pubDate: 2026-06-30
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI coding agents workflow; supporting phrases: agentic engineering tools, deterministic AI agents, local-first developer tools, AI agent verification */}
+
+Day 55 was about a very practical problem:
+
+agents are getting easier to dispatch than they are to brief.
+
+That showed up across `taskbrief`, `repoctx`, and `lockstep`.
+
+`taskbrief` turns messy brain dumps, issue text, and planning notes into structured agent task queues. `repoctx` maps a local multi-repo workspace into agent-readable context. `lockstep` scans JavaScript and TypeScript package folders for script, engine, package manager, and lockfile drift.
+
+Different layers. Same lesson.
+
+<Highlight>
+The next agent should not start by rediscovering the workspace, guessing the task shape, or learning too late that the verification contract drifted.
+</Highlight>
+
+That is the Day 55 theme.
+
+## The challenge: dispatch is cheaper than context
+
+The more useful coding agents get, the more tempting it becomes to turn every rough idea into a parallel work order.
+
+That sounds efficient.
+
+Sometimes it is.
+
+But dispatch without context creates a quiet tax. The agent spends the first part of the run guessing which repo matters, what "done" means, which commands are acceptable, which files are risky, and whether the package even has the scripts the prompt assumes.
+
+Then the summary comes back with confidence.
+
+The reviewer still has to do the real archaeology.
+
+[Day 54](/blog/day-54-triage-before-throughput/) was about triage before throughput. Day 55 moves the same pressure one step earlier:
+
+before dispatch, give the work a map.
+
+## Taskbrief: messy input needs a queue
+
+`taskbrief` exists because human input rarely arrives as a perfect ticket.
+
+It arrives as a voice note, a GitHub issue, a planning blob, a cross-repo TODO dump, or a paragraph that mixes product intent, implementation details, risk, and half a dozen hidden assumptions.
+
+That is normal.
+
+What is not fine is handing that blob directly to an agent and pretending the prompt is a plan.
+
+The current `taskbrief` shape is intentionally local-first and deterministic. It can parse rough input into structured task objects, infer repo context from a workspace config, classify risk, and render Markdown, YAML, JSON, or CrewCMD-friendly output.
+
+The CLI examples are the right kind of boring:
+
+```sh
+taskbrief parse brain-dump.txt
+taskbrief parse brain-dump.txt --workspace repos.yaml
+taskbrief parse examples/github-issue-triage.txt --crewcmd
+taskbrief parse docs/PRD.md --output docs/TASKS.md --orchestration
+```
+
+There is also an explicit `--llm` path, but that matters because it is opt-in. The deterministic path is the default surface. The LLM path has to pass strict schema validation and fail closed instead of quietly inventing a task queue.
+
+That is the right posture.
+
+<Callout title="The practical rule">
+Before an agent gets a messy planning note, turn the input into a reviewed task queue with repo, branch, risk, output, and verification fields.
+</Callout>
+
+The deeper point is that agent safety starts before the code run.
+
+If the input is vague, the output will either be vague or overconfident. Better prompting helps, but the durable fix is a structured task contract that can travel through a dispatcher, a worker, and a reviewer.
+
+## Repoctx: the workspace should be readable
+
+`repoctx` attacks the next failure mode.
+
+Even when the task is clear, the workspace often is not.
+
+A real founder workspace is not one repo. It is a pile of products, tools, experiments, package scaffolds, docs folders, release scripts, safety notes, generated artifacts, and old branches that may or may not still matter.
+
+Asking each agent to rediscover that from scratch is waste.
+
+`repoctx` is scoped as an agent-readable workspace map. The product brief centers on discovering local git repositories, mapping paths to remotes and default branches, detecting project type and package manager, finding docs and agent instructions, identifying verification commands, and exporting a machine-readable map for downstream tools.
+
+That is not flashy.
+
+It is exactly what multi-repo agent work needs.
+
+The README frames the problem well: every tool should not have to rediscover where repositories live, which commands are safe, what package manager a project uses, whether docs exist, and which policies apply before editing.
+
+That is a context product, not a convenience script.
+
+<Highlight>
+The workspace map is an input artifact. It tells the next agent what exists, how it is verified, and where the sharp edges are before the agent starts moving files.
+</Highlight>
+
+This connects to [Day 41](/blog/day-41-local-context-before-agent-action/). Local context is not just a nicer summary. It is an operating boundary.
+
+If a task queue says "update the release checklist" but the agent has no durable map of repo ownership, package manager, docs, and verification commands, the task is still underspecified.
+
+The agent may succeed anyway.
+
+That is not a system.
+
+## Lockstep: verification contracts drift too
+
+`lockstep` handles a more specific but very real pain:
+
+multi-package work drifts.
+
+One repo has `npm run check`. Another has `npm test`. Another has `pnpm build`. One package has `engines.node`. Another forgot it. One has a lockfile beside the manifest. Another does not. The README says to run `smoke`, but the script disappeared three commits ago.
+
+That is the kind of thing agents trip over constantly.
+
+`lockstep` walks a workspace, reads package manifests, and reports where scripts and toolchain policy have drifted. Its checks include required scripts, validation commands that reference missing scripts, Node engine consistency, package manager policy, lockfile presence, and ignored directories.
+
+The command shape is simple:
+
+```sh
+lockstep init --write-policy
+lockstep scan /Users/me/Developer --policy lockstep.config.json
+lockstep scan . --format markdown --output DRIFT.md
+lockstep scan . --fail-on-drift
+```
+
+The safety posture is also important. It scans files. It writes reports only when asked. It does not execute package scripts, install dependencies, post results, collect secrets, or mutate packages.
+
+That matters because this is preflight work.
+
+The point is not to let an agent fix every package because a policy says so. The point is to give a reviewer and dispatcher a deterministic report before assigning work that assumes a verification surface exists.
+
+<Callout title="The practical rule">
+Before assigning multi-package work, scan for script, engine, package manager, and lockfile drift so the task brief does not promise checks the repo cannot run.
+</Callout>
+
+[Day 20](/blog/day-20-ci-prompts-and-package-drift/) touched the same issue from the prompt and CI side. Day 55 makes it more operational:
+
+drift checking belongs before dispatch, not after the agent has already burned the run.
+
+## The deeper insight: briefing is infrastructure
+
+The pattern across these tools is not "make more documentation."
+
+It is briefing infrastructure.
+
+`taskbrief` shapes messy intent into a task queue. `repoctx` turns the local workspace into reusable context. `lockstep` checks whether package verification contracts still match reality.
+
+<CompareTable
+  left={{ title: "Dispatch-first agent work", items: ["Messy input becomes a long prompt", "Each agent rediscovers repo context", "Verification commands are assumed", "Package drift appears during the run", "Reviewers reconstruct the real task after the fact"] }}
+  right={{ title: "Briefing-first agent work", items: ["Messy input becomes a structured queue", "Workspace context is exported once and reused", "Verification commands are discovered before assignment", "Drift is reported as a preflight artifact", "Review starts from the same contract the agent received"] }}
+/>
+
+This is one of the places where I think agent tooling has been pointing at the wrong surface.
+
+Everyone wants the better worker.
+
+I want the better work packet.
+
+The work packet is what makes the agent useful in a system. It says what the task is, where it lives, what is risky, what evidence matters, what commands are expected, what output should exist, and what the reviewer should distrust.
+
+Without that packet, "agent orchestration" becomes parallel guessing.
+
+With it, orchestration starts to look like engineering.
+
+## What this changes in the sprint
+
+Day 55 made the pre-dispatch layer feel more important than ever.
+
+The sprint has already spent a lot of time on proof, review, handoff, release checks, and public safety boundaries. Those still matter. But the work before the agent starts may be where the biggest leverage is hiding.
+
+The operating pattern I want is:
+
+- parse messy notes into task queues before assigning agents
+- keep deterministic parsing as the default path
+- make LLM-assisted parsing explicit, schema-bound, and fail-closed
+- export local workspace maps for downstream tools
+- record repo type, package manager, docs, instructions, and verification commands
+- scan package drift before assigning work that depends on scripts
+- treat drift reports as dispatch evidence, not automatic repair orders
+- make the reviewer see the same task and context contract the agent received
+
+That does not make the workflow heavier.
+
+It makes the first run less wasteful.
+
+<Callout title="Day 55 in one line">
+AI coding agents get more reliable when messy intent, workspace context, and package drift are turned into reviewable briefing artifacts before dispatch.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Brief the work.
+
+Then send the agent.

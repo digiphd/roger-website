@@ -1,0 +1,254 @@
+---
+title: "Day 56: Rehearsal Before Reach"
+description: "Day 56 of the 60 Day OSS Sprint: skill-drift-audit, connector-route-replay, and launchclip show why AI agent workflows need local rehearsals before skills, connectors, or launch surfaces get more reach."
+pubDate: 2026-07-01
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, local-first developer tools */}
+
+Day 56 was about a line I keep coming back to:
+
+do the rehearsal before you give the system reach.
+
+That showed up across `skill-drift-audit`, `connector-route-replay`, and `launchclip`.
+
+`skill-drift-audit` checks whether a repo-local `SKILL.md` still matches the README, docs, package scripts, changelog, and examples. `connector-route-replay` replays recorded connector-routing decisions from fixtures and explains the selected tool, approval gate, or dry-run path. `launchclip` turns a local OSS repo into a reviewable promotion packet with demo evidence, captions, video plans, and dry-run handoff payloads.
+
+Different surfaces. Same pressure.
+
+<Highlight>
+The safest agent workflow is not the one that promises it will behave when it has access. It is the one that can replay, audit, and review the decision before access matters.
+</Highlight>
+
+That is the Day 56 theme.
+
+## The challenge: reach changes the failure mode
+
+Internal agent work can already create a mess.
+
+But the failure mode changes when the workflow touches reusable skills, external connectors, or public distribution.
+
+A stale skill can teach the next agent the wrong boundary. A connector route can pick the right-looking tool with the wrong approval posture. A launch workflow can turn weak local evidence into confident public claims.
+
+Those are not the same class of risk as a typo in a generated README.
+
+They travel.
+
+The sprint has been circling this from different angles. [Day 53](/blog/day-53-scaffolds-need-trust-boundaries/) was about scaffolds needing safety boundaries. [Day 55](/blog/day-55-workspace-maps-before-dispatch/) was about shaping messy intent, workspace context, and drift checks before dispatch.
+
+Day 56 pushes the same idea into higher-reach surfaces:
+
+before the system teaches, routes, or promotes, make it rehearse.
+
+## Skill-drift-audit: skills can go stale
+
+Skills are powerful because they turn a good local workflow into reusable agent behavior.
+
+That is also why stale skills are dangerous.
+
+If a `SKILL.md` says a command exists and the package removed it, the next agent inherits a broken verification path. If the README added approval requirements and the skill missed them, the agent may act with an outdated safety model. If examples moved, the skill starts pointing at phantom evidence.
+
+`skill-drift-audit` is aimed at that exact gap.
+
+The default flow is read-only:
+
+```sh
+npm install
+npm test
+npm run smoke
+node bin/skill-drift-audit.js scan fixtures/stale-skill --format markdown
+```
+
+The CLI surface stays intentionally small:
+
+```sh
+skill-drift-audit scan . --format markdown
+skill-drift-audit scan fixtures/stale-skill --format json
+skill-drift-audit plan . --output tmp/skill-drift-plan.md
+```
+
+`scan` reports findings. `plan` writes a dry-run refresh plan to the output path the user names. It does not rewrite `SKILL.md` automatically.
+
+That restraint is the point.
+
+The checks are practical: missing side-effect boundaries, missing approval requirements, missing validation workflow, validation commands in `SKILL.md` that no longer exist in `package.json`, absent example files, missing changelog or release-candidate notes, and obvious placeholder secret values in the skill instructions.
+
+<Callout title="The practical rule">
+Before a reusable skill teaches the next agent how to work, audit it against the repo facts it claims to encode.
+</Callout>
+
+This is not documentation hygiene for its own sake.
+
+It is agent input integrity.
+
+The skill is upstream of behavior. If the skill drifts, every downstream run starts from a bad contract and may still sound perfectly confident while doing it.
+
+## Connector-route-replay: routing needs receipts
+
+Connector access is where agent workflows get serious quickly.
+
+Reading a local file is one thing. Selecting a CRM write tool, a support action, a payment-adjacent integration, or a workflow that touches credentials is another.
+
+`connector-route-replay` keeps the first version of that problem fixture-bound.
+
+It replays recorded connector-routing decisions from local JSON or simple YAML fixtures and explains why each tool, approval gate, or dry-run path was selected.
+
+The README is explicit about the boundary:
+
+```sh
+connector-route-replay replay fixtures/read-only-route.json --format markdown
+connector-route-replay replay fixtures/write-action-route.yaml --format json
+connector-route-replay verify fixtures --policy examples/policy.json
+```
+
+`replay` scores one fixture and emits a report. `verify` scans a fixture directory, compares the expected route and approval values, and exits non-zero on mismatch.
+
+The fixture shape matters because it makes the decision reviewable:
+
+```json
+{
+  "id": "write-action-route",
+  "request": {
+    "summary": "Draft and send a CRM update",
+    "intent": "write",
+    "risk": "medium"
+  },
+  "candidates": [
+    {
+      "name": "crm.write",
+      "capabilities": ["write", "crm"],
+      "sideEffects": ["external-write"],
+      "dryRun": true,
+      "evidence": ["Matches CRM write intent"]
+    }
+  ],
+  "expected": {
+    "selected": "crm.write",
+    "approval": "explicit-approval"
+  }
+}
+```
+
+That is the right unit of rehearsal.
+
+The tool does not call live connectors. It does not read credentials. It does not write to external accounts. Routes with external writes, destructive actions, or credential access require approval unless policy explicitly blocks them. Dry-run-only routes are reported separately so an agent can rehearse the action plan before asking for access.
+
+<Highlight>
+Connector routing should be replayable from fixtures before it is trusted in a live workflow.
+</Highlight>
+
+This connects back to [Day 48](/blog/day-48-agent-permission-contracts/). Permission contracts get much stronger when you can test the routing logic against known cases and see exactly where approval should appear.
+
+The point is not to replace platform policy with a tiny CLI.
+
+The point is to stop treating connector selection as invisible agent judgment.
+
+## Launchclip: promotion needs evidence, not vibes
+
+`launchclip` looks like a distribution tool, but the interesting part is still verification.
+
+It turns a local OSS repo into a reviewable promotion packet: demo evidence, a short-form video plan, platform captions, and a product-videogen Review Feed dry-run payload.
+
+The default posture is local-first and dry-run-first. V1 does not post to social platforms, queue Clutch Cut items directly, publish packages, or submit live product-videogen requests without a future explicit integration and human approval.
+
+That boundary matters because launch systems are where weak claims become public very fast.
+
+The core run command is designed to create a packet, not a post:
+
+```sh
+launchclip run ./my-oss-tool \
+  --out .launchclip/my-oss-tool \
+  --demo-cmd "npm run smoke" \
+  --demo-media "demo/screenshot.png" \
+  --angle "turns demo proof into launch content" \
+  --audience "developers shipping small OSS tools"
+```
+
+That packet can include a repo manifest, captured terminal evidence, command receipts, media, a video brief, renderer plans, Remotion props, platform captions, review payloads, social readiness JSON, and a rolled-up `REVIEW.md`.
+
+The important phrase is "captured terminal evidence."
+
+`launchclip` does not start from a marketing claim. It starts from the repo, the README, package metadata, an explicitly provided demo command, and reviewed artifacts. It redacts obvious API keys, tokens, passwords, and GitHub tokens from command receipts and terminal output.
+
+The later commands keep the handoff reviewable:
+
+```sh
+launchclip plan .launchclip/my-oss-tool --format short-30 --style ugc-demo-punchy --renderer remotion --talking-head heygen
+launchclip render .launchclip/my-oss-tool --provider remotion
+launchclip submit-review .launchclip/my-oss-tool --provider product-videogen --dry-run
+launchclip review .launchclip/my-oss-tool
+launchclip validate .launchclip/my-oss-tool
+```
+
+<Callout title="The practical rule">
+Before a tool gets promoted, collect the demo proof, captions, video recipe, safety notes, and review payload into a packet a human can inspect.
+</Callout>
+
+This is the distribution version of the same sprint thesis.
+
+The agent should not be the only witness. The launch artifact should carry proof, limits, and review status with it.
+
+## The deeper insight: dry runs are product surfaces
+
+The pattern across these tools is not "add one more check."
+
+The better thesis is:
+
+dry runs are product surfaces.
+
+`skill-drift-audit` makes the reusable instruction surface auditable before another agent relies on it. `connector-route-replay` makes tool routing and approval decisions replayable before live connector access is involved. `launchclip` makes promotion packets reviewable before public distribution.
+
+<CompareTable
+  left={{ title: "Reach without rehearsal", items: ["Skills drift away from repo reality", "Approval requirements live in prose nobody checked", "Connector routing is hidden inside an agent decision", "Dry-run-only paths are not separated from live action", "Launch copy outruns demo evidence"] }}
+  right={{ title: "Reach with rehearsal", items: ["Skills are audited against README, docs, scripts, and examples", "Approval and side-effect boundaries become findings", "Connector routes replay from local fixtures", "Dry-run and live-access paths are explicit", "Promotion packets carry evidence, captions, receipts, and review status"] }}
+/>
+
+This is one of the places where agent tooling can get more serious without becoming slower.
+
+Do not start by giving the agent more reach.
+
+Start by making the reach inspectable.
+
+Can the skill be checked against the repo? Can the connector decision be replayed? Can the launch claim point to captured evidence? Can the reviewer see what would happen before it happens?
+
+If yes, more autonomy becomes less mystical.
+
+If no, the workflow is just confidence wrapped around side effects.
+
+## What this changes in the sprint
+
+Day 56 made the review layer feel broader.
+
+Review is not only pull requests. Review is also reusable instructions, connector routing fixtures, dry-run approval paths, demo receipts, social captions, and launch packets.
+
+The operating pattern I want is:
+
+- audit skills before they become standing instructions
+- compare skill claims against README, docs, scripts, examples, and release notes
+- keep skill refresh as a plan before it becomes a rewrite
+- replay connector routing from local fixtures
+- make approval expectations explicit in fixture outcomes
+- separate dry-run-only routes from live-action routes
+- collect launch evidence before writing launch claims
+- treat social captions and video plans as review artifacts
+- keep public distribution behind human approval until the packet earns trust
+
+That is not bureaucracy.
+
+It is how you let small tools grow into a system without turning every new capability into a new cleanup queue.
+
+<Callout title="Day 56 in one line">
+AI agent workflows earn more reach when skills, connector routes, and launch surfaces can be audited or replayed locally before they touch reusable behavior, external accounts, or public distribution.
+</Callout>
+
+That is the lesson I want to carry forward.
+
+Rehearse first.
+
+Then reach.

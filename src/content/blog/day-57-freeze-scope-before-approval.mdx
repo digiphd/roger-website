@@ -1,0 +1,222 @@
+---
+title: "Day 57: Freeze Scope Before Approval"
+description: "Day 57 of the 60 Day OSS Sprint: skill-context-freeze, connector-scope-audit-skill, and connector-plan-skill show why AI agent workflows need bounded scope before approval gates can mean anything."
+pubDate: 2026-07-02
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent approval workflows; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, AI agent verification */}
+
+Day 57 was about a trap that keeps showing up in agent systems:
+
+approval looks serious even when the scope underneath it is still vague.
+
+That is not a small problem.
+
+If the brief is loose, the agent can ask for permission to do a task nobody has really bounded. If the connector plan is broad, the approval gate can become a ritual instead of a control. If the policy check happens after the agent has already shaped the work, the reviewer is stuck reacting to momentum.
+
+The tools that made the pattern visible were `skill-context-freeze`, `connector-scope-audit-skill`, and `connector-plan-skill`.
+
+Different layers. Same lesson.
+
+<Highlight>
+Approval is only meaningful after the agent has frozen the scope, named the side effects, and made the intended action surface reviewable.
+</Highlight>
+
+That is the Day 57 theme.
+
+## The challenge: approval is not a magic boundary
+
+I like approval gates.
+
+I do not trust approval theater.
+
+There is a difference.
+
+An approval gate is useful when it answers a specific question: should this agent perform these actions, with these scopes, against this data, under these constraints?
+
+Approval theater asks a human to bless a blob of intent.
+
+The second version sounds responsible because a person is involved. But the human is being handed the wrong unit of review. They are not approving a bounded action. They are approving a story about what the agent thinks it is about to do.
+
+That is how small agent workflows start to get slippery.
+
+Day 56 was about rehearsing before giving systems more reach. [Day 48](/blog/day-48-agent-permission-contracts/) was about making permission boundaries explicit. Day 57 sits between those two ideas:
+
+before a permission contract can work, the agent has to freeze what it is actually asking for.
+
+## Skill-context-freeze: make the brief portable
+
+`skill-context-freeze` turns a loose agent run brief into a bounded context packet another agent can use without re-reading an entire project.
+
+That sounds like a handoff tool, and it is. But the more important thing is that it makes scope concrete before implementation starts.
+
+The basic flow is local and boring:
+
+```sh
+npm install
+npm run smoke
+node bin/skill-context-freeze.js freeze fixtures/basic-brief.md --metadata fixtures/basic-metadata.json
+```
+
+The CLI reads Markdown and optional JSON metadata, then emits the pieces that tend to disappear in agent handoffs:
+
+- goal and non-goals
+- constraints and assumptions
+- files or directories to inspect
+- allowed tools
+- approval and side-effect warnings
+- validation evidence to capture
+
+That list matters because a brief is not just context.
+
+It is a pre-approval surface.
+
+If the agent cannot state the non-goals, allowed tools, side-effect warnings, and validation evidence before work starts, the reviewer is not looking at a plan. They are looking at intention.
+
+<Callout title="The practical rule">
+Freeze the run brief before the agent starts changing things. A handoff without non-goals, constraints, allowed tools, and evidence requirements is not ready for approval.
+</Callout>
+
+The limitation is also useful. `skill-context-freeze` is conservative. It looks for common headings and checklist language. It does not infer hidden project policy or read external systems.
+
+That restraint keeps it honest.
+
+The tool is not pretending to understand everything. It is forcing the workflow to show the parts a reviewer needs before the agent moves.
+
+## Connector-plan-skill: route before you request
+
+Connector work makes the scope problem sharper.
+
+When an agent is choosing between connector actions, the dangerous part is not only the final write. It is also the route it chooses to get there.
+
+`connector-plan-skill` keeps that route reviewable.
+
+It turns connector manifests into action plans. The agent can explain why a connector was selected, which alternatives were blocked, what writes are intended, and when human approval is required.
+
+The README frames it as local-first connector routing and dry-run planning:
+
+```sh
+node src/cli.js route \
+  --task fixtures/follow-up-task.json \
+  --connectors fixtures/connectors \
+  --policy fixtures/policy.json \
+  --format markdown
+```
+
+Then the route can be saved and rendered as a dry-run plan:
+
+```sh
+node src/cli.js route --task fixtures/follow-up-task.json --connectors fixtures/connectors --policy fixtures/policy.json --out route.json
+node src/cli.js dry-run --route route.json --policy fixtures/policy.json --format markdown
+```
+
+That is the right order.
+
+Route first. Dry-run second. Ask for approval after the plan exists.
+
+The connector manifest has the fields that matter for review: capabilities, scopes, risk, dry-run support, and side effects. V1 does not execute live connector actions or store credentials. The dry-run plan is meant to become a review packet for a separate connector operator.
+
+<Highlight>
+Connector approval should review a route, not a wish.
+</Highlight>
+
+This is where a lot of agent systems get too casual.
+
+They make the approval prompt the first structured artifact. That is too late. By then the agent has already collapsed the task into a preferred path, and the reviewer has to reverse-engineer the assumptions.
+
+The plan should exist before the ask.
+
+## Connector-scope-audit-skill: compare the ask to policy
+
+Once the route exists, it still needs to be checked against policy.
+
+That is where `connector-scope-audit-skill` fits.
+
+It reviews a local connector action plan before an agent asks for approval or performs a write. The audit compares requested scopes, data classes, and side effects against a local policy fixture, then returns a `pass`, `warn`, or `block` decision.
+
+The quickstart is exactly the kind of thing I want in this layer:
+
+```sh
+npm install
+npm run smoke
+node bin/connector-scope-audit.js audit fixtures/action-plan.json --policy fixtures/policy.json
+```
+
+The plan describes the connector, scopes, data classes, actions, and approval note. The policy defines allowed scopes, data classes, write actions, and approvals required for writes.
+
+The safety boundary is explicit too.
+
+The package only reads local JSON files. It does not call connectors, grant permissions, create remote records, or send messages.
+
+That makes it a dry-run approval aid, not a platform control. The limitation is important because it stops the tool from claiming too much. It cannot prove that a live connector will enforce the same permissions. It can make the intended action surface visible before the workflow asks for trust.
+
+<Callout title="The practical rule">
+Do not ask a human to approve connector access until the requested scopes, data classes, side effects, write actions, and approval note have been compared against policy.
+</Callout>
+
+This is the difference between a gate and a guess.
+
+## The deeper insight: approval needs a frozen artifact
+
+The pattern across the tools is simple:
+
+the reviewer needs an artifact, not just a request.
+
+`skill-context-freeze` creates a bounded context packet. `connector-plan-skill` creates a route and dry-run plan. `connector-scope-audit-skill` compares the requested action surface to policy before approval or write access.
+
+Those are not three random utilities.
+
+They are pieces of the same workflow contract.
+
+<CompareTable
+  left={{ title: "Approval theater", items: ["The agent asks for broad permission", "The brief has fuzzy non-goals", "Connector selection is hidden in agent reasoning", "Scopes and data classes are reviewed late", "The human approves a narrative instead of an artifact"] }}
+  right={{ title: "Approval with scope", items: ["The brief freezes goals, non-goals, constraints, and evidence", "The connector route is generated as a dry-run plan", "Side effects and write actions are named before access", "Policy comparison happens against local fixtures", "The human reviews a bounded packet"] }}
+/>
+
+This is one of the more practical agentic engineering lessons in the sprint.
+
+Autonomy does not become safer because a human is somewhere in the loop. It becomes safer when the thing handed to the human is shaped well enough to review.
+
+The same idea applies outside connectors.
+
+A code-writing agent should freeze the files it expects to touch. A release agent should freeze the evidence it will collect. A content agent should freeze the source material and claims it is allowed to make. A support agent should freeze the customer data class and permitted response surface before it drafts anything that can be sent.
+
+The approval step is downstream of all of that.
+
+If the scope is still liquid, approval is too early.
+
+## What this changes in the sprint
+
+Day 57 tightened the model I want for agent workflows:
+
+- freeze the brief before dispatch
+- name non-goals as aggressively as goals
+- make allowed tools explicit
+- separate local planning from live connector access
+- generate connector routes before asking for approval
+- turn dry-run plans into review packets
+- audit scopes, data classes, side effects, and writes against policy
+- treat `warn` and `block` as review signals, not annoyances
+- keep external action behind a human until the artifact earns trust
+
+That is not slowing the agent down.
+
+It is moving ambiguity to the front, where it is still cheap.
+
+When the agent can freeze the brief, route the connector, and audit the scope locally, the approval gate finally has something solid to inspect.
+
+<Callout title="Day 57 in one line">
+AI agent approval workflows only become trustworthy when the scope is frozen first: the brief, connector route, requested scopes, data classes, side effects, and policy comparison all need to exist before the human says yes.
+</Callout>
+
+That is the rule I want to keep carrying forward.
+
+Freeze scope.
+
+Then approve.

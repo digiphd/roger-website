@@ -1,0 +1,248 @@
+---
+title: "Day 58: Change Signals Need Receipts"
+description: "Day 58 of the 60 Day OSS Sprint: mcpchangefeed, npm-cli-trends, and repo-changebrief-skill show why AI agent workflows need public change signals, dated snapshots, and evidence-backed summaries before they trust the story."
+pubDate: 2026-07-03
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, public change signals */}
+
+Day 58 was about a problem that sounds like content until it breaks the workflow:
+
+the agent needs to know what changed before it can say anything useful about what matters.
+
+That sounds obvious. It is not how a lot of agent systems behave.
+
+They summarize whatever context they were handed. They turn stale metadata into confident recommendations. They write release notes from vibes. They treat ecosystem movement as background noise instead of input data.
+
+The tools that made the pattern visible were `mcpchangefeed`, `npm-cli-trends`, and `repo-changebrief-skill`.
+
+Different scales. Same pressure.
+
+<Highlight>
+Change is not useful to an agent until it becomes a dated, inspectable artifact with provenance, diffs, and verification evidence.
+</Highlight>
+
+That is the Day 58 theme.
+
+## The challenge: the story moves faster than the review
+
+Agent workflows are hungry for summaries.
+
+That hunger is dangerous.
+
+A summary can be beautifully written and still be useless if the underlying change signal is vague. What changed? Compared to what? When was the data fetched? Which source produced it? Was the output validated? Did the agent warn when evidence was missing?
+
+Those questions matter because review time is finite.
+
+If the reviewer has to rediscover the source material, the agent did not save much time. It just moved the labor into a different shape.
+
+[Day 57](/blog/day-57-freeze-scope-before-approval/) was about freezing scope before approval. Day 58 moves one layer outward:
+
+before an agent writes the story, freeze the change signal.
+
+## Mcpchangefeed: ecosystem change needs a public trail
+
+MCP discovery is already fragmented.
+
+The crowded part is not the directory page. The useful part is knowing what changed.
+
+`mcpchangefeed` tracks public Model Context Protocol servers from registry-style data, normalizes metadata, detects meaningful changes, scores freshness and usefulness signals, and publishes both a CLI and a crawlable static site.
+
+The README is explicit about the angle:
+
+- new servers
+- removed servers
+- renamed packages and repositories
+- changed install commands
+- changed categories and tags
+- stale or missing documentation warnings
+- freshness views for maintained and fast-moving tools
+
+That is the right unit for agent work.
+
+Not "tell me about MCP servers."
+
+"Show me what changed, where it came from, and whether the signal is fresh enough to care about."
+
+The CLI keeps the workflow local:
+
+```sh
+pnpm install
+pnpm run build:cli
+node dist-cli/cli.js top --input fixtures/servers.json
+node dist-cli/cli.js search filesystem --input fixtures/servers.json
+node dist-cli/cli.js diff --before fixtures/servers-before.json --after fixtures/servers.json
+```
+
+The scheduled workflow is careful about the commit model too. It refreshes public data and commits only meaningful changes: the latest normalized snapshot, dated history snapshot, changed leaderboard output, changed static pages, and a daily changelog entry.
+
+No timestamp-only commits.
+
+That detail matters more than it looks.
+
+If every scheduled run creates noise, the changefeed stops being evidence and starts being churn. The agent then has to separate real movement from automation exhaust.
+
+<Callout title="The practical rule">
+For ecosystem discovery, do not ask the agent to trust a directory. Give it normalized snapshots, dated history, diffs, freshness signals, and a changelog it can inspect.
+</Callout>
+
+The limitation is honest too. Registry and package metadata can lag or disappear. Freshness scores are triage signals, not authority. The changefeed does not audit runtime safety, permissions, or transport security.
+
+That boundary keeps the tool useful.
+
+It tells the agent what changed in public metadata. It does not pretend that metadata is the whole truth.
+
+## Npm-cli-trends: snapshots beat live guessing
+
+`npm-cli-trends` sits at a different layer of the same problem.
+
+It keeps daily public npm registry snapshots for widely used CLI and developer tooling packages: TypeScript, ESLint, Prettier, Vite, webpack, Rollup, pnpm, npm, yarn, Turbo, Nx, Jest, Vitest, tsx, and esbuild.
+
+The repository is not trying to be clever.
+
+It stores compact, reviewable artifacts:
+
+- raw daily package snapshots with provenance
+- a normalized latest package view
+- a CSV export for simple analysis
+- compact diffs against the previous snapshot
+- a generated package index
+- run reports with validation notes
+
+That is exactly what agents need when they reason about fast-moving developer tooling.
+
+Without snapshots, the agent has two bad choices. It can call live APIs repeatedly and make review harder, or it can rely on stale memory and sound more certain than it should.
+
+The commands make the workflow plain:
+
+```sh
+npm run fetch
+npm run validate
+npm test
+npm run smoke
+npm run release:check
+node scripts/api.mjs summary --date latest
+node scripts/api.mjs package eslint --date latest
+```
+
+The verification path checks the JSON, CSV, docs, diff, and report artifacts, then runs fixture-backed API tests and a summary smoke command against `data/latest.json`.
+
+That is not just data plumbing.
+
+It is a way to make package movement reviewable.
+
+<Highlight>
+If an agent is going to reason about an ecosystem trend, the trend should come from a dated artifact, not a live hunch.
+</Highlight>
+
+The limitation is also part of the contract. Download counts are last-week point-in-time values from the npm downloads API. Dist-tags, maintainer lists, and package timestamps come from npm registry documents.
+
+That means the data can be useful without becoming mystical.
+
+The agent can say, "this is what the snapshot says." It does not need to pretend the snapshot explains the whole ecosystem.
+
+## Repo-changebrief-skill: summaries need evidence warnings
+
+The first two tools create change signals.
+
+`repo-changebrief-skill` turns those signals into output a human might actually read.
+
+It is a local-first agent skill for turning repository change summaries into release notes, demo outlines, and post drafts that stay tied to verification evidence.
+
+The input shape is intentionally boring. Markdown inputs can include:
+
+- Summary
+- Changed Files
+- Verification
+- Artifacts
+- Risks
+- Audience
+
+JSON inputs use the same field names in camel case.
+
+The CLI can render Markdown or JSON:
+
+```sh
+npm install
+npm run smoke
+node src/cli.js fixtures/change-summary.md --format markdown
+node src/cli.js fixtures/change-summary.json --format json
+```
+
+The important part is what it refuses to know.
+
+The tool cannot prove that a claim is true beyond the provided summary. Missing verification and artifact evidence is surfaced as warnings. Output is a draft. Human approval is required before public release notes, social posts, or launch materials are published.
+
+That is the right posture for agent-generated content.
+
+The agent can help shape the release story. It should also show where the story is under-evidenced.
+
+<Callout title="The practical rule">
+Do not let an agent turn repository changes into public-facing content unless missing verification, missing artifacts, and stated risks remain visible in the draft path.
+</Callout>
+
+This is where Day 58 connects back to [Day 56](/blog/day-56-rehearsal-before-reach/). Promotion needs evidence before reach. A change brief is one of the places where that evidence either survives or disappears.
+
+## The deeper insight: change data is an agent input contract
+
+The pattern across these tools is not "collect more data."
+
+The better thesis is:
+
+change data is an agent input contract.
+
+`mcpchangefeed` turns public MCP server movement into normalized snapshots, diffs, freshness views, and static pages. `npm-cli-trends` turns npm package movement into dated JSON, CSV, reports, and compact diffs. `repo-changebrief-skill` turns repository summaries into draftable output while preserving warnings about missing evidence.
+
+<CompareTable
+  left={{ title: "Change as vibes", items: ["The agent summarizes stale memory", "Live APIs are called without a review trail", "Directory data has no diff shape", "Package movement is discussed without dated snapshots", "Release notes hide missing verification"] }}
+  right={{ title: "Change as receipts", items: ["Public data is normalized into snapshots", "Diffs show what actually moved", "Freshness is treated as triage, not authority", "Reports include provenance and validation notes", "Drafts preserve risks and evidence gaps"] }}
+/>
+
+That distinction matters because agents are very good at turning partial context into fluent prose.
+
+Fluency is not the same thing as evidence.
+
+When the change signal has a shape, the agent has less room to invent connective tissue. It can compare before and after. It can cite the artifact it saw. It can warn when verification is missing. It can stop pretending that a confident summary is the same as a reviewable claim.
+
+That is the operator lesson.
+
+Better agent writing starts upstream of writing.
+
+It starts with change artifacts.
+
+## What this changes in the sprint
+
+Day 58 made the content and data layer feel more like infrastructure.
+
+The operating pattern I want is:
+
+- normalize public ecosystem data before asking agents to reason from it
+- store dated snapshots so future reviewers can reconstruct the claim
+- generate diffs that separate real movement from scheduled noise
+- keep source URLs and provenance attached to data artifacts
+- validate JSON, CSV, docs, reports, and fixture-backed APIs before trust
+- treat freshness as a triage signal, not a truth oracle
+- turn repository change summaries into drafts only when risks and evidence gaps remain visible
+- keep public release notes, social posts, and launch materials behind human approval
+
+This is not a content trick.
+
+It is the same verification lesson from another angle.
+
+Agents do better work when the inputs are shaped like contracts. A frozen scope helps approval. A rehearsed route helps connector access. A dated change signal helps the agent say something true about a moving system.
+
+<Callout title="Day 58 in one line">
+AI agent workflows need change receipts before change stories: normalized snapshots, dated diffs, provenance, validation reports, and evidence warnings should exist before an agent writes the summary.
+</Callout>
+
+That is the rule I want to keep carrying forward.
+
+Freeze the change.
+
+Then tell the story.

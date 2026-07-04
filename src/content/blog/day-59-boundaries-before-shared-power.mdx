@@ -1,0 +1,257 @@
+---
+title: "Day 59: Boundaries Before Shared Power"
+description: "Day 59 of the 60 Day OSS Sprint: CrewCmd, dexwatch, and agent-safety-case-skill show why AI agent workflows need privacy, network, and side-effect boundaries before shared power becomes useful."
+pubDate: 2026-07-04
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent governance; supporting phrases: AI coding agents workflow, deterministic AI agents, local-first developer tools, AI agent verification */}
+
+Day 59 was about a line that gets blurry as soon as agents become useful:
+
+where does private leverage end and shared power begin?
+
+That showed up across `CrewCmd`, `dexwatch`, and `agent-safety-case-skill`.
+
+One is a collaborative AI workspace for humans and OpenClaw agents. One is a local-first DexScreener snapshot inspector for reproducible crypto-market research. One drafts reviewable safety cases before agent side effects.
+
+Different products. Same operating lesson.
+
+<Highlight>
+Agents get more powerful when they move into shared channels, live data, and side-effecting workflows. That is exactly why the boundary has to be designed before the power is handed over.
+</Highlight>
+
+That is the Day 59 theme.
+
+## The challenge: collaboration changes the risk
+
+Most agent demos still pretend the hard problem is the solo chat window.
+
+It is not.
+
+The solo chat window is only the warm-up. The serious pressure starts when an agent joins a team channel, imports runtime state, reads market data, prepares an action, drafts a handoff, or asks for permission to touch something outside the local machine.
+
+At that point the workflow is no longer just "did the model answer well?"
+
+The questions become sharper:
+
+- Who can see this context?
+- Did the agent make a network call or read a fixture?
+- Is this data safe to reuse?
+- What side effects are being proposed?
+- Does the reviewer have a concrete safety case, or just a confident paragraph?
+
+[Day 57](/blog/day-57-freeze-scope-before-approval/) was about freezing scope before approval. [Day 58](/blog/day-58-change-signals-need-receipts/) was about turning change into evidence before writing the story.
+
+Day 59 pushes the same idea into the boundary layer:
+
+before agents get shared power, define what stays private, what stays local, and what requires a safety case.
+
+## CrewCmd: private runtime first, shared channels second
+
+`CrewCmd` is the biggest surface in this set.
+
+It is an open-source, self-hostable collaborative AI workspace built around channels and chats where humans and OpenClaw agents work together. The idea is not "add a bot to Slack." It is a different operating shape: private personal AI work, shared team channels, approved agents, tasks, inboxes, voice sessions, skills management, and governance primitives in one workspace.
+
+The part I care about most is the boundary between personal and shared.
+
+CrewCmd's README is explicit about personal runtime privacy:
+
+- private OpenClaw-backed conversations, agents, tasks, and context stay private by default
+- selected outputs can be intentionally shared into team channels
+- personal runtimes are not attachable to shared channels
+- company-owned agents can have team or org visibility
+- approval gates and audit-trail primitives exist, while broader guardrail workflows are still in progress
+
+That caveat matters. This is early software. It should not be described as a finished compliance layer.
+
+But the product direction is right because it starts with the boundary I think teams actually need.
+
+Most teams will not want one giant agent room where every private thought, draft, source, and task is equally visible. They will want personal leverage and shared coordination at the same time.
+
+That means the software has to know the difference.
+
+<Callout title="The practical rule">
+Do not make team AI collaboration start by collapsing private runtimes into shared channels. Let people work privately, then promote selected outputs into shared spaces with explicit visibility.
+</Callout>
+
+That is not a UX nicety.
+
+It is a governance primitive.
+
+If private runtime state leaks into shared work by default, the team learns not to trust the workspace. If shared agents can reach into personal contexts too easily, the collaboration layer becomes another permission problem. If approvals and inboxes are scattered across tools, the human reviewer becomes the integration point.
+
+CrewCmd is trying to make the shared surface explicit: channels, approved agents, inbox items, task boards, org charts, and eventually stronger guardrails.
+
+The lesson for the sprint is simple.
+
+AI collaboration cannot be "everything in the same chat."
+
+It needs scopes.
+
+## Dexwatch: live data needs an offline shape
+
+`dexwatch` is much smaller than CrewCmd, but it hits the same boundary from the data side.
+
+It inspects local DexScreener-style snapshots for reproducible crypto-market research, fixture-driven filters, and bot backtest inputs. It can filter pools by chain, DEX, base symbol, liquidity, and 24-hour volume. It exports normalized pools, OHLC-style JSON and CSV rows, reports, and provenance.
+
+The important design decision is the network boundary.
+
+`inspect` reads local files. `capture` refuses to run unless `--allow-network true` is supplied.
+
+That small flag is the whole point.
+
+```sh
+dexwatch inspect test/fixtures/eth-pairs --output out/eth --chain ethereum
+dexwatch capture <url> --output out/live --allow-network true
+```
+
+The default workflow is fixture-first. A downstream agent or backtest does not have to guess where the data came from because the output includes provenance: source, capture time, filters, and input hash.
+
+That matters more in market-adjacent tooling than almost anywhere.
+
+Crypto data changes quickly. Public APIs can disappear, lag, rate-limit, or produce slightly different results depending on when they are called. If an agent builds a backtest, report, or strategy note from live calls without a local artifact, review becomes a mess.
+
+What did it see? When? With which filters? From which file or URL? Can we rerun it?
+
+`dexwatch` gives that question a boring answer.
+
+<Highlight>
+If an agent is going to reason from volatile public data, make the live capture explicit and preserve the offline artifact before analysis starts.
+</Highlight>
+
+The README is careful about the safety boundary too. V1 has no credential discovery, telemetry, trading, signing, publishing, or background scheduling. It is not a trading system. It is a local inspection and export tool.
+
+That restraint is the useful part.
+
+The agent can use market snapshots without pretending it has a live trading mandate. It can work from fixtures. It can carry provenance into the next step. It can let a reviewer separate "this was inspected locally" from "this made a network request."
+
+That is the data version of the CrewCmd lesson.
+
+Shared power starts with a boundary.
+
+## Agent-safety-case-skill: side effects need an argument
+
+`agent-safety-case-skill` sits right where the agent wants to do something consequential.
+
+It drafts reviewable safety cases before agent side effects. It reads local fixtures, produces Markdown or JSON, and keeps external side effects out of scope.
+
+The quickstart is intentionally plain:
+
+```sh
+npm install
+npm test
+npm run smoke
+node bin/cli.js fixtures/send-plan.json --format=json
+```
+
+The safety notes are the important contract:
+
+- reads local files only
+- does not call external services
+- does not approve, publish, send, or write outside stdout
+- treats warnings as review prompts, not perfect policy enforcement
+
+That is exactly the posture a safety-case tool should have.
+
+It should not become the actor. It should help the human and the next agent review the proposed action before anything external happens.
+
+This is the same approval problem from Day 57, but with one more piece added.
+
+Freezing scope is necessary. It is not always enough.
+
+For higher-risk actions, the workflow needs an argument:
+
+- what the agent is proposing
+- what evidence supports the action
+- what side effects are expected
+- what warnings or gaps remain
+- what a human should review before approving
+
+<Callout title="The practical rule">
+Before an agent performs an external action, create a local safety case that names the plan, evidence, side effects, warnings, and review decision. The safety case should not perform the action.
+</Callout>
+
+That last sentence is where a lot of systems drift.
+
+They turn the approval helper into the executor. They make the tool that explains risk also hold the button that creates risk. They let a fluent summary stand in for an actual review artifact.
+
+`agent-safety-case-skill` keeps the first version smaller.
+
+It reads fixtures and prints a draft. Human review is still required before public reuse or external action. That limitation does not make it less useful. It makes it easier to trust.
+
+## The deeper insight: power needs a promotion path
+
+The pattern across these tools is not "add governance."
+
+The better thesis is:
+
+power needs a promotion path.
+
+Private work should be promotable into shared work. Offline data should be promotable into analysis. A proposed action should be promotable into approval. But each promotion needs a boundary, an artifact, and a review surface.
+
+<CompareTable
+  left={{ title: "Power without boundaries", items: ["Private runtime state leaks into team collaboration", "Every agent channel gets the same visibility", "Live data calls happen invisibly", "Backtests lose source and filter provenance", "Side-effecting plans become confident summaries", "Approval happens without a safety case"] }}
+  right={{ title: "Power with promotion paths", items: ["Personal AI work stays private until selected outputs are shared", "Team agents and company-owned agents have explicit visibility", "Network capture requires an explicit flag", "Snapshots carry source, time, filters, and input hashes", "Safety cases stay local and non-executing", "Humans review the artifact before external action"] }}
+/>
+
+That is the operating model I keep converging on.
+
+Agents should not jump straight from private context to shared authority. They should not jump from live public data to unreviewable conclusions. They should not jump from plan to side effect because the model sounded confident.
+
+There should be a promotion path.
+
+Private to shared.
+
+Fixture to live capture.
+
+Plan to safety case.
+
+Safety case to approval.
+
+Approval to action.
+
+Each step should leave a receipt.
+
+That sounds slower until you compare it with the cost of cleaning up invisible scope leaks, irreproducible data, or side effects nobody can explain.
+
+## What this changes in the sprint
+
+Day 59 made the boundary layer feel less like a security add-on and more like the product itself.
+
+The operating pattern I want is:
+
+- keep personal agent runtime state private by default
+- make shared channels explicit, scoped, and reviewable
+- distinguish personal agents from company-owned or team-visible agents
+- let selected outputs move into shared spaces intentionally
+- keep volatile data workflows local-first by default
+- require explicit flags for network capture
+- preserve source, capture time, filters, and input hashes with data artifacts
+- keep trading, signing, publishing, sending, and external writes outside small inspection tools
+- draft safety cases before side effects
+- make warnings visible instead of smoothing them out
+- keep approval helpers separate from executors
+
+That is not enterprise theater.
+
+It is the minimum shape a serious agent workflow needs once it leaves the single-player chat window.
+
+The sprint started with small tools because small tools force the contract to be visible. Day 59 is the same lesson at a higher level: when agents become collaborative, data-aware, and action-oriented, the boundary is no longer implementation detail.
+
+It is the thing that makes the power usable.
+
+<Callout title="Day 59 in one line">
+AI agent workflows need boundaries before shared power: private runtimes, explicit network capture, provenance-rich local data, and non-executing safety cases should exist before agents move into team channels, live data, or external side effects.
+</Callout>
+
+That is the rule I want to carry into the final stretch.
+
+Define the boundary.
+
+Then share the power.

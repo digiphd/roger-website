@@ -1,0 +1,256 @@
+---
+title: "Day 60: Earn the Next Step"
+description: "Day 60 of the 60 Day OSS Sprint: skillforge, skill-release-gate, and toolhutch show why AI agent workflows need portable skills, release gates, and permission reviews before agents get more reach."
+pubDate: 2026-07-05
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification; supporting phrases: deterministic AI agents, agentic engineering tools, AI coding agents workflow, agent permission review */}
+
+Day 60 is the end of the sprint, but it does not feel like a finish line.
+
+It feels like the point where the operating system becomes obvious.
+
+The tools that made that clear were `skillforge`, `skill-release-gate`, and `toolhutch`.
+
+One turns repeatable engineering rituals into portable skill bundles. One checks whether those skills are ready to be shared. One audits the tool permissions an agent is about to receive.
+
+Different layers. Same rule.
+
+<Highlight>
+An agent should not get more reach because it produced one good answer. It should earn the next step through portable instructions, release evidence, and explicit permission review.
+</Highlight>
+
+That is the Day 60 theme.
+
+## The challenge: useful agents want more surface area
+
+The first version of an agent workflow is usually small.
+
+Give it a task. Give it a repo. Let it write a patch. Review the diff.
+
+That is already useful, but the pressure changes quickly.
+
+The agent wants reusable instructions. Then it wants tools. Then it wants connector access. Then it wants to run the same workflow in another host. Then somebody wants to package the workflow so another team, repo, or future agent can use it without rediscovering the rules.
+
+That is where a lot of systems get messy.
+
+The playbook becomes a prompt blob. The verification gets implied. The permission surface gets waved through because the demo worked. The next agent inherits instructions that sound confident but do not travel cleanly.
+
+[Day 57](/blog/day-57-freeze-scope-before-approval/) was about freezing scope before approval. [Day 59](/blog/day-59-boundaries-before-shared-power/) was about boundaries before shared power.
+
+Day 60 is the synthesis:
+
+before an agent gets the next step, make it prove the current one can travel, be checked, and be reviewed.
+
+## Skillforge: skills need a package shape
+
+`skillforge` exists because reusable agent workflows should not live as folklore.
+
+It is a local-first CLI for turning repeatable engineering rituals into portable, linted, tested skill bundles. The core layout is intentionally small:
+
+```text
+my-skill/
+  skill.yaml
+  SKILL.md
+  fixtures/activation.json
+```
+
+That shape matters.
+
+`SKILL.md` carries the actual instructions. `skill.yaml` makes the metadata reviewable. Activation fixtures prove the skill triggers when it should. Rendering targets let the same workflow move toward different agent hosts without turning the source into host-specific soup.
+
+The CLI is built around that lifecycle:
+
+```sh
+skillforge init tdd-workflow
+skillforge lint ./tdd-workflow
+skillforge test ./tdd-workflow --fixtures ./tdd-workflow/fixtures/activation.json
+skillforge render ./tdd-workflow --target openclaw --out dist/openclaw
+skillforge matrix ./tdd-workflow --format markdown
+skillforge report ./tdd-workflow --format json
+skillforge package ./tdd-workflow --out dist/tdd-workflow.skill.tgz
+```
+
+The important checks are not glamorous:
+
+- manifest shape
+- activation clarity
+- safety smell tests
+- portability warnings
+- compatibility matrix
+- package artifacts
+
+That is the point.
+
+If a workflow is valuable enough to reuse, it is valuable enough to package like software. Not as a magical instruction blob. Not as a Slack message somebody copies later. As a small, inspectable artifact with fixtures and a report.
+
+<Callout title="The practical rule">
+Do not scale agent rituals by copying prompts. Give the ritual a manifest, fixtures, host targets, lint output, and a package boundary.
+</Callout>
+
+The status is deliberately scoped too. `skillforge` is useful for local authoring, validation, rendering, package artifacts, and CI smoke tests. Marketplace publishing and host auto-installation are out of scope.
+
+That restraint is healthy.
+
+Portability first. Distribution later.
+
+## Skill-release-gate: sharing needs blockers
+
+`skill-release-gate` picks up where `skillforge` leaves off.
+
+It checks whether a reusable agent skill folder has the pieces a reviewer needs before the skill is shared:
+
+- activation guidance
+- required inputs
+- required tools
+- side-effect and approval boundaries
+- examples
+- verification workflow
+- limitations
+- release notes
+- fixture or example evidence
+
+The CLI is plain:
+
+```sh
+skill-release-gate check <path> --format json --threshold 70
+```
+
+The useful part is the exit behavior. The command reads local files only and exits with code `1` when a folder fails release blockers.
+
+That is a very small design choice with a lot of leverage.
+
+Agents are good at producing something that looks almost ready. A human reviewer can usually feel the missing pieces, but feeling them is not the same as having a gate.
+
+If the skill lacks side-effect boundaries, that should not be a vibe. If it lacks examples, that should not be a note lost in a PR comment. If it lacks a verification workflow, the release candidate should fail before somebody packages the skill into another environment.
+
+<Highlight>
+Release readiness is not a mood. It is a set of blockers the workflow is allowed to fail on.
+</Highlight>
+
+The configuration stays boring on purpose:
+
+```json
+{
+  "threshold": 90,
+  "extraRequiredDocs": ["docs/SAFETY.md"],
+  "ignoreRequiredDocs": ["docs/PRD.md"]
+}
+```
+
+Static JSON. No code execution. Local files only. No publishing. No pushing. No tagging. No remote APIs.
+
+That makes the gate easier to trust.
+
+It does not claim the skill is correct for every host. It says the folder has enough evidence for release-candidate review. That is the right promise.
+
+## Toolhutch: permissions need a review surface
+
+`toolhutch` is the permission layer in the same story.
+
+Point it at MCP configs, OpenClaw-style tool manifests, or JSON/YAML fixtures and it produces a practical risk brief before an agent gets sharp tools.
+
+The examples make the workflow clear:
+
+```sh
+toolhutch scan ./fixtures/risky-openclaw-tools.json
+toolhutch scan ./fixtures/risky-openclaw-tools.json --fail-on high
+toolhutch scan ./fixtures/mcp-mixed.yaml --format json
+toolhutch explain ./fixtures/risky-openclaw-tools.json --json
+toolhutch policy ./fixtures/risky-openclaw-tools.json --policy ./examples/toolhutch.policy.json
+```
+
+The report includes capability labels, risk levels, evidence paths, mitigations, and an approval plan.
+
+That last phrase is the product.
+
+An agent tool manifest can look harmless until you read the verbs closely. Shell execution, filesystem write access, browser automation, logged-in browser contexts, network access, messaging, secrets, databases, and package manager execution are not equivalent. They should not all move through the same approval path.
+
+`toolhutch` turns that surface area into something a reviewer can scan.
+
+Critical findings block until an owner approves the tool surface. High-risk findings require maintainer approval. Medium and low findings are documented for later review. Policy denies are listed first and make `toolhutch policy` exit `3`.
+
+That is not runtime enforcement. The README is clear about that. It is review support.
+
+But review support is exactly what this layer needs.
+
+<Callout title="The practical rule">
+Before enabling agent tools, classify the capabilities, attach evidence paths, write the mitigation plan, and make high-risk access fail a local gate.
+</Callout>
+
+The local-first model is consistent with the rest of the sprint. No default command performs network calls. Reports are deterministic. The scanner avoids intentionally reading credential values and flags names, paths, and descriptions that imply secret access.
+
+Again, the limitation is part of the trust story.
+
+It is not pretending to be a complete security scanner. It is giving the human reviewer a clear permission surface before the agent gets reach.
+
+## The deeper insight: the next step should be earned
+
+The pattern across these tools is not "make agents safer" in the abstract.
+
+The sharper thesis is:
+
+the next step should be earned.
+
+`skillforge` says a reusable workflow earns portability by becoming a package with metadata, fixtures, rendering, and reports. `skill-release-gate` says a skill earns release-candidate status by passing local blockers around activation, inputs, tools, boundaries, examples, verification, and limitations. `toolhutch` says an agent earns tool access only after the permission surface is classified and reviewed.
+
+<CompareTable
+  left={{ title: "Reach by confidence", items: ["Reusable workflows live as prompt blobs", "Host-specific instructions leak into generic docs", "Skills are shared without activation fixtures", "Missing safety and verification sections become reviewer memory", "Tool manifests are approved as a single blob", "Sharp capabilities move forward without an approval plan"] }}
+  right={{ title: "Reach by evidence", items: ["Skills have manifests, fixtures, reports, and package artifacts", "Compatibility matrices expose portability blockers", "Release gates fail on missing boundaries and examples", "Verification evidence is part of the folder", "Tool capabilities are labeled with risk and evidence paths", "High-risk permissions require explicit review gates"] }}
+/>
+
+This is the operating system I was trying to build toward for sixty days.
+
+Not one giant agent.
+
+Not one perfect framework.
+
+A ladder.
+
+Small tools that let an agent move from idea to fixture, fixture to report, report to release candidate, release candidate to shared workflow, shared workflow to permissioned execution.
+
+Every rung has a contract.
+
+Every promotion leaves evidence.
+
+Every increase in reach has a review surface.
+
+That is how agent speed turns into something I can actually use.
+
+## What the sprint changed
+
+The sprint started with a simple bias: build harness tools, not demos.
+
+Sixty days later, the pattern is much clearer.
+
+The useful agent stack needs:
+
+- small task contracts before broad autonomy
+- fixtures before live data
+- local proof before public reach
+- receipts before summaries
+- release checks before automation
+- privacy boundaries before shared work
+- safety cases before side effects
+- permission briefs before sharp tools
+- portable skills before workflow distribution
+
+That is not a list of features. It is a philosophy of leverage.
+
+Agents become more useful when the surrounding system gives them fewer ambiguous choices and more explicit gates. They get faster because they have less to guess. They get safer because the next step is shaped before they reach it. They get easier to review because the evidence is not trapped in the transcript.
+
+<Callout title="Day 60 in one line">
+AI agent workflows should earn reach one step at a time: package reusable skills, gate release readiness, classify permissions, and only then let the agent move into broader tools or shared execution.
+</Callout>
+
+That is the sprint in its simplest form.
+
+Do not ask the agent to be trusted.
+
+Build the path where trust can accumulate.

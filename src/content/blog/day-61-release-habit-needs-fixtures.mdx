@@ -1,0 +1,227 @@
+---
+title: "Day 61: The Release Habit Needs Fixtures"
+description: "Day 61 of the 60 Day OSS Sprint: actionloom, MCPMock, and ArgVault show why AI agent workflows need CI audits, mock tool catalogs, and redacted run cassettes after the sprint ends."
+pubDate: 2026-07-06
+tags: ["oss", "ai", "agents", "60-day-oss-sprint", "developer-tools", "verification"]
+draft: false
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+{/* SEO intent: AI agent verification; supporting phrases: deterministic AI agents, AI coding agents workflow, agentic engineering tools, local-first developer tools */}
+
+Day 61 is not a victory lap.
+
+It is the first day after the finish line, which is usually where useful engineering work gets tested.
+
+The sprint proved the pattern. The next question is whether the pattern survives ordinary release work: CI changes, tool integrations, failed commands, fixture updates, package smoke checks, and handoffs that somebody else can review without reading the entire transcript.
+
+That is where `actionloom`, `MCPMock`, and `ArgVault` fit.
+
+One audits and generates GitHub Actions workflows. One gives MCP-style tool integrations deterministic fixture catalogs and replayable transcripts. One records redacted command cassettes for agent handoffs.
+
+Different tools. Same post-sprint lesson.
+
+<Highlight>
+The work after a sprint is not more speed. It is turning speed into a release habit that leaves fixtures, reports, and replayable evidence behind.
+</Highlight>
+
+That is the Day 61 theme.
+
+## The challenge: the sprint cannot be the only witness
+
+Sprints are good at forcing movement.
+
+They are also good at hiding whether the system can keep moving once the artificial pressure disappears.
+
+During a sprint, a human can remember why a workflow changed. The agent transcript can carry a lot of context. The repo is fresh in your head. The release checklist still feels close to the work.
+
+That does not last.
+
+The next review needs smaller artifacts:
+
+- what changed in CI
+- which tool calls were mocked
+- which command failed or passed
+- which inputs were used
+- which warnings were ignored
+- which outputs are safe to paste into a PR
+
+[Day 50](/blog/day-50-evidence-survives-handoff/) was about evidence surviving handoff. [Day 60](/blog/day-60-earn-the-next-step/) was about earning more reach through package shape, release gates, and permission review.
+
+Day 61 is the next layer:
+
+the release habit needs fixtures.
+
+## Actionloom: CI changes need a review artifact
+
+`actionloom` exists for a very boring pressure point: GitHub Actions workflows are easy for agents to change and easy for reviewers to skim too quickly.
+
+The CLI reads workflow files from a checkout, points out risky permissions and CI footguns, and can generate a conservative Node CI workflow template without calling external services.
+
+The useful checks are practical:
+
+- `permissions: write-all`
+- `pull_request_target`
+- `curl | bash`
+- missing intentional matrix `fail-fast`
+- missing Node dependency cache configuration
+
+The commands are built for a local review loop:
+
+```sh
+node dist/cli.js inspect . --format markdown
+node dist/cli.js inspect . --format json --output actionloom-report.json
+node dist/cli.js inspect . --fail-on medium
+node dist/cli.js generate node-ci --package-manager npm --node-versions 20,22 --output .github/workflows/ci.yml
+```
+
+That last command is the important boundary. `actionloom` reads by default. It only writes when the reviewer asks for an explicit `--output` path.
+
+That is exactly the shape I want from an agent-facing CI tool.
+
+An agent should be able to inspect a workflow, produce a PR-ready report, fail a gate when the risk is high enough, and propose a conservative workflow. It should not silently mutate CI because it found a pattern it dislikes.
+
+<Callout title="The practical rule">
+Treat CI as an agent permission surface. Audit it locally, write a report, fail on known risky patterns, and make generation an explicit output step.
+</Callout>
+
+The release checks matter too. The repository now has a common path around `release:check` and package smoke coverage. That is not glamorous work. It is the part that lets a future reviewer ask, "what did you run?" and get a repeatable answer instead of a memory.
+
+## MCPMock: tool integrations need deterministic catalogs
+
+`MCPMock` attacks the same problem from the tool side.
+
+Real MCP integrations are valuable, but they are a poor default for tests. Network calls are slow. Live services rate-limit. Responses drift. Costs add up. The worst part is that a failed agent run can become hard to replay because the tool surface changed underneath it.
+
+`MCPMock` gives the integration a local fixture-backed shape:
+
+```sh
+mcpmock validate my-tools.json
+mcpmock tools my-tools.json --format json
+mcpmock call my-tools.json search '{"query": "typescript patterns"}'
+mcpmock call my-tools.json search '{"query": "hello"}' --record --output transcript.jsonl
+mcpmock replay transcript.jsonl --fast
+```
+
+The catalog defines tools, descriptions, input schemas, default responses, and variants. The transcript captures tool calls as newline-delimited JSON. Replay can run with timing or skip delays.
+
+That changes the review problem.
+
+Instead of asking an agent to "test the connector" against a real service every time, the workflow can separate two jobs:
+
+- validate the local contract with deterministic tool catalogs
+- use live services only when the review actually needs live behavior
+
+That distinction is one of the most important boundaries in agentic engineering.
+
+<Highlight>
+If a tool integration cannot be mocked, it is not ready to become part of an agent test loop.
+</Highlight>
+
+The README is explicit about the write boundary too. MCPMock reads local fixtures by default and only writes transcripts when recording is requested with an output path.
+
+That keeps the tool useful without turning it into a hidden side-effect machine.
+
+## ArgVault: failed commands need portable cassettes
+
+`ArgVault` is the handoff layer for terminal work.
+
+It records the boring details of a command run: argv, cwd, selected environment variables, stdin and output samples, exit code, duration, notes, and fixture hashes. It writes JSON plus a readable Markdown report.
+
+The quickstart tells the story:
+
+```sh
+argvault init
+argvault record \
+  --out .argvault/runs/repro.json \
+  --env NODE_ENV \
+  --fixture fixtures/input.txt \
+  --stdin-file fixtures/input.txt \
+  --note "fails on the tiny fixture" \
+  -- node scripts/repro.js --case tiny
+argvault report .argvault/runs/repro.json --out .argvault/runs/repro.md
+```
+
+This is not a glamorous product surface, but it solves a real agent problem.
+
+Agents are constantly asked to summarize terminal evidence. Sometimes that is fine. Sometimes it is fragile. The command had a weird argument. The fixture mattered. The stdout sample was truncated. The environment had one allowed variable. The failure only makes sense if you know what stdin looked like.
+
+`ArgVault` turns that into a cassette.
+
+The safety model is the point:
+
+- no required network access
+- no telemetry or background daemon
+- environment capture is allowlist-only
+- common secrets and home paths are redacted
+- fixture contents are not embedded
+- fixture hashes and sizes are recorded instead
+
+That is the right level of humility. The README says to review before posting because custom secrets can have weird shapes. Good. A redaction tool should not pretend to be a lawyer.
+
+<Callout title="The practical rule">
+When a command result matters to another reviewer, do not leave it as transcript lore. Capture a redacted cassette with argv, bounded output, exit status, notes, and fixture identity.
+</Callout>
+
+This is the same release habit again.
+
+Make the evidence portable.
+
+## The deeper insight: ordinary work needs receipts
+
+The pattern across these tools is not "add more QA."
+
+The sharper thesis is:
+
+ordinary work needs receipts.
+
+Not just major releases. Not just risky production changes. The everyday agent work around CI, tool catalogs, and terminal reproduction needs small artifacts that outlive the run.
+
+<CompareTable
+  left={{ title: "Sprint-only memory", items: ["CI changes are reviewed from raw YAML", "Risky workflow patterns depend on human memory", "Tool integrations hit live services during routine tests", "Connector failures cannot be replayed cleanly", "Terminal evidence is summarized from chat transcripts", "Fixtures are named in prose but not attached to evidence"] }}
+  right={{ title: "Release habit", items: ["CI audits produce Markdown or JSON reports", "Workflow generation writes only to explicit output paths", "MCP tools run from local deterministic catalogs", "Tool calls can be recorded and replayed from transcripts", "Command runs become redacted JSON and Markdown cassettes", "Fixture hashes travel with the handoff"] }}
+/>
+
+That is what changes after sixty days.
+
+The sprint was never really about producing sixty blog posts or sixty small tools. It was about training a reflex:
+
+make the next agent run easier to trust than the last one.
+
+That means the repo should carry its own review surface. The fixtures should be close to the workflow. The reports should be pasteable into PRs. The release check should be boring. The command evidence should be portable. The network boundary should be explicit.
+
+The agent should not be the only witness.
+
+The transcript should not be the product.
+
+The artifact should survive.
+
+## What this changes next
+
+Day 61 makes the post-sprint direction clearer.
+
+The useful stack now looks less like a list of tools and more like an operating habit:
+
+- audit CI before asking an agent to edit it
+- keep workflow generation explicit and reviewable
+- test agent tool integrations against local catalogs before live services
+- record tool-call transcripts when replay matters
+- capture terminal repros as redacted cassettes
+- put fixture identity into the handoff
+- make package smoke checks part of release readiness
+- keep every side effect behind an intentional command or output path
+
+That is not slower than agent speed.
+
+That is how agent speed compounds without turning every review into archaeology.
+
+<Callout title="Day 61 in one line">
+After the 60 Day OSS Sprint, the real habit is evidence: CI audits, mock tool catalogs, replayable transcripts, and redacted command cassettes turn agent work into something reviewers can trust after the run is over.
+</Callout>
+
+The sprint ended yesterday.
+
+The habit starts now.

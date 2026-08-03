@@ -1,0 +1,173 @@
+---
+title: "Has AI Killed SaaS? Distribution and Agentic Tool-Running Teams"
+description: "Has AI killed SaaS? No. AI has made generic software easier to build, while distribution, workflow ownership, and reliable agentic teams have become more valuable."
+pubDate: 2026-08-04
+tags: ["ai saas", "distribution", "agentic ai", "ai agents", "startups"]
+draft: true
+---
+
+import Callout from "../../components/mdx/Callout.astro";
+import Highlight from "../../components/mdx/Highlight.astro";
+import Step from "../../components/mdx/Step.astro";
+import CompareTable from "../../components/mdx/CompareTable.astro";
+
+"AI has killed SaaS" is a useful provocation. It is also the wrong conclusion.
+
+AI has made it dramatically easier to produce an app that looks like SaaS: a polished interface, a database, billing, an API connection, and a thin layer of AI. That changes the economics of building. It does not remove the hard parts of building a durable software business.
+
+The question is not whether SaaS is dead. The question is: **what kind of SaaS still earns the right to exist when an agent can build a credible first version in a weekend?**
+
+My answer is simple. The winners will own a valuable workflow, earn distribution, and make agents reliable enough to run real tools safely.
+
+<Highlight emoji="⚡">
+AI has not killed SaaS. It has killed the assumption that shipping a feature set is a moat.
+</Highlight>
+
+## Why people say AI has killed SaaS
+
+The argument has a real foundation.
+
+A solo founder can now use AI coding tools to go from idea to prototype far faster than a small team could a few years ago. Commodity functionality is easier to copy. A basic dashboard, CRM, scheduling tool, content generator, or internal workflow app is no longer an intimidating technical project.
+
+That means plenty of old SaaS moats are thinner:
+
+- a generic feature checklist
+- a clean but interchangeable UI
+- an undifferentiated chatbot on top of a model API
+- a roadmap that is just "more of the same"
+
+But lower build cost does not mean lower customer-acquisition cost. It does not mean customers trust a new tool with important data. It does not mean an AI agent can navigate messy internal systems without failure, permissions, and audit trails becoming product problems.
+
+<Callout type="warning" title="The important distinction">
+Building software is getting cheaper. Earning attention, integrating into a workflow, and becoming trusted enough to stay there are not.
+</Callout>
+
+## SaaS is not dead. Generic software is under pressure.
+
+The useful distinction is between a feature and a workflow.
+
+A feature is easy to describe and easy to swap: "write a summary," "make a landing page," or "put AI in the inbox." A workflow has inputs, permissions, exceptions, data, people, handoffs, and a consequence when something goes wrong.
+
+That is where AI-native SaaS still has room to win.
+
+<CompareTable
+  left={{ title: "Thin AI wrapper", items: [
+    "A prompt attached to a generic interface",
+    "Little proprietary context or data",
+    "Easy to copy the visible feature",
+    "No clear distribution advantage",
+    "Breaks when a real exception appears"
+  ] }}
+  right={{ title: "Durable AI-native SaaS", items: [
+    "Owns a recurring customer workflow",
+    "Uses permissioned context and integrations",
+    "Turns actions into auditable outcomes",
+    "Has a repeatable route to a specific audience",
+    "Handles exceptions and human review well"
+  ] }}
+/>
+
+The product does not need to own every system of record. But it needs to become a system of action that people can trust: the layer that sees the relevant context, takes bounded action, records what happened, and routes ambiguity to a human.
+
+That is much harder to replace than an interface with a clever prompt.
+
+## Distribution is still the real constraint for AI SaaS
+
+If everyone can build faster, more people can launch. The market gets noisier. Distribution does not disappear in that environment. It becomes more important.
+
+Distribution means more than paid ads. It is the repeatable system that helps the right people discover the product, understand why it matters, trust it, and take the next step. For an AI startup, that can include search, founder-led content, a niche community, partnerships, integrations, referrals, a sales motion, or existing product distribution.
+
+I wrote previously about [why most AI SaaS founders have a distribution problem](/blog/why-most-ai-saas-founders-dont-have-a-product-problem-they-have-a-distribution-problem/). That diagnosis becomes sharper as AI lowers the barrier to building.
+
+<Highlight emoji="📣">
+When features are easier to create, distribution becomes the filter that decides which useful products are actually discovered.
+</Highlight>
+
+There is a second part that is often missed. Distribution works best when it is attached to a specific job.
+
+"We use AI for marketing" is vague. "We help a five-person content team turn approved customer interviews into a weekly distribution pipeline" is a workflow someone can recognise, evaluate, and refer.
+
+## Agentic tool-running teams change the product, not just the cost base
+
+The most interesting change is not that AI can generate more code. It is that AI agents can increasingly use tools: inspect a repository, query a database, prepare a report, create a task, open a pull request, or escalate a blocked decision.
+
+That turns AI from a feature inside a SaaS product into part of the operating team.
+
+The reliable version is not a magical autonomous employee. It is a team of agents with narrow roles, scoped access, clear inputs, tool contracts, verification, and human approval where the cost of being wrong is high. This is consistent with [OpenAI's guide to building agents](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-agents/) and [Anthropic's guidance on effective agents](https://www.anthropic.com/engineering/building-effective-agents): use agents where a workflow benefits from model-led decisions and tool use, rather than adding them where deterministic software is enough.
+
+<Step number={1} title="Give the agent a bounded job">
+An agent should not get "run growth" or "fix the codebase." Give it a task with a defined outcome, inputs, tools, and stop conditions.
+</Step>
+
+<Step number={2} title="Make tools boring and explicit">
+Good agent tools have clear names, constrained parameters, useful error messages, and permissions that match the job. The agent should not have to guess how to act.
+</Step>
+
+<Step number={3} title="Build a review and evidence layer">
+Agents need receipts: what they saw, what they changed, what failed, and what needs a decision. High-impact actions need approval gates and reversible paths.
+</Step>
+
+<Step number={4} title="Measure the workflow, not the demo">
+Track completed outcomes, correction rate, time saved, cost per successful run, and how often a human has to take over. A fluent agent that creates rework is not productive.
+</Step>
+
+This is why I am more interested in agentic teams than isolated AI features. A durable agentic product can make a workflow faster and more reliable while producing the proof a customer needs to trust it.
+
+## Where the new moat actually lives
+
+There is no single AI moat. There is a stack of advantages that compound.
+
+- **Workflow depth:** knowing the actual sequence of work, edge cases, and handoffs.
+- **Permissioned context:** access to the right customer data and systems, with a reason to be trusted.
+- **Integration quality:** tools that work reliably with the systems customers already use.
+- **Evaluation and verification:** a way to prove the agent is improving outcomes rather than merely sounding capable.
+- **Distribution:** an audience, channel, or sales process that reaches the right buyer repeatedly.
+- **Operational learning:** the feedback gained from real runs, reviewed failures, and customer exceptions.
+
+The defensibility is not that nobody can recreate the first version. They probably can. It is that recreating the whole operating system around a workflow, including distribution and trust, is far more expensive.
+
+## What founders should build now
+
+If you are deciding what to build in the era of AI SaaS, avoid starting with "what can a model generate?" Start with "what important work remains slow, fragmented, or expensive because tools do not coordinate well?"
+
+Good opportunities tend to have three properties:
+
+1. The job happens often enough that automation compounds.
+2. The workflow crosses systems or requires judgement, so a simple template is not enough.
+3. You have a plausible distribution advantage: domain credibility, an existing audience, a partner, a community, search demand, or direct access to the buyer.
+
+<Callout type="tip" title="A better product question">
+Do not ask whether AI can build your SaaS. Ask whether your product can become the trusted action layer for a recurring customer workflow.
+</Callout>
+
+That reframing also changes the first product milestone. A demo is not enough. The milestone is a narrow workflow where a customer can see the agent take a useful action, verify the outcome, and keep control.
+
+## FAQ: Has AI killed SaaS?
+
+### Has AI killed SaaS?
+
+No. AI has reduced the cost of building many SaaS products and increased competition around generic features. SaaS remains valuable when it owns a meaningful workflow, integrates with customer systems, earns trust, and reaches customers through a repeatable distribution channel.
+
+### Is AI making SaaS easier to build?
+
+Yes. AI coding tools and reusable infrastructure make prototypes and ordinary product features faster to build. That does not automatically solve customer acquisition, retention, compliance, integrations, or the operational reliability required for a real business.
+
+### What is an agentic AI team?
+
+An agentic AI team is a coordinated set of AI agents that use tools to complete bounded jobs. The useful version has specialised roles, scoped permissions, task queues, verification, and human escalation rather than unrestricted autonomy.
+
+### What matters more than features in AI SaaS?
+
+Distribution, workflow fit, trust, proprietary context, reliable integrations, and proof that the product produces a valuable outcome. Features still matter, but they are increasingly the entry ticket rather than the whole business.
+
+## The better way to say it
+
+AI has not killed SaaS. It has raised the standard.
+
+The old shortcut was to treat the product as the business. Build enough features, launch, and expect the market to notice. The new reality is less forgiving.
+
+Build faster, yes. But pair that speed with a specific workflow, a credible distribution engine, and agentic systems that can run tools safely enough to create real outcomes.
+
+<Highlight emoji="🎯">
+The next valuable SaaS companies will not win because they added AI. They will win because they turn AI into a trusted, distributed, tool-running part of how work gets done.
+</Highlight>
